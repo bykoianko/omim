@@ -113,17 +113,17 @@ UNIT_TEST(TurnsSoundMetersTest)
   TEST(turnNotifications.empty(), ());
 
   // 700 meters till the turn. No sound notifications is required.
-  turns.front().m_distMeters = 700.;
+  turns.front().m_distMeters = 800.;
   turnSound.GenerateTurnSound(turns, turnNotifications);
   TEST(turnNotifications.empty(), ());
 
-  // 699 meters till the turn. It's time to pronounce the first voice notification.
+  // 749 meters till the turn. It's time to pronounce the first voice notification.
   // Why? The current speed is 30 meters per seconds. According to correctSettingsMeters
   // we need to play the first voice notification 20 seconds before the turn.
-  // Besides that we need 5 seconds (but 100 meters maximum) for playing the notification.
+  // Besides that we need 5 seconds (but 150 meters maximum) for playing the notification.
   // So we start playing the first notification when the distance till the turn is less
-  // then 20 seconds * 30 meters per seconds + 100 meters = 700 meters.
-  turns.front().m_distMeters = 699.;
+  // then 20 seconds * 30 meters per seconds + 150 meters = 750 meters.
+  turns.front().m_distMeters = 749.;
   turnSound.GenerateTurnSound(turns, turnNotifications);
   vector<string> const expectedNotification1 = {{"In 600 meters. Make a right turn."}};
   TEST_EQUAL(turnNotifications, expectedNotification1, ());
@@ -135,18 +135,18 @@ UNIT_TEST(TurnsSoundMetersTest)
 
   turnSound.SetSpeedMetersPerSecond(32.);
 
+  // 200 meters till the turn. No sound notifications is required.
+  turns.front().m_distMeters = 200.;
+  turnSound.GenerateTurnSound(turns, turnNotifications);
+  TEST(turnNotifications.empty(), ());
+
   // 150 meters till the turn. No sound notifications is required.
   turns.front().m_distMeters = 150.;
   turnSound.GenerateTurnSound(turns, turnNotifications);
   TEST(turnNotifications.empty(), ());
 
-  // 100 meters till the turn. No sound notifications is required.
-  turns.front().m_distMeters = 100.;
-  turnSound.GenerateTurnSound(turns, turnNotifications);
-  TEST(turnNotifications.empty(), ());
-
-  // 99 meters till the turn. It's time to pronounce the second voice notification.
-  turns.front().m_distMeters = 99.;
+  // 149 meters till the turn. It's time to pronounce the second voice notification.
+  turns.front().m_distMeters = 149.;
   turnSound.GenerateTurnSound(turns, turnNotifications);
   vector<string> const expectedNotification2 = {{"Make a right turn."}};
   TEST_EQUAL(turnNotifications, expectedNotification2, ());
@@ -191,20 +191,20 @@ UNIT_TEST(TurnsSoundMetersTwoTurnsTest)
   turnSound.Reset();
   turnSound.SetSpeedMetersPerSecond(35.);
 
-  vector<TurnItemDist> turns = {{{5 /* idx */, TurnDirection::TurnSharpRight}, 800.}};
+  vector<TurnItemDist> turns = {{{5 /* idx */, TurnDirection::TurnSharpRight}, 900.}};
   vector<string> turnNotifications;
 
   // Starting nearing the first turn.
-  // 800 meters till the turn. No sound notifications is required.
+  // 900 meters till the turn. No sound notifications is required.
   turnSound.GenerateTurnSound(turns, turnNotifications);
   TEST(turnNotifications.empty(), ());
 
-  // 700 meters till the turn. It's time to pronounce the first voice notification.
+  // 750 meters till the turn. It's time to pronounce the first voice notification.
   // The speed is high.
   // The compensation of kStartBeforeSeconds/kMinStartBeforeMeters/kMaxStartBeforeMeters is not enough.
   // The user will be closer to the turn while pronouncing despite the compensation.
   // So it should be pronounced "In 600 meters."
-  turns.front().m_distMeters = 700.;
+  turns.front().m_distMeters = 750.;
   turnSound.GenerateTurnSound(turns, turnNotifications);
   vector<string> const expectedNotification1 = {{"In 600 meters. Make a sharp right turn."}};
   TEST_EQUAL(turnNotifications, expectedNotification1, ());
@@ -272,18 +272,18 @@ UNIT_TEST(TurnsSoundFeetTest)
   turnSound.GenerateTurnSound(turns, turnNotifications);
   TEST(turnNotifications.empty(), ());
 
-  // 700 meters till the turn. No sound notifications is required.
-  turns.front().m_distMeters = 700.;
+  // 800 meters till the turn. No sound notifications is required.
+  turns.front().m_distMeters = 800.;
   turnSound.GenerateTurnSound(turns, turnNotifications);
   TEST(turnNotifications.empty(), ());
 
-  // 699 meters till the turn. It's time to pronounce the first voice notification.
+  // 749 meters till the turn. It's time to pronounce the first voice notification.
   // Why? The current speed is 30 meters per seconds. According to correctSettingsMeters
   // we need to play the first voice notification 20 seconds before the turn.
   // Besides that we need 5 seconds (but 100 meters maximum) for playing the notification.
   // So we start playing the first notification when the distance till the turn is less
-  // then 20 seconds * 30 meters per seconds + 100 meters = 700 meters.
-  turns.front().m_distMeters = 699.;
+  // then 20 seconds * 30 meters per seconds + 150 meters = 750 meters.
+  turns.front().m_distMeters = 749.;
   turnSound.GenerateTurnSound(turns, turnNotifications);
   vector<string> const expectedNotification1 = {{"In 2000 feet. Enter the roundabout."}};
   TEST_EQUAL(turnNotifications, expectedNotification1, ());
@@ -293,24 +293,24 @@ UNIT_TEST(TurnsSoundFeetTest)
   turnSound.GenerateTurnSound(turns, turnNotifications);
   TEST(turnNotifications.empty(), ());
 
+  // 200 meters till the turn. No sound notifications is required.
+  turns.front().m_distMeters = 200.;
+  turnSound.GenerateTurnSound(turns, turnNotifications);
+  TEST(turnNotifications.empty(), ());
+
   // 150 meters till the turn. No sound notifications is required.
   turns.front().m_distMeters = 150.;
   turnSound.GenerateTurnSound(turns, turnNotifications);
   TEST(turnNotifications.empty(), ());
 
-  // 100 meters till the turn. No sound notifications is required.
-  turns.front().m_distMeters = 100.;
-  turnSound.GenerateTurnSound(turns, turnNotifications);
-  TEST(turnNotifications.empty(), ());
-
-  // 99 meters till the turn. It's time to pronounce the second voice notification.
-  turns.front().m_distMeters = 99.;
+  // 149 meters till the turn. It's time to pronounce the second voice notification.
+  turns.front().m_distMeters = 149.;
   turnSound.GenerateTurnSound(turns, turnNotifications);
   vector<string> const expectedNotification2 = {{"Enter the roundabout."}};
   TEST_EQUAL(turnNotifications, expectedNotification2, ());
 
-  // 99 meters till the turn again. No sound notifications is required.
-  turns.front().m_distMeters = 99.;
+  // 149 meters till the turn again. No sound notifications is required.
+  turns.front().m_distMeters = 149.;
   turnSound.GenerateTurnSound(turns, turnNotifications);
   TEST(turnNotifications.empty(), ());
 
