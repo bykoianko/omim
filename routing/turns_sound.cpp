@@ -15,12 +15,12 @@ namespace
 // When kStartBeforeSeconds * TurnsSound::m_speedMetersPerSecond  is too small or too large
 // we use kMinStartBeforeMeters or kMaxStartBeforeMeters correspondingly.
 uint32_t const kStartBeforeSeconds = 5;
-uint32_t const kMinStartBeforeMeters = 10;
-uint32_t const kMaxStartBeforeMeters = 100;
+uint32_t const kMinStartBeforeMeters = 25;
+uint32_t const kMaxStartBeforeMeters = 150;
 
 // kMinDistToSayNotificationMeters is minimum distance between two turns
 // when pronouncing the first notification about the second turn makes sense.
-uint32_t const kMinDistToSayNotificationMeters = 100;
+uint32_t const kMinDistToSayNotificationMeters = 170;
 
 uint32_t CalculateDistBeforeMeters(double m_speedMetersPerSecond)
 {
