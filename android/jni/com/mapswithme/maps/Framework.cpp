@@ -159,6 +159,7 @@ namespace android
 
     rmParams.m_videoMemoryLimit = 30 * 1024 * 1024;
     rmParams.m_texFormat = graphics::Data4Bpp;
+    rmParams.m_exactDensityDPI = densityDpi;
 
     RenderPolicy::Params rpParams;
 
