@@ -337,11 +337,14 @@ RenderPolicy * CreateRenderPolicy(RenderPolicy::Params const & params)
 
 graphics::GlyphCache::Params GetGlyphCacheParams(graphics::EDensity density, size_t cacheMaxSize)
 {
+  // @TODO(bykoianko) It's a hot fix to be able to build the version before ios changes.
+  double const xhdpi = 320.;
   return graphics::GlyphCache::Params(UNICODE_BLOCK_FILE,
                                       WHITE_LIST_FILE,
                                       BLACK_LIST_FILE,
                                       cacheMaxSize,
                                       density,
+                                      xhdpi,
                                       false);
 }
 
