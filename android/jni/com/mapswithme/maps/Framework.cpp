@@ -150,6 +150,7 @@ namespace android
     }
 
     params.m_density = dens[bestRangeIndex].second;
+    params.m_exactDensityDPI = densityDpi;
   }
 
   bool Framework::InitRenderPolicyImpl(int densityDpi, int screenWidth, int screenHeight)
