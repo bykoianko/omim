@@ -91,6 +91,7 @@ public:
     string m_skinName;
     size_t m_screenWidth;
     size_t m_screenHeight;
+    int m_exactDensityDPI;
   };
 
   /// constructor
