@@ -33,7 +33,7 @@ void IndexAndTypeMapping::Load(istream & s)
       Add(ind++, c.GetTypeByPath(path));
     }
   }
-  LOG(LINFO, ("TESTFIX m_types.size() = ", m_types.size()));
+  // LOG(LINFO, ("TESTFIX m_types.size() = ", m_types.size()));
 }
 
 void IndexAndTypeMapping::Add(uint32_t ind, uint32_t type)
