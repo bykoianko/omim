@@ -124,10 +124,11 @@ int main(int argc, char * argv[])
   vector<bool> testResults;
   int numFailedTests = 0;
 
-  ParseOptions(argc, argv, g_testingOptions);
+  char * argvv[] = { "routing_integration_tests", "--filter=.*EstoniaTallinnRadissonHiltonToSkypeOffice.*" };
+  ParseOptions(2, argvv, g_testingOptions);
   if (g_testingOptions.m_help)
   {
-    Usage(argv[0]);
+    Usage(argvv[0]);
     return STATUS_SUCCESS;
   }
 

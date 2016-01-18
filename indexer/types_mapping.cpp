@@ -1,6 +1,7 @@
 #include "indexer/types_mapping.hpp"
 #include "indexer/classificator.hpp"
 
+#include "base/logging.hpp"
 #include "base/string_utils.hpp"
 #include "base/stl_add.hpp"
 
@@ -32,6 +33,7 @@ void IndexAndTypeMapping::Load(istream & s)
       Add(ind++, c.GetTypeByPath(path));
     }
   }
+  LOG(LINFO, ("TESTFIX m_types.size() = ", m_types.size()));
 }
 
 void IndexAndTypeMapping::Add(uint32_t ind, uint32_t type)
