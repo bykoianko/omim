@@ -364,7 +364,7 @@ private:
 
   // @TODO |m_altitudes| should be exchanged with vector<TAltitude>.
   // If the vector is empty no altitude information is available for this feature.
-  feature::Altitudes m_altitudes;
+//  feature::Altitudes m_altitudes;
 
   mutable bool m_header2Parsed = false;
   mutable bool m_pointsParsed = false;

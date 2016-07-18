@@ -79,11 +79,27 @@ public:
 private:
   friend class CrossFeaturesLoader;
 
-  struct Value
-  {
-    MwmSet::MwmHandle mwmHandle;
-    feature::AltitudeLoader altitudeLoader;
-  };
+//  struct Value
+//  {
+//    Value(MwmSet::MwmHandle && handle, MwmValue const * MwmValue)
+//      : mwmHandle(move(handle)), altitudeLoader(MwmValue)
+//    {
+//      LOG(LINFO, ("Value::Value"));
+//    }
+
+//    ~Value()
+//    {
+//      LOG(LINFO, ("Value::~Value"));
+//    }
+
+//    Value(Value && v) : mwmHandle(move(v.mwmHandle)), altitudeLoader(move(v.altitudeLoader))
+//    {
+//      LOG(LINFO, ("Value::Value(Value &&)"));
+//    }
+
+//    MwmSet::MwmHandle mwmHandle;
+//    feature::AltitudeLoader altitudeLoader;
+//  };
 
   bool IsRoad(FeatureType const & ft) const;
   bool IsOneWay(FeatureType const & ft) const;
@@ -99,13 +115,17 @@ private:
   void ExtractRoadInfo(FeatureID const & featureId, FeatureType const & ft, double speedKMPH,
                        RoadInfo & ri) const;
 
-  Value const & LockFeatureMwm(FeatureID const & featureId) const;
+  //Value const & LockFeatureMwm(FeatureID const & featureId) const;
+  void LockFeatureMwm(FeatureID const & featureId) const;
 
   Index const & m_index;
   IRoadGraph::Mode const m_mode;
   mutable RoadInfoCache m_cache;
   mutable CrossCountryVehicleModel m_vehicleModel;
-  mutable map<MwmSet::MwmId, Value> m_mwmLocks;
+  //mutable map<MwmSet::MwmId, Value> m_mwmLocks;
+  mutable MwmSet::MwmId mwmId;
+  mutable MwmSet::MwmHandle mwmHandle;
+  mutable unique_ptr<feature::AltitudeLoader> altitudeLoader;
 };
 
 }  // namespace routing

@@ -238,7 +238,7 @@ void FeaturesRoadGraph::ClearState()
 {
   m_cache.Clear();
   m_vehicleModel.Clear();
-  m_mwmLocks.clear();
+//  m_mwmLocks.clear();
 }
 
 bool FeaturesRoadGraph::IsRoad(FeatureType const & ft) const { return m_vehicleModel.IsRoad(ft); }
@@ -256,15 +256,16 @@ double FeaturesRoadGraph::GetSpeedKMPHFromFt(FeatureType const & ft) const
 void FeaturesRoadGraph::ExtractRoadInfo(FeatureID const & featureId, FeatureType const & ft,
                                         double speedKMPH, RoadInfo & ri) const
 {
-  Value const & value = LockFeatureMwm(featureId);
+//  Value const & value = LockFeatureMwm(featureId);
+  LockFeatureMwm(featureId);
 
   ri.m_bidirectional = !IsOneWay(ft);
   ri.m_speedKMPH = speedKMPH;
 
   ft.ParseGeometry(FeatureType::BEST_GEOMETRY);
-  feature::Altitudes altitudes = value.altitudeLoader.GetAltitudes(featureId.m_index);
-  LOG(LINFO, ("Feature idx =", featureId.m_index, "altitudes.begin =", altitudes.begin,
-              "altitudes.end =", altitudes.end));
+  feature::Altitudes altitudes = /*value.*/altitudeLoader->GetAltitudes(featureId.m_index);
+//  LOG(LINFO, ("Feature idx =", featureId.m_index, "altitudes.begin =", altitudes.begin,
+//              "altitudes.end =", altitudes.end));
 
   // @TODO It's a temprarery solution until a vector of feature altitudes is saved in mwm.
   bool const isAltidudeValid = altitudes.begin != feature::kInvalidAltitude &&
@@ -322,24 +323,36 @@ IRoadGraph::RoadInfo const & FeaturesRoadGraph::GetCachedRoadInfo(FeatureID cons
   return ri;
 }
 
-FeaturesRoadGraph::Value const & FeaturesRoadGraph::LockFeatureMwm(FeatureID const & featureId) const
+// FeaturesRoadGraph::Value const & FeaturesRoadGraph::LockFeatureMwm(FeatureID const & featureId) const
+void FeaturesRoadGraph::LockFeatureMwm(FeatureID const & featureId) const
 {
-  MwmSet::MwmId mwmId = featureId.m_mwmId;
-  ASSERT(mwmId.IsAlive(), ());
+//  MwmSet::MwmId mwmId = featureId.m_mwmId;
+//  ASSERT(mwmId.IsAlive(), ());
 
-  auto const itr = m_mwmLocks.find(mwmId);
-  if (itr != m_mwmLocks.end())
-    return itr->second;
+//  auto const itr = m_mwmLocks.find(mwmId);
+//  if (itr != m_mwmLocks.end())
+//    return itr->second;
 
-  MwmSet::MwmHandle mwmHandle = m_index.GetMwmHandleById(mwmId);
-  ASSERT(mwmHandle.IsAlive(), ());
+//  LOG(LINFO, ("*****NEW MWM***** featureId.m_mwmId =", featureId.m_mwmId.GetInfo()->GetCountryName()));
+//  MwmSet::MwmHandle mwmHandle = m_index.GetMwmHandleById(mwmId);
+//  ASSERT(mwmHandle.IsAlive(), ());
 
-  MwmValue * mwmValue = nullptr;
-  if (mwmHandle.IsAlive())
-    mwmValue = mwmHandle.GetValue<MwmValue>();
+//  MwmValue * mwmValue = nullptr;
+//  if (mwmHandle.IsAlive())
+//    mwmValue = mwmHandle.GetValue<MwmValue>();
 
-  Value value = {move(mwmHandle), feature::AltitudeLoader(mwmValue)};
+//  Value value(move(mwmHandle), mwmValue);
+//  return m_mwmLocks.insert(make_pair(move(mwmId), move(value))).first->second;
+  ////
 
-  return m_mwmLocks.insert(make_pair(move(mwmId), move(value))).first->second;
+  if (altitudeLoader)
+  {
+    ASSERT_EQUAL(mwmId, featureId.m_mwmId, ());
+    return;
+  }
+
+  mwmId = featureId.m_mwmId;
+  mwmHandle = m_index.GetMwmHandleById(mwmId);
+  altitudeLoader = make_unique<feature::AltitudeLoader>(mwmHandle.GetValue<MwmValue>());
 }
 }  // namespace routing
