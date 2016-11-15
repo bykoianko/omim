@@ -24,6 +24,7 @@ SOURCES += \
     cross_mwm_router.cpp \
     cross_routing_context.cpp \
     directions_engine.cpp \
+    edge_estimator.cpp \
     features_road_graph.cpp \
     fseg_index.cpp \
     geometry.cpp \
@@ -69,6 +70,7 @@ HEADERS += \
     cross_mwm_router.hpp \
     cross_routing_context.hpp \
     directions_engine.hpp \
+    edge_estimator.hpp \
     features_road_graph.hpp \
     fseg.hpp \
     fseg_index.hpp \

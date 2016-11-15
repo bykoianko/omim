@@ -1,5 +1,6 @@
 #pragma once
 
+#include "routing/edge_estimator.hpp"
 #include "routing/fseg.hpp"
 #include "routing/fseg_index.hpp"
 #include "routing/geometry.hpp"
@@ -32,7 +33,7 @@ public:
   using TEdgeType = JointEdge;
 
   IndexGraph() = default;
-  explicit IndexGraph(unique_ptr<Geometry> geometry);
+  explicit IndexGraph(unique_ptr<GeometryLoader> loader, shared_ptr<EdgeEstimator> estimator);
 
   // TGraph overloads:
   void GetOutgoingEdgesList(TVertexType vertex, vector<TEdgeType> & edges) const;
@@ -40,7 +41,7 @@ public:
   double HeuristicCostEstimate(TVertexType from, TVertexType to) const;
 
   // Access methods.
-  Geometry const & GetGeometry() const { return *m_geometry; }
+  Geometry const & GetGeometry() const { return m_geometry; }
   m2::PointD const & GetPoint(JointId jointId) const;
   size_t GetRoadsAmount() const { return m_fsegIndex.GetSize(); }
   size_t GetJointsAmount() const { return m_jointOffsets.size(); }
@@ -73,10 +74,12 @@ private:
   void BuildJoints(uint32_t jointsAmount);
 
   // Edge methods.
-  void AddNeigborEdge(vector<TEdgeType> & edges, FSegId fseg, bool forward) const;
+  void AddNeigborEdge(RoadGeometry const & road, vector<TEdgeType> & edges, FSegId fseg,
+                      bool forward) const;
   void GetEdgesList(JointId jointId, vector<TEdgeType> & edges, bool forward) const;
 
-  unique_ptr<Geometry> m_geometry;
+  Geometry m_geometry;
+  shared_ptr<EdgeEstimator> m_estimator;
   FSegIndex m_fsegIndex;
   vector<JointOffset> m_jointOffsets;
   vector<FSegId> m_fsegs;

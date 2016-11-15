@@ -1,6 +1,7 @@
 #pragma once
 
 #include "routing/directions_engine.hpp"
+#include "routing/edge_estimator.hpp"
 #include "routing/road_graph.hpp"
 #include "routing/router.hpp"
 #include "routing/vehicle_model.hpp"
@@ -20,7 +21,7 @@ class AStarRouter
 public:
   AStarRouter(const char * name, Index const & index, TCountryFileFn const & countryFileFn,
               shared_ptr<VehicleModelFactory> vehicleModelFactory,
-              unique_ptr<IDirectionsEngine> directionsEngine);
+              shared_ptr<EdgeEstimator> estimator, unique_ptr<IDirectionsEngine> directionsEngine);
 
   string const & GetName() const { return m_name; }
 
@@ -39,6 +40,7 @@ private:
   TCountryFileFn m_countryFileFn;
   unique_ptr<IRoadGraph> m_roadGraph;
   shared_ptr<VehicleModelFactory> m_vehicleModelFactory;
+  shared_ptr<EdgeEstimator> m_estimator;
   unique_ptr<IDirectionsEngine> m_directionsEngine;
 };
 

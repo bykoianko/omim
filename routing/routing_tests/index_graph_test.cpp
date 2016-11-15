@@ -1,6 +1,8 @@
 #include "testing/testing.hpp"
 
 #include "routing/base/astar_algorithm.hpp"
+#include "routing/car_model.hpp"
+#include "routing/edge_estimator.hpp"
 #include "routing/index_graph.hpp"
 
 #include "geometry/point2d.hpp"
@@ -8,87 +10,44 @@
 #include "base/assert.hpp"
 
 #include "std/algorithm.hpp"
-#include "std/map.hpp"
+#include "std/unordered_map.hpp"
 #include "std/vector.hpp"
 
 namespace
 {
 using namespace routing;
 
-class TestGeometry : public Geometry
+class TestGeometryLoader : public GeometryLoader
 {
 public:
-  // Geometry overrides:
-  bool IsRoad(uint32_t featureId) const override;
-  bool IsOneWay(uint32_t featureId) const override;
-  m2::PointD const & GetPoint(FSegId fseg) const override;
-  double CalcEdgesWeight(uint32_t featureId, uint32_t pointStart,
-                         uint32_t pointFinish) const override;
-  double CalcHeuristic(FSegId from, FSegId to) const override;
+  // GeometryLoader overrides:
+  void Load(uint32_t featureId, RoadGeometry & road) const override;
 
-  void AddRoad(uint32_t featureId, vector<m2::PointD> const & points);
+  void AddRoad(uint32_t featureId, buffer_vector<m2::PointD, 32> const & points);
 
 private:
-  map<uint32_t, vector<m2::PointD>> m_features;
+  unordered_map<uint32_t, RoadGeometry> m_roads;
 };
 
-bool TestGeometry::IsRoad(uint32_t featureId) const
+void TestGeometryLoader::Load(uint32_t featureId, RoadGeometry & road) const
 {
-  return m_features.find(featureId) != m_features.end();
+  auto it = m_roads.find(featureId);
+  if (it == m_roads.cend())
+    return;
+
+  road = it->second;
 }
 
-bool TestGeometry::IsOneWay(uint32_t featureId) const { return false; }
-
-m2::PointD const & TestGeometry::GetPoint(FSegId fseg) const
+void TestGeometryLoader::AddRoad(uint32_t featureId, buffer_vector<m2::PointD, 32> const & points)
 {
-  auto it = m_features.find(fseg.GetFeatureId());
-  if (it == m_features.end())
-  {
-    ASSERT(false, ("Can't find feature", fseg.GetFeatureId()));
-    static m2::PointD invalidResult(-1.0, -1.0);
-    return invalidResult;
-  }
-
-  ASSERT_LESS(fseg.GetSegId(), it->second.size(), ("featureId =", fseg.GetFeatureId()));
-  return it->second[fseg.GetSegId()];
-}
-
-double TestGeometry::CalcEdgesWeight(uint32_t featureId, uint32_t pointFrom, uint32_t pointTo) const
-{
-  auto it = m_features.find(featureId);
-  if (it == m_features.end())
-  {
-    ASSERT(false, ("Can't find feature", featureId));
-    return 0.0;
-  }
-  vector<m2::PointD> const & points = it->second;
-
-  uint32_t const start = min(pointFrom, pointTo);
-  uint32_t const finish = max(pointFrom, pointTo);
-  ASSERT_LESS(finish, points.size(), ());
-
-  double result = 0.0;
-  for (uint32_t i = start; i < finish; ++i)
-    result += points[i].Length(points[i + 1]);
-
-  return result;
-}
-
-double TestGeometry::CalcHeuristic(FSegId from, FSegId to) const
-{
-  return GetPoint(from).Length(GetPoint(to));
-}
-
-void TestGeometry::AddRoad(uint32_t featureId, vector<m2::PointD> const & points)
-{
-  auto it = m_features.find(featureId);
-  if (it != m_features.end())
+  auto it = m_roads.find(featureId);
+  if (it != m_roads.end())
   {
     ASSERT(false, ("Already contains feature", featureId));
     return;
   }
 
-  m_features[featureId] = points;
+  m_roads[featureId] = RoadGeometry(false, 1.0, points);
 }
 
 Joint MakeJoint(vector<FSegId> const & points)
@@ -133,11 +92,14 @@ namespace routing_test
 //
 UNIT_TEST(FindPathCross)
 {
-  unique_ptr<TestGeometry> geometry = make_unique<TestGeometry>();
-  geometry->AddRoad(0, {{-2.0, 0.0}, {-1.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}});
-  geometry->AddRoad(1, {{0.0, -2.0}, {-1.0, 0.0}, {0.0, 0.0}, {0.0, 1.0}, {0.0, 2.0}});
+  unique_ptr<TestGeometryLoader> loader = make_unique<TestGeometryLoader>();
+  loader->AddRoad(0, buffer_vector<m2::PointD, 32>(
+                         {{-2.0, 0.0}, {-1.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}}));
+  loader->AddRoad(1, buffer_vector<m2::PointD, 32>(
+                         {{0.0, -2.0}, {-1.0, 0.0}, {0.0, 0.0}, {0.0, 1.0}, {0.0, 2.0}}));
 
-  IndexGraph graph(move(geometry));
+  IndexGraph graph(move(loader),
+                   CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
 
   graph.Export({MakeJoint({{0, 2}, {1, 2}})});
 
@@ -175,21 +137,22 @@ UNIT_TEST(FindPathCross)
 UNIT_TEST(FindPathManhattan)
 {
   uint32_t constexpr kCitySize = 4;
-  unique_ptr<TestGeometry> geometry = make_unique<TestGeometry>();
+  unique_ptr<TestGeometryLoader> loader = make_unique<TestGeometryLoader>();
   for (uint32_t i = 0; i < kCitySize; ++i)
   {
-    vector<m2::PointD> horizontalRoad;
-    vector<m2::PointD> verticalRoad;
+    buffer_vector<m2::PointD, 32> horizontalRoad;
+    buffer_vector<m2::PointD, 32> verticalRoad;
     for (uint32_t j = 0; j < kCitySize; ++j)
     {
       horizontalRoad.emplace_back((double)i, (double)j);
       verticalRoad.emplace_back((double)j, (double)i);
     }
-    geometry->AddRoad(i, horizontalRoad);
-    geometry->AddRoad(i + kCitySize, verticalRoad);
+    loader->AddRoad(i, horizontalRoad);
+    loader->AddRoad(i + kCitySize, verticalRoad);
   }
 
-  IndexGraph graph(move(geometry));
+  IndexGraph graph(move(loader),
+                   CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
 
   vector<Joint> joints;
   for (uint32_t i = 0; i < kCitySize; ++i)

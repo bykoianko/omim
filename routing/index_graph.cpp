@@ -4,7 +4,11 @@
 
 namespace routing
 {
-IndexGraph::IndexGraph(unique_ptr<Geometry> geometry) : m_geometry(move(geometry)) {}
+IndexGraph::IndexGraph(unique_ptr<GeometryLoader> loader, shared_ptr<EdgeEstimator> estimator)
+  : m_geometry(move(loader)), m_estimator(move(estimator))
+{
+  ASSERT(m_estimator, ());
+}
 
 void IndexGraph::GetOutgoingEdgesList(JointId jointId, vector<TEdgeType> & edges) const
 {
@@ -18,12 +22,12 @@ void IndexGraph::GetIngoingEdgesList(JointId jointId, vector<TEdgeType> & edges)
 
 double IndexGraph::HeuristicCostEstimate(JointId jointFrom, JointId jointTo) const
 {
-  return m_geometry->CalcHeuristic(GetFSeg(jointFrom), GetFSeg(jointTo));
+  return m_estimator->CalcHeuristic(GetPoint(jointFrom), GetPoint(jointTo));
 }
 
 m2::PointD const & IndexGraph::GetPoint(JointId jointId) const
 {
-  return m_geometry->GetPoint(GetFSeg(jointId));
+  return m_geometry.GetPoint(GetFSeg(jointId));
 }
 
 void IndexGraph::Export(vector<Joint> const & joints)
@@ -95,7 +99,7 @@ vector<FSegId> IndexGraph::RedressRoute(vector<JointId> const & route) const
   return fsegs;
 }
 
-FSegId IndexGraph::GetFSeg(JointId jointId) const
+inline FSegId IndexGraph::GetFSeg(JointId jointId) const
 {
   return m_fsegs[GetJointOffset(jointId).Begin()];
 }
@@ -164,18 +168,18 @@ void IndexGraph::BuildJoints(uint32_t jointsAmount)
   });
 }
 
-void IndexGraph::AddNeigborEdge(vector<TEdgeType> & edges, FSegId fseg, bool forward) const
+inline void IndexGraph::AddNeigborEdge(RoadGeometry const & road, vector<TEdgeType> & edges,
+                                       FSegId fseg, bool forward) const
 {
   pair<JointId, uint32_t> const & pair = m_fsegIndex.FindNeigbor(fseg, forward);
   if (pair.first != kInvalidJointId)
   {
-    double const distance =
-        m_geometry->CalcEdgesWeight(fseg.GetFeatureId(), fseg.GetSegId(), pair.second);
+    double const distance = m_estimator->CalcEdgesWeight(road, fseg.GetSegId(), pair.second);
     edges.push_back({pair.first, distance});
   }
 }
 
-void IndexGraph::GetEdgesList(JointId jointId, vector<TEdgeType> & edges, bool forward) const
+inline void IndexGraph::GetEdgesList(JointId jointId, vector<TEdgeType> & edges, bool forward) const
 {
   edges.clear();
 
@@ -183,15 +187,16 @@ void IndexGraph::GetEdgesList(JointId jointId, vector<TEdgeType> & edges, bool f
   for (size_t i = offset.Begin(); i < offset.End(); ++i)
   {
     FSegId const & fseg = m_fsegs[i];
-    if (!m_geometry->IsRoad(fseg.GetFeatureId()))
+    RoadGeometry const & road = m_geometry.GetRoad(fseg.GetFeatureId());
+    if (!road.IsRoad())
       continue;
 
-    bool const twoWay = !m_geometry->IsOneWay(fseg.GetFeatureId());
+    bool const twoWay = !road.IsOneWay();
     if (!forward || twoWay)
-      AddNeigborEdge(edges, fseg, false);
+      AddNeigborEdge(road, edges, fseg, false);
 
     if (forward || twoWay)
-      AddNeigborEdge(edges, fseg, true);
+      AddNeigborEdge(road, edges, fseg, true);
   }
 }
 }  // namespace routing

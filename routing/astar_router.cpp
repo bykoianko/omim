@@ -45,6 +45,7 @@ namespace routing
 AStarRouter::AStarRouter(const char * name, Index const & index,
                          TCountryFileFn const & countryFileFn,
                          shared_ptr<VehicleModelFactory> vehicleModelFactory,
+                         shared_ptr<EdgeEstimator> estimator,
                          unique_ptr<IDirectionsEngine> directionsEngine)
   : m_name(name)
   , m_index(index)
@@ -52,11 +53,13 @@ AStarRouter::AStarRouter(const char * name, Index const & index,
   , m_roadGraph(
         make_unique<FeaturesRoadGraph>(index, IRoadGraph::Mode::ObeyOnewayTag, vehicleModelFactory))
   , m_vehicleModelFactory(vehicleModelFactory)
+  , m_estimator(estimator)
   , m_directionsEngine(move(directionsEngine))
 {
   ASSERT(name, ());
   ASSERT(!m_name.empty(), ());
   ASSERT(m_vehicleModelFactory, ());
+  ASSERT(m_estimator, ());
   ASSERT(m_directionsEngine, ());
 }
 
@@ -79,8 +82,9 @@ IRouter::ResultCode AStarRouter::CalculateRoute(MwmSet::MwmId const & mwmId,
   FSegId const start(startEdge.GetFeatureId().m_index, startEdge.GetSegId());
   FSegId const finish(finishEdge.GetFeatureId().m_index, finishEdge.GetSegId());
 
-  IndexGraph graph(
-      CreateGeometry(m_index, mwmId, m_vehicleModelFactory->GetVehicleModelForCountry(country)));
+  IndexGraph graph(CreateGeometryLoader(m_index, mwmId,
+                                        m_vehicleModelFactory->GetVehicleModelForCountry(country)),
+                   m_estimator);
 
   if (!LoadIndex(mwmId, graph))
     return IRouter::RouteFileNotExist;
@@ -185,9 +189,11 @@ unique_ptr<AStarRouter> CreateCarAStarBidirectionalRouter(Index & index,
   // @TODO Bicycle turn generation engine is used now. It's ok for the time being.
   // But later a special car turn generation engine should be implemented.
   unique_ptr<IDirectionsEngine> directionsEngine = make_unique<BicycleDirectionsEngine>(index);
+  shared_ptr<EdgeEstimator> estimator =
+      CreateCarEdgeEstimator(vehicleModelFactory->GetVehicleModel());
   unique_ptr<AStarRouter> router =
       make_unique<AStarRouter>("astar-bidirectional-car", index, countryFileFn,
-                               move(vehicleModelFactory), move(directionsEngine));
+                               move(vehicleModelFactory), estimator, move(directionsEngine));
   return router;
 }
 }  // namespace routing
