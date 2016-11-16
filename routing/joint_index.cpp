@@ -2,40 +2,40 @@
 
 namespace routing
 {
-Joint::Id JointIndex::InsertJoint(FSegId const & fseg)
+Joint::Id JointIndex::InsertJoint(FtPoint const & ftp)
 {
   Joint::Id const jointId = m_slices.size();
-  m_slices.emplace_back(Slice(m_fsegs.size(), m_fsegs.size() + 1));
-  m_fsegs.emplace_back(fseg);
+  m_slices.emplace_back(Slice(m_ftPoints.size(), m_ftPoints.size() + 1));
+  m_ftPoints.emplace_back(ftp);
   return jointId;
 }
 
-pair<FSegId, FSegId> JointIndex::FindCommonFeature(Joint::Id jointId0, Joint::Id jointId1) const
+pair<FtPoint, FtPoint> JointIndex::FindCommonFeature(Joint::Id jointId0, Joint::Id jointId1) const
 {
   Slice const & slice0 = GetSlice(jointId0);
   Slice const & slice1 = GetSlice(jointId1);
 
   for (size_t i = slice0.Begin(); i < slice0.End(); ++i)
   {
-    FSegId const & fseg0 = m_fsegs[i];
+    FtPoint const & ftp0 = m_ftPoints[i];
     for (size_t j = slice1.Begin(); j < slice1.End(); ++j)
     {
-      FSegId const & fseg1 = m_fsegs[j];
-      if (fseg0.GetFeatureId() == fseg1.GetFeatureId())
-        return make_pair(fseg0, fseg1);
+      FtPoint const & ftp1 = m_ftPoints[j];
+      if (ftp0.GetFeatureId() == ftp1.GetFeatureId())
+        return make_pair(ftp0, ftp1);
     }
   }
 
   MYTHROW(RootException, ("Can't find common feature for joints", jointId0, jointId1));
 }
 
-void JointIndex::Build(FSegIndex const & fsegIndex, uint32_t jointsAmount)
+void JointIndex::Build(FtPointIndex const & ftPointIndex, uint32_t jointsAmount)
 {
   // +2 is reserved space for start and finish
   m_slices.reserve(jointsAmount + 2);
   m_slices.assign(jointsAmount, {0, 0});
 
-  fsegIndex.ForEachRoad([this](uint32_t /* featureId */, RoadJointIds const & road) {
+  ftPointIndex.ForEachRoad([this](uint32_t /* featureId */, RoadJointIds const & road) {
     road.ForEachJoint([this](uint32_t /* segId */, Joint::Id jointId) {
       ASSERT_LESS(jointId, m_slices.size(), ());
       m_slices[jointId].IncSize();
@@ -54,14 +54,14 @@ void JointIndex::Build(FSegIndex const & fsegIndex, uint32_t jointsAmount)
   }
 
   // +2 is reserved space for start and finish
-  m_fsegs.reserve(offset + 2);
-  m_fsegs.resize(offset);
+  m_ftPoints.reserve(offset + 2);
+  m_ftPoints.resize(offset);
 
-  fsegIndex.ForEachRoad([this](uint32_t featureId, RoadJointIds const & road) {
+  ftPointIndex.ForEachRoad([this](uint32_t featureId, RoadJointIds const & road) {
     road.ForEachJoint([this, featureId](uint32_t segId, Joint::Id jointId) {
       ASSERT_LESS(jointId, m_slices.size(), ());
       Slice & slice = m_slices[jointId];
-      m_fsegs[slice.End()] = {featureId, segId};
+      m_ftPoints[slice.End()] = {featureId, segId};
       slice.IncSize();
     });
   });

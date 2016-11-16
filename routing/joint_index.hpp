@@ -1,7 +1,7 @@
 #pragma once
 
-#include "routing/fseg.hpp"
-#include "routing/fseg_index.hpp"
+#include "routing/ftpoint.hpp"
+#include "routing/ftpoint_index.hpp"
 #include "routing/joint.hpp"
 
 #include "std/vector.hpp"
@@ -16,20 +16,20 @@ class JointIndex final
 {
 public:
   size_t GetNumJoints() const { return m_slices.size(); }
-  size_t GetNumFtPoints() const { return m_fsegs.size(); }
-  FSegId GetFSeg(Joint::Id jointId) const { return m_fsegs[GetSlice(jointId).Begin()]; }
+  size_t GetNumFtPoints() const { return m_ftPoints.size(); }
+  FtPoint GetFtPoint(Joint::Id jointId) const { return m_ftPoints[GetSlice(jointId).Begin()]; }
 
   template <typename F>
   void ForEachFtSeg(Joint::Id jointId, F && f) const
   {
     Slice const & slice = GetSlice(jointId);
     for (size_t i = slice.Begin(); i < slice.End(); ++i)
-      f(m_fsegs[i]);
+      f(m_ftPoints[i]);
   }
 
-  void Build(FSegIndex const & fsegIndex, uint32_t jointsAmount);
-  pair<FSegId, FSegId> FindCommonFeature(Joint::Id jointId0, Joint::Id jointId1) const;
-  Joint::Id InsertJoint(FSegId const & fseg);
+  void Build(FtPointIndex const & ftPointIndex, uint32_t jointsAmount);
+  pair<FtPoint, FtPoint> FindCommonFeature(Joint::Id jointId0, Joint::Id jointId1) const;
+  Joint::Id InsertJoint(FtPoint const & ftp);
 
 private:
   class Slice final
@@ -66,6 +66,6 @@ private:
   }
 
   vector<Slice> m_slices;
-  vector<FSegId> m_fsegs;
+  vector<FtPoint> m_ftPoints;
 };
 }  // namespace routing

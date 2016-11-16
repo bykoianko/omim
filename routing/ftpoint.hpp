@@ -8,33 +8,33 @@
 
 namespace routing
 {
-class FSegId final
+class FtPoint final
 {
 public:
-  FSegId() : m_featureId(0), m_segId(0) {}
+  FtPoint() : m_featureId(0), m_pointId(0) {}
 
-  FSegId(uint32_t featureId, uint32_t segId) : m_featureId(featureId), m_segId(segId) {}
+  FtPoint(uint32_t featureId, uint32_t pointId) : m_featureId(featureId), m_pointId(pointId) {}
 
   uint32_t GetFeatureId() const { return m_featureId; }
 
-  uint32_t GetSegId() const { return m_segId; }
+  uint32_t GetPointId() const { return m_pointId; }
 
   template <class Sink>
   void Serialize(Sink & sink) const
   {
     WriteToSink(sink, m_featureId);
-    WriteToSink(sink, m_segId);
+    WriteToSink(sink, m_pointId);
   }
 
   template <class Source>
   void Deserialize(Source & src)
   {
     m_featureId = ReadPrimitiveFromSource<decltype(m_featureId)>(src);
-    m_segId = ReadPrimitiveFromSource<decltype(m_segId)>(src);
+    m_pointId = ReadPrimitiveFromSource<decltype(m_pointId)>(src);
   }
 
 private:
   uint32_t m_featureId;
-  uint32_t m_segId;
+  uint32_t m_pointId;
 };
 }  // namespace routing

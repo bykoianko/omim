@@ -51,7 +51,7 @@ void TestGeometryLoader::AddRoad(uint32_t featureId, buffer_vector<m2::PointD, 3
   m_roads[featureId] = RoadGeometry(false, 1.0 /* speed */, points);
 }
 
-Joint MakeJoint(vector<FSegId> const & points)
+Joint MakeJoint(vector<FtPoint> const & points)
 {
   Joint joint;
   for (auto const & point : points)
@@ -65,21 +65,21 @@ shared_ptr<EdgeEstimator> CreateEstimator()
   return CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel());
 }
 
-void TestRoute(IndexGraph & graph, FSegId const & start, FSegId const & finish,
+void TestRoute(IndexGraph & graph, FtPoint const & start, FtPoint const & finish,
                size_t expectedLength)
 {
-  LOG(LINFO, ("Test route", start.GetFeatureId(), ",", start.GetSegId(), "=>",
-              finish.GetFeatureId(), ",", finish.GetSegId()));
+  LOG(LINFO, ("Test route", start.GetFeatureId(), ",", start.GetPointId(), "=>",
+              finish.GetFeatureId(), ",", finish.GetPointId()));
 
   AStarAlgorithm<IndexGraph> algorithm;
   RoutingResult<Joint::Id> routingResult;
 
   AStarAlgorithm<IndexGraph>::Result const resultCode = algorithm.FindPath(
       graph, graph.InsertJoint(start), graph.InsertJoint(finish), routingResult, {}, {});
-  vector<FSegId> const & fsegs = graph.RedressRoute(routingResult.path);
+  vector<FtPoint> const & ftPoints = graph.RedressRoute(routingResult.path);
 
   TEST_EQUAL(resultCode, AStarAlgorithm<IndexGraph>::Result::OK, ());
-  TEST_EQUAL(fsegs.size(), expectedLength, ());
+  TEST_EQUAL(ftPoints.size(), expectedLength, ());
 }
 
 uint32_t AbsDelta(uint32_t v0, uint32_t v1) { return v0 > v1 ? v0 - v1 : v1 - v0; }
@@ -109,7 +109,7 @@ UNIT_TEST(FindPathCross)
 
   graph.Import({MakeJoint({{0, 2}, {1, 2}})});
 
-  vector<FSegId> points;
+  vector<FtPoint> points;
   for (uint32_t i = 0; i < 5; ++i)
   {
     points.emplace_back(0, i);
@@ -126,9 +126,9 @@ UNIT_TEST(FindPathCross)
       // 2 segments, 3 points,
       // Therefore route length = geometrical length + 1
       if (start.GetFeatureId() == finish.GetFeatureId())
-        expectedLength = AbsDelta(start.GetSegId(), finish.GetSegId()) + 1;
+        expectedLength = AbsDelta(start.GetPointId(), finish.GetPointId()) + 1;
       else
-        expectedLength = AbsDelta(start.GetSegId(), 2) + AbsDelta(finish.GetSegId(), 2) + 1;
+        expectedLength = AbsDelta(start.GetPointId(), 2) + AbsDelta(finish.GetPointId(), 2) + 1;
       TestRoute(graph, start, finish, expectedLength);
     }
   }

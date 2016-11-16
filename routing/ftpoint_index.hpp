@@ -71,20 +71,20 @@ private:
   vector<Joint::Id> m_jointIds;
 };
 
-class FSegIndex final
+class FtPointIndex final
 {
 public:
   void Import(vector<Joint> const & joints);
 
-  void AddJoint(FSegId fseg, Joint::Id jointId)
+  void AddJoint(FtPoint ftp, Joint::Id jointId)
   {
-    m_roads[fseg.GetFeatureId()].AddJoint(fseg.GetSegId(), jointId);
+    m_roads[ftp.GetFeatureId()].AddJoint(ftp.GetPointId(), jointId);
   }
 
   // Find nearest point with normal joint id.
   // If forward == true: neighbor with larger point id (right neighbor)
   // If forward == false: neighbor with smaller point id (left neighbor)
-  pair<Joint::Id, uint32_t> FindNeighbor(FSegId fseg, bool forward) const;
+  pair<Joint::Id, uint32_t> FindNeighbor(FtPoint ftp, bool forward) const;
 
   template <class TSink>
   void Serialize(TSink & sink) const
@@ -111,13 +111,13 @@ public:
 
   uint32_t GetSize() const { return m_roads.size(); }
 
-  Joint::Id GetJointId(FSegId fseg) const
+  Joint::Id GetJointId(FtPoint ftp) const
   {
-    auto const it = m_roads.find(fseg.GetFeatureId());
+    auto const it = m_roads.find(ftp.GetFeatureId());
     if (it == m_roads.end())
       return Joint::kInvalidId;
 
-    return it->second.GetJointId(fseg.GetSegId());
+    return it->second.GetJointId(ftp.GetPointId());
   }
 
   template <typename F>

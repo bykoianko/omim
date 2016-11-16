@@ -1,8 +1,8 @@
 #pragma once
 
 #include "routing/edge_estimator.hpp"
-#include "routing/fseg.hpp"
-#include "routing/fseg_index.hpp"
+#include "routing/ftpoint.hpp"
+#include "routing/ftpoint_index.hpp"
 #include "routing/geometry.hpp"
 #include "routing/joint.hpp"
 #include "routing/joint_index.hpp"
@@ -48,36 +48,36 @@ public:
 
   Geometry const & GetGeometry() const { return m_geometry; }
   m2::PointD const & GetPoint(Joint::Id jointId) const;
-  size_t GetNumRoads() const { return m_fsegIndex.GetSize(); }
+  size_t GetNumRoads() const { return m_ftPointIndex.GetSize(); }
   size_t GetNumJoints() const { return m_jointIndex.GetNumJoints(); }
   size_t GetNumFtPoints() const { return m_jointIndex.GetNumFtPoints(); }
   void Import(vector<Joint> const & joints);
-  Joint::Id InsertJoint(FSegId const & fseg);
-  vector<FSegId> RedressRoute(vector<Joint::Id> const & route) const;
+  Joint::Id InsertJoint(FtPoint const & ftp);
+  vector<FtPoint> RedressRoute(vector<Joint::Id> const & route) const;
 
   template <class TSink>
   void Serialize(TSink & sink) const
   {
     WriteToSink(sink, static_cast<Joint::Id>(GetNumJoints()));
-    m_fsegIndex.Serialize(sink);
+    m_ftPointIndex.Serialize(sink);
   }
 
   template <class TSource>
   void Deserialize(TSource & src)
   {
     uint32_t const jointsSize = ReadPrimitiveFromSource<uint32_t>(src);
-    m_fsegIndex.Deserialize(src);
-    m_jointIndex.Build(m_fsegIndex, jointsSize);
+    m_ftPointIndex.Deserialize(src);
+    m_jointIndex.Build(m_ftPointIndex, jointsSize);
   }
 
 private:
-  void AddNeighboringEdge(RoadGeometry const & road, FSegId fseg, bool forward,
+  void AddNeighboringEdge(RoadGeometry const & road, FtPoint ftp, bool forward,
                           vector<TEdgeType> & edges) const;
   void GetEdgesList(Joint::Id jointId, bool forward, vector<TEdgeType> & edges) const;
 
   Geometry m_geometry;
   shared_ptr<EdgeEstimator> m_estimator;
-  FSegIndex m_fsegIndex;
+  FtPointIndex m_ftPointIndex;
   JointIndex m_jointIndex;
 };
 }  // namespace routing

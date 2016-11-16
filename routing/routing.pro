@@ -26,7 +26,7 @@ SOURCES += \
     directions_engine.cpp \
     edge_estimator.cpp \
     features_road_graph.cpp \
-    fseg_index.cpp \
+    ftpoint_index.cpp \
     geometry.cpp \
     index_graph.cpp \
     joint.cpp \
@@ -74,8 +74,8 @@ HEADERS += \
     directions_engine.hpp \
     edge_estimator.hpp \
     features_road_graph.hpp \
-    fseg.hpp \
-    fseg_index.hpp \
+    ftpoint.hpp \
+    ftpoint_index.hpp \
     geometry.hpp \
     index_graph.hpp \
     joint.hpp \

@@ -28,40 +28,40 @@ double IndexGraph::HeuristicCostEstimate(Joint::Id jointFrom, Joint::Id jointTo)
 
 m2::PointD const & IndexGraph::GetPoint(Joint::Id jointId) const
 {
-  return m_geometry.GetPoint(m_jointIndex.GetFSeg(jointId));
+  return m_geometry.GetPoint(m_jointIndex.GetFtPoint(jointId));
 }
 
 void IndexGraph::Import(vector<Joint> const & joints)
 {
-  m_fsegIndex.Import(joints);
-  m_jointIndex.Build(m_fsegIndex, joints.size());
+  m_ftPointIndex.Import(joints);
+  m_jointIndex.Build(m_ftPointIndex, joints.size());
 }
 
-Joint::Id IndexGraph::InsertJoint(FSegId const & fseg)
+Joint::Id IndexGraph::InsertJoint(FtPoint const & ftp)
 {
-  Joint::Id const existId = m_fsegIndex.GetJointId(fseg);
+  Joint::Id const existId = m_ftPointIndex.GetJointId(ftp);
   if (existId != Joint::kInvalidId)
     return existId;
 
-  Joint::Id const jointId = m_jointIndex.InsertJoint(fseg);
-  m_fsegIndex.AddJoint(fseg, jointId);
+  Joint::Id const jointId = m_jointIndex.InsertJoint(ftp);
+  m_ftPointIndex.AddJoint(ftp, jointId);
   return jointId;
 }
 
 // Add intermediate points to route (those doesn't correspond any joint).
 //
 // Also convert joint id to feature id, point id.
-vector<FSegId> IndexGraph::RedressRoute(vector<Joint::Id> const & route) const
+vector<FtPoint> IndexGraph::RedressRoute(vector<Joint::Id> const & route) const
 {
-  vector<FSegId> fsegs;
+  vector<FtPoint> ftPoints;
   if (route.size() < 2)
   {
     if (route.size() == 1)
-      fsegs.emplace_back(m_jointIndex.GetFSeg(route[0]));
-    return fsegs;
+      ftPoints.emplace_back(m_jointIndex.GetFtPoint(route[0]));
+    return ftPoints;
   }
 
-  fsegs.reserve(route.size() * 2);
+  ftPoints.reserve(route.size() * 2);
 
   for (size_t i = 0; i < route.size() - 1; ++i)
   {
@@ -70,58 +70,59 @@ vector<FSegId> IndexGraph::RedressRoute(vector<Joint::Id> const & route) const
 
     auto const & pair = m_jointIndex.FindCommonFeature(prevJoint, nextJoint);
     if (i == 0)
-      fsegs.push_back(pair.first);
+      ftPoints.push_back(pair.first);
 
     uint32_t const featureId = pair.first.GetFeatureId();
-    uint32_t const segFrom = pair.first.GetSegId();
-    uint32_t const segTo = pair.second.GetSegId();
+    uint32_t const segFrom = pair.first.GetPointId();
+    uint32_t const segTo = pair.second.GetPointId();
 
     if (segFrom < segTo)
     {
       for (uint32_t seg = segFrom + 1; seg < segTo; ++seg)
-        fsegs.push_back({featureId, seg});
+        ftPoints.push_back({featureId, seg});
     }
     else if (segFrom > segTo)
     {
       for (uint32_t seg = segFrom - 1; seg > segTo; --seg)
-        fsegs.push_back({featureId, seg});
+        ftPoints.push_back({featureId, seg});
     }
     else
       MYTHROW(RootException,
               ("Wrong equality segFrom = segTo =", segFrom, ", featureId = ", featureId));
 
-    fsegs.push_back(pair.second);
+    ftPoints.push_back(pair.second);
   }
 
-  return fsegs;
+  return ftPoints;
 }
 
-inline void IndexGraph::AddNeighboringEdge(RoadGeometry const & road, FSegId fseg, bool forward,
+inline void IndexGraph::AddNeighboringEdge(RoadGeometry const & road, FtPoint ftp, bool forward,
                                            vector<TEdgeType> & edges) const
 {
-  pair<Joint::Id, uint32_t> const & pair = m_fsegIndex.FindNeighbor(fseg, forward);
+  pair<Joint::Id, uint32_t> const & pair = m_ftPointIndex.FindNeighbor(ftp, forward);
   if (pair.first != Joint::kInvalidId)
   {
-    double const distance = m_estimator->CalcEdgesWeight(road, fseg.GetSegId(), pair.second);
+    double const distance = m_estimator->CalcEdgesWeight(road, ftp.GetPointId(), pair.second);
     edges.push_back({pair.first, distance});
   }
 }
 
-inline void IndexGraph::GetEdgesList(Joint::Id jointId, bool forward, vector<TEdgeType> & edges) const
+inline void IndexGraph::GetEdgesList(Joint::Id jointId, bool forward,
+                                     vector<TEdgeType> & edges) const
 {
   edges.clear();
 
-  m_jointIndex.ForEachFtSeg(jointId, [this, &edges, forward](FSegId const & fseg) {
-    RoadGeometry const & road = m_geometry.GetRoad(fseg.GetFeatureId());
+  m_jointIndex.ForEachFtSeg(jointId, [this, &edges, forward](FtPoint const & ftp) {
+    RoadGeometry const & road = m_geometry.GetRoad(ftp.GetFeatureId());
     if (!road.IsRoad())
       return;
 
     bool const twoWay = !road.IsOneWay();
     if (!forward || twoWay)
-      AddNeighboringEdge(road, fseg, false, edges);
+      AddNeighboringEdge(road, ftp, false, edges);
 
     if (forward || twoWay)
-      AddNeighboringEdge(road, fseg, true, edges);
+      AddNeighboringEdge(road, ftp, true, edges);
   });
 }
 }  // namespace routing

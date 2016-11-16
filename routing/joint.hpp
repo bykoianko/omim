@@ -1,6 +1,6 @@
 #pragma once
 
-#include "routing/fseg.hpp"
+#include "routing/ftpoint.hpp"
 
 #include "base/buffer_vector.hpp"
 
@@ -17,13 +17,13 @@ public:
   using Id = uint32_t;
   static Id constexpr kInvalidId = numeric_limits<Id>::max();
 
-  void AddEntry(FSegId entry) { m_entries.emplace_back(entry); }
+  void AddEntry(FtPoint entry) { m_entries.emplace_back(entry); }
 
   size_t GetSize() const { return m_entries.size(); }
 
-  FSegId const & GetEntry(size_t i) const { return m_entries[i]; }
+  FtPoint const & GetEntry(size_t i) const { return m_entries[i]; }
 
 private:
-  buffer_vector<FSegId, 2> m_entries;
+  buffer_vector<FtPoint, 2> m_entries;
 };
 }  // namespace routing
