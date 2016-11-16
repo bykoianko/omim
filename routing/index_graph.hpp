@@ -5,6 +5,7 @@
 #include "routing/fseg_index.hpp"
 #include "routing/geometry.hpp"
 #include "routing/joint.hpp"
+#include "routing/joint_index.hpp"
 
 #include "coding/reader.hpp"
 #include "coding/write_to_sink.hpp"
@@ -48,8 +49,8 @@ public:
   Geometry const & GetGeometry() const { return m_geometry; }
   m2::PointD const & GetPoint(JointId jointId) const;
   size_t GetRoadsAmount() const { return m_fsegIndex.GetSize(); }
-  size_t GetJointsAmount() const { return m_jointOffsets.size(); }
-  size_t GetFSegsAmount() const { return m_fsegs.size(); }
+  size_t GetJointsAmount() const { return m_jointIndex.GetJointsAmount(); }
+  size_t GetFSegsAmount() const { return m_jointIndex.GetFSegsAmount(); }
   void Export(vector<Joint> const & joints);
   JointId InsertJoint(FSegId const & fseg);
   vector<FSegId> RedressRoute(vector<JointId> const & route) const;
@@ -66,16 +67,10 @@ public:
   {
     uint32_t const jointsSize = ReadPrimitiveFromSource<uint32_t>(src);
     m_fsegIndex.Deserialize(src);
-    BuildJoints(jointsSize);
+    m_jointIndex.Build(m_fsegIndex, jointsSize);
   }
 
 private:
-  void BuildJoints(uint32_t jointsAmount);
-  FSegId GetFSeg(JointId jointId) const;
-  JointOffset const & GetJointOffset(JointId jointId) const;
-  pair<FSegId, FSegId> FindCommonFeature(JointId jointId0, JointId jointId1) const;
-
-  // Edge methods.
   void AddNeigborEdge(RoadGeometry const & road, vector<TEdgeType> & edges, FSegId fseg,
                       bool forward) const;
   void GetEdgesList(JointId jointId, vector<TEdgeType> & edges, bool forward) const;
@@ -83,7 +78,6 @@ private:
   Geometry m_geometry;
   shared_ptr<EdgeEstimator> m_estimator;
   FSegIndex m_fsegIndex;
-  vector<JointOffset> m_jointOffsets;
-  vector<FSegId> m_fsegs;
+  JointIndex m_jointIndex;
 };
 }  // namespace routing

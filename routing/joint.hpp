@@ -26,33 +26,4 @@ public:
 private:
   buffer_vector<FSegId, 2> m_entries;
 };
-
-class JointOffset final
-{
-public:
-  JointOffset() : m_begin(0), m_end(0) {}
-
-  JointOffset(uint32_t begin, uint32_t end) : m_begin(begin), m_end(end)
-  {
-    ASSERT_LESS_OR_EQUAL(begin, end, ());
-  }
-
-  uint32_t Begin() const { return m_begin; }
-
-  uint32_t End() const { return m_end; }
-
-  uint32_t Size() const { return m_end - m_begin; }
-
-  void Assign(uint32_t offset)
-  {
-    m_begin = offset;
-    m_end = offset;
-  }
-
-  void IncSize() { ++m_end; }
-
-private:
-  uint32_t m_begin;
-  uint32_t m_end;
-};
 }  // namespace routing

@@ -28,13 +28,13 @@ double IndexGraph::HeuristicCostEstimate(JointId jointFrom, JointId jointTo) con
 
 m2::PointD const & IndexGraph::GetPoint(JointId jointId) const
 {
-  return m_geometry.GetPoint(GetFSeg(jointId));
+  return m_geometry.GetPoint(m_jointIndex.GetFSeg(jointId));
 }
 
 void IndexGraph::Export(vector<Joint> const & joints)
 {
   m_fsegIndex.Import(joints);
-  BuildJoints(joints.size());
+  m_jointIndex.Build(m_fsegIndex, joints.size());
 }
 
 JointId IndexGraph::InsertJoint(FSegId const & fseg)
@@ -43,9 +43,7 @@ JointId IndexGraph::InsertJoint(FSegId const & fseg)
   if (existId != kInvalidJointId)
     return existId;
 
-  JointId const jointId = m_jointOffsets.size();
-  m_jointOffsets.emplace_back(JointOffset(m_fsegs.size(), m_fsegs.size() + 1));
-  m_fsegs.emplace_back(fseg);
+  JointId const jointId = m_jointIndex.InsertJoint(fseg);
   m_fsegIndex.AddJoint(fseg, jointId);
   return jointId;
 }
@@ -56,7 +54,7 @@ vector<FSegId> IndexGraph::RedressRoute(vector<JointId> const & route) const
   if (route.size() < 2)
   {
     if (route.size() == 1)
-      fsegs.emplace_back(GetFSeg(route[0]));
+      fsegs.emplace_back(m_jointIndex.GetFSeg(route[0]));
     return fsegs;
   }
 
@@ -67,7 +65,7 @@ vector<FSegId> IndexGraph::RedressRoute(vector<JointId> const & route) const
     JointId const prevJoint = route[i];
     JointId const nextJoint = route[i + 1];
 
-    auto const & pair = FindCommonFeature(prevJoint, nextJoint);
+    auto const & pair = m_jointIndex.FindCommonFeature(prevJoint, nextJoint);
     if (i == 0)
       fsegs.push_back(pair.first);
 
@@ -95,74 +93,6 @@ vector<FSegId> IndexGraph::RedressRoute(vector<JointId> const & route) const
   return fsegs;
 }
 
-inline FSegId IndexGraph::GetFSeg(JointId jointId) const
-{
-  return m_fsegs[GetJointOffset(jointId).Begin()];
-}
-
-inline JointOffset const & IndexGraph::GetJointOffset(JointId jointId) const
-{
-  ASSERT_LESS(jointId, m_jointOffsets.size(), ("JointId out of bounds"));
-  return m_jointOffsets[jointId];
-}
-
-pair<FSegId, FSegId> IndexGraph::FindCommonFeature(JointId jointId0, JointId jointId1) const
-{
-  JointOffset const & offset0 = GetJointOffset(jointId0);
-  JointOffset const & offset1 = GetJointOffset(jointId1);
-
-  for (size_t i = offset0.Begin(); i < offset0.End(); ++i)
-  {
-    FSegId const & fseg0 = m_fsegs[i];
-    for (size_t j = offset1.Begin(); j < offset1.End(); ++j)
-    {
-      FSegId const & fseg1 = m_fsegs[j];
-      if (fseg0.GetFeatureId() == fseg1.GetFeatureId())
-        return make_pair(fseg0, fseg1);
-    }
-  }
-
-  MYTHROW(RootException, ("Can't find common feature for joints", jointId0, jointId1));
-}
-
-void IndexGraph::BuildJoints(uint32_t jointsAmount)
-{
-  // +2 is reserved space for start and finish
-  m_jointOffsets.reserve(jointsAmount + 2);
-  m_jointOffsets.assign(jointsAmount, {0, 0});
-
-  m_fsegIndex.ForEachRoad([this](uint32_t /* featureId */, RoadJointIds const & road) {
-    road.ForEachJoint([this](uint32_t /* segId */, uint32_t jointId) {
-      ASSERT_LESS(jointId, m_jointOffsets.size(), ());
-      m_jointOffsets[jointId].IncSize();
-    });
-  });
-
-  uint32_t offset = 0;
-  for (size_t i = 0; i < m_jointOffsets.size(); ++i)
-  {
-    JointOffset & jointOffset = m_jointOffsets[i];
-    uint32_t const size = jointOffset.Size();
-    ASSERT_GREATER(size, 0, ());
-
-    jointOffset.Assign(offset);
-    offset += size;
-  }
-
-  // +2 is reserved space for start and finish
-  m_fsegs.reserve(offset + 2);
-  m_fsegs.resize(offset);
-
-  m_fsegIndex.ForEachRoad([this](uint32_t featureId, RoadJointIds const & road) {
-    road.ForEachJoint([this, featureId](uint32_t segId, uint32_t jointId) {
-      ASSERT_LESS(jointId, m_jointOffsets.size(), ());
-      JointOffset & jointOffset = m_jointOffsets[jointId];
-      m_fsegs[jointOffset.End()] = {featureId, segId};
-      jointOffset.IncSize();
-    });
-  });
-}
-
 inline void IndexGraph::AddNeigborEdge(RoadGeometry const & road, vector<TEdgeType> & edges,
                                        FSegId fseg, bool forward) const
 {
@@ -178,13 +108,10 @@ inline void IndexGraph::GetEdgesList(JointId jointId, vector<TEdgeType> & edges,
 {
   edges.clear();
 
-  JointOffset const & offset = GetJointOffset(jointId);
-  for (size_t i = offset.Begin(); i < offset.End(); ++i)
-  {
-    FSegId const & fseg = m_fsegs[i];
+  m_jointIndex.ForEachFtSeg(jointId, [this, &edges, forward](FSegId const & fseg) {
     RoadGeometry const & road = m_geometry.GetRoad(fseg.GetFeatureId());
     if (!road.IsRoad())
-      continue;
+      return;
 
     bool const twoWay = !road.IsOneWay();
     if (!forward || twoWay)
@@ -192,6 +119,6 @@ inline void IndexGraph::GetEdgesList(JointId jointId, vector<TEdgeType> & edges,
 
     if (forward || twoWay)
       AddNeigborEdge(road, edges, fseg, true);
-  }
+  });
 }
 }  // namespace routing

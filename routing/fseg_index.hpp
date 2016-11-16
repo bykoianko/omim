@@ -65,6 +65,8 @@ public:
   }
 
 private:
+  // Joint ids indexed by segment id.
+  // If some segment id doesn't match any joint id, this vector contains Joint::kInvalidId.
   vector<JointId> m_jointIds;
 };
 

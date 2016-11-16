@@ -29,6 +29,7 @@ SOURCES += \
     fseg_index.cpp \
     geometry.cpp \
     index_graph.cpp \
+    joint_index.cpp \
     nearest_edge_finder.cpp \
     online_absent_fetcher.cpp \
     online_cross_fetcher.cpp \
@@ -77,6 +78,7 @@ HEADERS += \
     geometry.hpp \
     index_graph.hpp \
     joint.hpp \
+    joint_index.hpp \
     loaded_path_segment.hpp \
     nearest_edge_finder.hpp \
     online_absent_fetcher.hpp \
