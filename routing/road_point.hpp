@@ -1,6 +1,9 @@
 #pragma once
 
 #include "std/cstdint.hpp"
+#include "std/limits.hpp"
+#include "std/sstream.hpp"
+#include "std/string.hpp"
 
 namespace routing
 {
@@ -15,6 +18,11 @@ public:
 
   RoadPoint(uint32_t featureId, uint32_t pointId) : m_featureId(featureId), m_pointId(pointId) {}
 
+  bool operator==(RoadPoint const & roadPoint) const
+  {
+    return m_featureId == roadPoint.m_featureId && m_pointId == roadPoint.m_pointId;
+  }
+
   uint32_t GetFeatureId() const { return m_featureId; }
 
   uint32_t GetPointId() const { return m_pointId; }
@@ -23,4 +31,11 @@ private:
   uint32_t m_featureId;
   uint32_t m_pointId;
 };
+
+inline string DebugPrint(RoadPoint const & roadPoint)
+{
+  ostringstream out;
+  out << "RoadPoint[" << roadPoint.GetFeatureId() << ", " << roadPoint.GetPointId() << "]";
+  return out.str();
+}
 }  // namespace routing

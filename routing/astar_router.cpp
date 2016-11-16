@@ -8,6 +8,7 @@
 #include "routing/features_road_graph.hpp"
 #include "routing/index_graph.hpp"
 #include "routing/pedestrian_model.hpp"
+#include "routing/restriction_loader.hpp"
 #include "routing/route.hpp"
 #include "routing/turns_generator.hpp"
 
@@ -36,10 +37,9 @@ vector<Junction> ConvertToJunctions(IndexGraph const & graph, vector<Joint::Id> 
   vector<Junction> junctions;
   junctions.reserve(roadPoints.size());
 
-  Geometry const & geometry = graph.GetGeometry();
   // TODO: Use real altitudes for pedestrian and bicycle routing.
   for (RoadPoint const & point : roadPoints)
-    junctions.emplace_back(geometry.GetPoint(point), feature::kDefaultAltitudeMeters);
+    junctions.emplace_back(graph.GetPoint(point), feature::kDefaultAltitudeMeters);
 
   return junctions;
 }
@@ -110,7 +110,7 @@ IRouter::ResultCode AStarRouter::DoCalculateRoute(MwmSet::MwmId const & mwmId,
     return IRouter::RouteFileNotExist;
 
   AStarProgress progress(0, 100);
-  progress.Initialize(graph.GetGeometry().GetPoint(start), graph.GetGeometry().GetPoint(finish));
+  progress.Initialize(graph.GetPoint(start), graph.GetPoint(finish));
 
   uint32_t drawPointsStep = 0;
   auto onVisitJunction = [&delegate, &progress, &graph, &drawPointsStep](Joint::Id const & from,
@@ -191,7 +191,11 @@ bool AStarRouter::LoadIndex(MwmSet::MwmId const & mwmId, string const & country,
     ReaderSource<FilesContainerR::TReader> src(reader);
     feature::RoutingSectionHeader header;
     header.Deserialize(src);
-    graph.Deserialize(src);
+    graph.Deserialize(src, {} /* restrictions */);
+    RestrictionLoader restrictionLoader(*mwmValue);
+    if (restrictionLoader.HasRestrictions())
+      graph.ApplyRestrictions(restrictionLoader.GetRestrictions());
+
     LOG(LINFO,
         (ROUTING_FILE_TAG, "section for", country, "loaded in", timer.ElapsedSeconds(), "seconds"));
     return true;
