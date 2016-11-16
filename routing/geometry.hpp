@@ -71,11 +71,6 @@ public:
     return road;
   }
 
-  m2::PointD const & GetPoint(RoadPoint const & rp) const
-  {
-    return GetRoad(rp.GetFeatureId()).GetPoint(rp.GetPointId());
-  }
-
 private:
   // Feature id to RoadGeometry map.
   mutable unordered_map<uint32_t, RoadGeometry> m_roads;

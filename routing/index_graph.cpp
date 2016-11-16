@@ -26,15 +26,117 @@ double IndexGraph::HeuristicCostEstimate(Joint::Id jointFrom, Joint::Id jointTo)
   return m_estimator->CalcHeuristic(GetPoint(jointFrom), GetPoint(jointTo));
 }
 
-m2::PointD const & IndexGraph::GetPoint(Joint::Id jointId) const
+m2::PointD const & IndexGraph::GetPoint(RoadPoint const & ftp) const
 {
-  return m_geometry.GetPoint(m_jointIndex.GetPoint(jointId));
+  RoadGeometry const & road = GetRoad(ftp.GetFeatureId());
+  CHECK_LESS(ftp.GetPointId(), road.GetPointsCount(), ());
+  return road.GetPoint(ftp.GetPointId());
 }
 
-void IndexGraph::Import(vector<Joint> const & joints)
+m2::PointD const & IndexGraph::GetPoint(Joint::Id jointId) const
+{
+  return GetPoint(m_jointIndex.GetPoint(jointId));
+}
+
+double IndexGraph::GetSpeed(RoadPoint ftp) const
+{
+  return GetRoad(ftp.GetFeatureId()).GetSpeed();
+}
+
+void IndexGraph::Build(uint32_t jointNumber, RestrictionVec const & restrictions)
+{
+  m_jointIndex.Build(m_roadIndex, jointNumber);
+  ApplyRestrictions(restrictions);
+}
+
+void IndexGraph::Import(vector<Joint> const & joints, RestrictionVec const & restrictions)
 {
   m_roadIndex.Import(joints);
-  m_jointIndex.Build(m_roadIndex, joints.size());
+  Build(joints.size(), restrictions);
+}
+
+void IndexGraph::CreateFakeFeatureGeometry(vector<RoadPoint> const & geometrySource,
+                                           RoadGeometry & geometry) const
+{
+  double averageSpeed = 0.0;
+  buffer_vector<m2::PointD, 32> points(geometrySource.size());
+  for (size_t i = 0; i < geometrySource.size(); ++i)
+  {
+    RoadPoint const ftp = geometrySource[i];
+    averageSpeed += GetSpeed(ftp) / geometrySource.size();
+    points[i] = GetPoint(ftp);
+  }
+
+  geometry = RoadGeometry(true /* oneWay */, averageSpeed, points);
+}
+
+void IndexGraph::AddFakeFeature(Joint::Id from, Joint::Id to, vector<RoadPoint> const & viaPointGeometry)
+{
+  CHECK_LESS(from, m_jointIndex.GetNumJoints(), ());
+  CHECK_LESS(to, m_jointIndex.GetNumJoints(), ());
+
+  // Getting fake feature geometry.
+  RoadGeometry geom;
+  vector<RoadPoint> geometrySource({m_jointIndex.GetPoint(from)});
+  geometrySource.insert(geometrySource.end(), viaPointGeometry.cbegin(), viaPointGeometry.cend());
+  geometrySource.push_back(m_jointIndex.GetPoint(to));
+  CreateFakeFeatureGeometry(geometrySource, geom);
+  m_fakeFeatureGeometry.insert(make_pair(m_nextFakeFeatureId, geom));
+
+  // Adding to indexes.
+  RoadPoint const fromFakeFtPoint(m_nextFakeFeatureId, 0);
+  RoadPoint const toFakeFtPoint(m_nextFakeFeatureId, 1);
+
+  m_roadIndex.AddJoint(fromFakeFtPoint, from);
+  m_roadIndex.AddJoint(toFakeFtPoint, to);
+
+  m_jointIndex.AppendJoint(from, fromFakeFtPoint);
+  m_jointIndex.AppendJoint(to, toFakeFtPoint);
+
+  ++m_nextFakeFeatureId;
+}
+
+void IndexGraph::AddFakeFeature(RoadPoint const & fromPnt, Joint::Id to)
+{
+  AddFakeFeature(InsertJoint(fromPnt), to, {} /* viaPointGeometry */);
+}
+
+void IndexGraph::ApplyRestrictionNo(routing::RoadPoint const & from, routing::RoadPoint const & to,
+                                    Joint::Id jointId)
+{
+}
+
+void IndexGraph::ApplyRestrictionOnly(routing::RoadPoint const & from, routing::RoadPoint const & to,
+                                      Joint::Id jointId)
+{
+}
+
+void IndexGraph::ApplyRestrictions(RestrictionVec const & restrictions)
+{
+  for (Restriction const & restriction : restrictions)
+  {
+    if (restriction.m_featureIds.size() != 2)
+    {
+      LOG(LERROR, ("Only to link restriction are supported."));
+      continue;
+    }
+
+    routing::RoadPoint from;
+    routing::RoadPoint to;
+    Joint::Id jointId;
+    if (!m_roadIndex.GetAdjacentFtPoints(restriction.m_featureIds[0], restriction.m_featureIds[1],
+        from, to, jointId))
+    {
+      continue; // Restriction is not contain adjacent features.
+    }
+    // @TODO(bykoianko) By knowing |from|, |to|, |jointId| and |restriction.m_type|
+    // |m_geometry| should be edited.
+    switch (restriction.m_type)
+    {
+    case Restriction::Type::No: ApplyRestrictionNo(from, to, jointId); continue;
+    case Restriction::Type::Only: ApplyRestrictionOnly(from, to, jointId); continue;
+    }
+  }
 }
 
 Joint::Id IndexGraph::InsertJoint(RoadPoint const & rp)
@@ -102,11 +204,24 @@ inline void IndexGraph::AddNeighboringEdge(RoadGeometry const & road, RoadPoint 
                                            vector<TEdgeType> & edges) const
 {
   pair<Joint::Id, uint32_t> const & neighbor = m_roadIndex.FindNeighbor(rp, forward);
-  if (neighbor.first != Joint::kInvalidId)
-  {
-    double const distance = m_estimator->CalcEdgesWeight(road, rp.GetPointId(), neighbor.second);
-    edges.push_back({neighbor.first, distance});
-  }
+  if (neighbor.first == Joint::kInvalidId)
+    return;
+
+  Joint::Id const from = m_roadIndex.GetJointId(rp);
+  if (m_blockedEdges.find(make_pair(from, neighbor.first)) != m_blockedEdges.end())
+    return;
+
+  double const distance = m_estimator->CalcEdgesWeight(road, rp.GetPointId(), neighbor.second);
+  edges.push_back({neighbor.first, distance});
+}
+
+RoadGeometry const & IndexGraph::GetRoad(uint32_t featureId) const
+{
+  auto const it = m_fakeFeatureGeometry.find(featureId);
+  if (it != m_fakeFeatureGeometry.cend())
+    return it->second;
+
+  return m_geometry.GetRoad(featureId);
 }
 
 inline void IndexGraph::GetEdgesList(Joint::Id jointId, bool forward,
@@ -115,7 +230,7 @@ inline void IndexGraph::GetEdgesList(Joint::Id jointId, bool forward,
   edges.clear();
 
   m_jointIndex.ForEachPoint(jointId, [this, &edges, forward](RoadPoint const & rp) {
-    RoadGeometry const & road = m_geometry.GetRoad(rp.GetFeatureId());
+    RoadGeometry const & road = GetRoad(rp.GetFeatureId());
     if (!road.IsRoad())
       return;
 

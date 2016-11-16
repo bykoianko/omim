@@ -1,6 +1,7 @@
 #pragma once
 
 #include "routing/joint.hpp"
+#include "routing/routing_serialization.hpp"
 
 #include "coding/reader.hpp"
 #include "coding/write_to_sink.hpp"
@@ -45,6 +46,10 @@ public:
 
   size_t GetSize() const { return m_jointIds.size(); }
 
+  Joint::Id Front() const { return m_jointIds.front(); }
+
+  Joint::Id Back() const { return m_jointIds.back(); }
+
   template <class TSink>
   void Serialize(TSink & sink) const
   {
@@ -75,6 +80,12 @@ class RoadIndex final
 {
 public:
   void Import(vector<Joint> const & joints);
+
+  /// \brief if |featureIdFrom| and |featureIdTo| are adjacent and if they are connected by
+  /// its ends fills |from| and |to| with corresponding |from| and |to| and return true.
+  /// If not returns false.
+  bool GetAdjacentFtPoints(uint32_t featureIdFrom, uint32_t featureIdTo,
+                           RoadPoint & from, RoadPoint & to, Joint::Id & jointId) const;
 
   void AddJoint(RoadPoint rp, Joint::Id jointId)
   {
@@ -125,6 +136,16 @@ public:
   {
     for (auto const & it : m_roads)
       f(it.first, it.second);
+  }
+
+  template <typename F>
+  void ForEachJoint(uint32_t featureId, F && f) const
+  {
+    auto const it = m_roads.find(featureId);
+    if (it == m_roads.cend())
+      return;
+
+    it->second.ForEachJoint(f);
   }
 
 private:

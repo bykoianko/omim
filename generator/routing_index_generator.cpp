@@ -65,7 +65,7 @@ public:
     for (auto const & it : m_posToJoint)
       joints.emplace_back(it.second);
 
-    graph.Import(joints);
+    graph.Import(joints, {} /* restrictions */);
   }
 
 private:
