@@ -48,7 +48,7 @@ void TestGeometryLoader::AddRoad(uint32_t featureId, buffer_vector<m2::PointD, 3
     return;
   }
 
-  m_roads[featureId] = RoadGeometry(false, 1.0, points);
+  m_roads[featureId] = RoadGeometry(false, 1.0 /* speed */, points);
 }
 
 Joint MakeJoint(vector<FSegId> const & points)
@@ -65,10 +65,10 @@ shared_ptr<EdgeEstimator> CreateEstimator()
   return CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel());
 }
 
-void CheckRoute(IndexGraph & graph, FSegId const & start, FSegId const & finish,
-                size_t expectedLength)
+void TestRoute(IndexGraph & graph, FSegId const & start, FSegId const & finish,
+               size_t expectedLength)
 {
-  LOG(LINFO, ("Check route", start.GetFeatureId(), ",", start.GetSegId(), "=>",
+  LOG(LINFO, ("Test route", start.GetFeatureId(), ",", start.GetSegId(), "=>",
               finish.GetFeatureId(), ",", finish.GetSegId()));
 
   AStarAlgorithm<IndexGraph> algorithm;
@@ -98,14 +98,16 @@ namespace routing_test
 UNIT_TEST(FindPathCross)
 {
   unique_ptr<TestGeometryLoader> loader = make_unique<TestGeometryLoader>();
-  loader->AddRoad(0, buffer_vector<m2::PointD, 32>(
-                         {{-2.0, 0.0}, {-1.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}}));
-  loader->AddRoad(1, buffer_vector<m2::PointD, 32>(
-                         {{0.0, -2.0}, {-1.0, 0.0}, {0.0, 0.0}, {0.0, 1.0}, {0.0, 2.0}}));
+  loader->AddRoad(0 /* featureId */,
+                  buffer_vector<m2::PointD, 32>(
+                      {{-2.0, 0.0}, {-1.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}}));
+  loader->AddRoad(1 /* featureId */,
+                  buffer_vector<m2::PointD, 32>(
+                      {{0.0, -2.0}, {-1.0, 0.0}, {0.0, 0.0}, {0.0, 1.0}, {0.0, 2.0}}));
 
   IndexGraph graph(move(loader), CreateEstimator());
 
-  graph.Export({MakeJoint({{0, 2}, {1, 2}})});
+  graph.Import({MakeJoint({{0, 2}, {1, 2}})});
 
   vector<FSegId> points;
   for (uint32_t i = 0; i < 5; ++i)
@@ -119,11 +121,15 @@ UNIT_TEST(FindPathCross)
     for (auto const & finish : points)
     {
       uint32_t expectedLength;
+      // Length of the route is the number of route points.
+      // Example: p0 --- p1 --- p2
+      // 2 segments, 3 points,
+      // Therefore route length = geometrical length + 1
       if (start.GetFeatureId() == finish.GetFeatureId())
         expectedLength = AbsDelta(start.GetSegId(), finish.GetSegId()) + 1;
       else
         expectedLength = AbsDelta(start.GetSegId(), 2) + AbsDelta(finish.GetSegId(), 2) + 1;
-      CheckRoute(graph, start, finish, expectedLength);
+      TestRoute(graph, start, finish, expectedLength);
     }
   }
 }
@@ -161,11 +167,9 @@ UNIT_TEST(FindPathManhattan)
   for (uint32_t i = 0; i < kCitySize; ++i)
   {
     for (uint32_t j = 0; j < kCitySize; ++j)
-    {
       joints.emplace_back(MakeJoint({{i, j}, {j + kCitySize, i}}));
-    }
   }
-  graph.Export(joints);
+  graph.Import(joints);
 
   for (uint32_t startY = 0; startY < kCitySize; ++startY)
   {
@@ -174,10 +178,8 @@ UNIT_TEST(FindPathManhattan)
       for (uint32_t finishY = 0; finishY < kCitySize; ++finishY)
       {
         for (uint32_t finishX = 0; finishX < kCitySize; ++finishX)
-        {
-          CheckRoute(graph, {startX, startY}, {finishX, finishY},
-                     AbsDelta(startX, finishX) + AbsDelta(startY, finishY) + 1);
-        }
+          TestRoute(graph, {startX, startY}, {finishX, finishY},
+                    AbsDelta(startX, finishX) + AbsDelta(startY, finishY) + 1);
       }
     }
   }

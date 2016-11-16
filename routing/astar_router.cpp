@@ -1,4 +1,4 @@
-#include "astar_router.hpp"
+#include "routing/astar_router.hpp"
 
 #include "routing/base/astar_algorithm.hpp"
 #include "routing/base/astar_progress.hpp"

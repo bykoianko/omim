@@ -7,6 +7,7 @@
 
 #include "std/cstdint.hpp"
 #include "std/unordered_map.hpp"
+#include "std/utility.hpp"
 #include "std/vector.hpp"
 
 namespace routing
@@ -77,11 +78,13 @@ public:
 
   void AddJoint(FSegId fseg, JointId jointId)
   {
-    RoadJointIds & road = m_roads[fseg.GetFeatureId()];
-    road.AddJoint(fseg.GetSegId(), jointId);
+    m_roads[fseg.GetFeatureId()].AddJoint(fseg.GetSegId(), jointId);
   }
 
-  pair<JointId, uint32_t> FindNeigbor(FSegId fseg, bool forward) const;
+  // Find nearest point with normal joint id.
+  // If forward == true: neighbor with larger point id (right neighbor)
+  // If forward == false: neighbor with smaller point id (left neighbor)
+  pair<JointId, uint32_t> FindNeighbor(FSegId fseg, bool forward) const;
 
   template <class TSink>
   void Serialize(TSink & sink) const

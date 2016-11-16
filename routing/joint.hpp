@@ -10,7 +10,7 @@
 namespace routing
 {
 using JointId = uint32_t;
-JointId constexpr kInvalidJointId = numeric_limits<JointId>::max();
+static JointId constexpr kInvalidJointId = numeric_limits<JointId>::max();
 
 // Joint represents roads connection.
 // It contains feature id, segment id for each road connected.

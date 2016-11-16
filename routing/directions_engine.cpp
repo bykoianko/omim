@@ -98,8 +98,6 @@ void ReconstructRoute(IDirectionsEngine * engine, IRoadGraph const & graph,
   // direction on a road was changed.  But it doesn't matter since
   // this code reconstructs only geometry of a route.
   path.erase(unique(path.begin(), path.end()), path.end());
-  if (path.size() == 1)
-    path.emplace_back(path.back());
 
   Route::TTimes times;
   Route::TTurns turnsDir;

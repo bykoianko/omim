@@ -1,5 +1,7 @@
 #include "routing/fseg_index.hpp"
 
+#include "base/exception.hpp"
+
 #include "std/utility.hpp"
 
 namespace routing
@@ -18,11 +20,11 @@ void FSegIndex::Import(vector<Joint> const & joints)
   }
 }
 
-pair<JointId, uint32_t> FSegIndex::FindNeigbor(FSegId fseg, bool forward) const
+pair<JointId, uint32_t> FSegIndex::FindNeighbor(FSegId fseg, bool forward) const
 {
   auto const it = m_roads.find(fseg.GetFeatureId());
   if (it == m_roads.cend())
-    return make_pair(kInvalidJointId, 0);
+    MYTHROW(RootException, ("FSegIndex doesn't contains feature", fseg.GetFeatureId()));
 
   RoadJointIds const & joints = it->second;
   int32_t const step = forward ? 1 : -1;

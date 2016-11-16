@@ -36,7 +36,7 @@ void JointIndex::Build(FSegIndex const & fsegIndex, uint32_t jointsAmount)
   m_slices.assign(jointsAmount, {0, 0});
 
   fsegIndex.ForEachRoad([this](uint32_t /* featureId */, RoadJointIds const & road) {
-    road.ForEachJoint([this](uint32_t /* segId */, uint32_t jointId) {
+    road.ForEachJoint([this](uint32_t /* segId */, JointId jointId) {
       ASSERT_LESS(jointId, m_slices.size(), ());
       m_slices[jointId].IncSize();
     });
@@ -58,7 +58,7 @@ void JointIndex::Build(FSegIndex const & fsegIndex, uint32_t jointsAmount)
   m_fsegs.resize(offset);
 
   fsegIndex.ForEachRoad([this](uint32_t featureId, RoadJointIds const & road) {
-    road.ForEachJoint([this, featureId](uint32_t segId, uint32_t jointId) {
+    road.ForEachJoint([this, featureId](uint32_t segId, JointId jointId) {
       ASSERT_LESS(jointId, m_slices.size(), ());
       Slice & slice = m_slices[jointId];
       m_fsegs[slice.End()] = {featureId, segId};

@@ -1,5 +1,7 @@
 #include "routing/edge_estimator.hpp"
 
+#include "std/algorithm.hpp"
+
 namespace routing
 {
 double constexpr kMPH2MPS = 1000.0 / (60 * 60);
@@ -41,9 +43,7 @@ double CarEdgeEstimator::CalcEdgesWeight(RoadGeometry const & road, uint32_t poi
   double result = 0.0;
   double const speedMPS = road.GetSpeed() * kMPH2MPS;
   for (uint32_t i = start; i < finish; ++i)
-  {
     result += TimeBetweenSec(road.GetPoint(i), road.GetPoint(i + 1), speedMPS);
-  }
 
   return result;
 }

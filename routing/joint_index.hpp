@@ -15,8 +15,8 @@ namespace routing
 class JointIndex final
 {
 public:
-  size_t GetJointsAmount() const { return m_slices.size(); }
-  size_t GetFSegsAmount() const { return m_fsegs.size(); }
+  size_t GetNumJoints() const { return m_slices.size(); }
+  size_t GetNumFtPoints() const { return m_fsegs.size(); }
   FSegId GetFSeg(JointId jointId) const { return m_fsegs[GetSlice(jointId).Begin()]; }
 
   template <typename F>

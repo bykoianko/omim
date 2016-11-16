@@ -23,12 +23,13 @@ namespace routing
 class JointEdge final
 {
 public:
-  JointEdge(JointId target, double weight) : target(target), weight(weight) {}
-  JointId GetTarget() const { return target; }
-  double GetWeight() const { return weight; }
+  JointEdge(JointId target, double weight) : m_target(target), m_weight(weight) {}
+  JointId GetTarget() const { return m_target; }
+  double GetWeight() const { return m_weight; }
+
 private:
-  JointId target;
-  double weight;
+  JointId const m_target;
+  double const m_weight;
 };
 
 class IndexGraph final
@@ -40,25 +41,24 @@ public:
   IndexGraph() = default;
   explicit IndexGraph(unique_ptr<GeometryLoader> loader, shared_ptr<EdgeEstimator> estimator);
 
-  // TGraph overloads:
+  // AStarAlgorithm<TGraph> overloads:
   void GetOutgoingEdgesList(TVertexType vertex, vector<TEdgeType> & edges) const;
   void GetIngoingEdgesList(TVertexType vertex, vector<TEdgeType> & edges) const;
   double HeuristicCostEstimate(TVertexType from, TVertexType to) const;
 
-  // Access methods.
   Geometry const & GetGeometry() const { return m_geometry; }
   m2::PointD const & GetPoint(JointId jointId) const;
-  size_t GetRoadsAmount() const { return m_fsegIndex.GetSize(); }
-  size_t GetJointsAmount() const { return m_jointIndex.GetJointsAmount(); }
-  size_t GetFSegsAmount() const { return m_jointIndex.GetFSegsAmount(); }
-  void Export(vector<Joint> const & joints);
+  size_t GetNumRoads() const { return m_fsegIndex.GetSize(); }
+  size_t GetNumJoints() const { return m_jointIndex.GetNumJoints(); }
+  size_t GetNumFtPoints() const { return m_jointIndex.GetNumFtPoints(); }
+  void Import(vector<Joint> const & joints);
   JointId InsertJoint(FSegId const & fseg);
   vector<FSegId> RedressRoute(vector<JointId> const & route) const;
 
   template <class TSink>
   void Serialize(TSink & sink) const
   {
-    WriteToSink(sink, static_cast<JointId>(GetJointsAmount()));
+    WriteToSink(sink, static_cast<JointId>(GetNumJoints()));
     m_fsegIndex.Serialize(sink);
   }
 
@@ -71,9 +71,9 @@ public:
   }
 
 private:
-  void AddNeigborEdge(RoadGeometry const & road, vector<TEdgeType> & edges, FSegId fseg,
-                      bool forward) const;
-  void GetEdgesList(JointId jointId, vector<TEdgeType> & edges, bool forward) const;
+  void AddNeighboringEdge(RoadGeometry const & road, FSegId fseg, bool forward,
+                          vector<TEdgeType> & edges) const;
+  void GetEdgesList(JointId jointId, bool forward, vector<TEdgeType> & edges) const;
 
   Geometry m_geometry;
   shared_ptr<EdgeEstimator> m_estimator;
