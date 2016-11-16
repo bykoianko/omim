@@ -27,7 +27,7 @@ namespace
 size_t constexpr kMaxRoadCandidates = 6;
 float constexpr kProgressInterval = 2;
 
-vector<Junction> ConvertToJunctions(IndexGraph const & graph, vector<JointId> const & joints)
+vector<Junction> ConvertToJunctions(IndexGraph const & graph, vector<Joint::Id> const & joints)
 {
   vector<FSegId> const & fsegs = graph.RedressRoute(joints);
 
@@ -113,8 +113,8 @@ IRouter::ResultCode AStarRouter::DoCalculateRoute(MwmSet::MwmId const & mwmId,
   AStarProgress progress(0, 100);
   progress.Initialize(graph.GetGeometry().GetPoint(start), graph.GetGeometry().GetPoint(finish));
 
-  auto onVisitJunction = [&delegate, &progress, &graph](JointId const & from,
-                                                        JointId const & target) {
+  auto onVisitJunction = [&delegate, &progress, &graph](Joint::Id const & from,
+                                                        Joint::Id const & target) {
     m2::PointD const & point = graph.GetPoint(from);
     m2::PointD const & targetPoint = graph.GetPoint(target);
     auto const lastValue = progress.GetLastValue();
@@ -126,7 +126,7 @@ IRouter::ResultCode AStarRouter::DoCalculateRoute(MwmSet::MwmId const & mwmId,
 
   AStarAlgorithm<IndexGraph> algorithm;
 
-  RoutingResult<JointId> routingResult;
+  RoutingResult<Joint::Id> routingResult;
   AStarAlgorithm<IndexGraph>::Result const resultCode =
       algorithm.FindPathBidirectional(graph, graph.InsertJoint(start), graph.InsertJoint(finish),
                                       routingResult, delegate, onVisitJunction);

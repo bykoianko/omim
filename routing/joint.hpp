@@ -9,14 +9,14 @@
 
 namespace routing
 {
-using JointId = uint32_t;
-static JointId constexpr kInvalidJointId = numeric_limits<JointId>::max();
-
 // Joint represents roads connection.
 // It contains feature id, segment id for each road connected.
 class Joint final
 {
 public:
+  using Id = uint32_t;
+  static Id constexpr kInvalidId = numeric_limits<Id>::max();
+
   void AddEntry(FSegId entry) { m_entries.emplace_back(entry); }
 
   size_t GetSize() const { return m_entries.size(); }

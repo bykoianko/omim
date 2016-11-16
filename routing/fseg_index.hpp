@@ -15,20 +15,20 @@ namespace routing
 class RoadJointIds final
 {
 public:
-  JointId GetJointId(uint32_t segId) const
+  Joint::Id GetJointId(uint32_t segId) const
   {
     if (segId < m_jointIds.size())
       return m_jointIds[segId];
 
-    return kInvalidJointId;
+    return Joint::kInvalidId;
   }
 
-  void AddJoint(uint32_t segId, JointId jointId)
+  void AddJoint(uint32_t segId, Joint::Id jointId)
   {
     if (segId >= m_jointIds.size())
-      m_jointIds.insert(m_jointIds.end(), segId + 1 - m_jointIds.size(), kInvalidJointId);
+      m_jointIds.insert(m_jointIds.end(), segId + 1 - m_jointIds.size(), Joint::kInvalidId);
 
-    ASSERT_EQUAL(m_jointIds[segId], kInvalidJointId, ());
+    ASSERT_EQUAL(m_jointIds[segId], Joint::kInvalidId, ());
     m_jointIds[segId] = jointId;
   }
 
@@ -37,8 +37,8 @@ public:
   {
     for (uint32_t segId = 0; segId < m_jointIds.size(); ++segId)
     {
-      JointId const jointId = m_jointIds[segId];
-      if (jointId != kInvalidJointId)
+      Joint::Id const jointId = m_jointIds[segId];
+      if (jointId != Joint::kInvalidId)
         f(segId, jointId);
     }
   }
@@ -48,19 +48,19 @@ public:
   template <class TSink>
   void Serialize(TSink & sink) const
   {
-    WriteToSink(sink, static_cast<JointId>(m_jointIds.size()));
-    for (JointId jointId : m_jointIds)
+    WriteToSink(sink, static_cast<Joint::Id>(m_jointIds.size()));
+    for (Joint::Id jointId : m_jointIds)
       WriteToSink(sink, jointId);
   }
 
   template <class TSource>
   void Deserialize(TSource & src)
   {
-    JointId const jointsSize = ReadPrimitiveFromSource<JointId>(src);
+    Joint::Id const jointsSize = ReadPrimitiveFromSource<Joint::Id>(src);
     m_jointIds.reserve(jointsSize);
-    for (JointId i = 0; i < jointsSize; ++i)
+    for (Joint::Id i = 0; i < jointsSize; ++i)
     {
-      JointId const jointId = ReadPrimitiveFromSource<JointId>(src);
+      Joint::Id const jointId = ReadPrimitiveFromSource<Joint::Id>(src);
       m_jointIds.emplace_back(jointId);
     }
   }
@@ -68,7 +68,7 @@ public:
 private:
   // Joint ids indexed by segment id.
   // If some segment id doesn't match any joint id, this vector contains Joint::kInvalidId.
-  vector<JointId> m_jointIds;
+  vector<Joint::Id> m_jointIds;
 };
 
 class FSegIndex final
@@ -76,7 +76,7 @@ class FSegIndex final
 public:
   void Import(vector<Joint> const & joints);
 
-  void AddJoint(FSegId fseg, JointId jointId)
+  void AddJoint(FSegId fseg, Joint::Id jointId)
   {
     m_roads[fseg.GetFeatureId()].AddJoint(fseg.GetSegId(), jointId);
   }
@@ -84,7 +84,7 @@ public:
   // Find nearest point with normal joint id.
   // If forward == true: neighbor with larger point id (right neighbor)
   // If forward == false: neighbor with smaller point id (left neighbor)
-  pair<JointId, uint32_t> FindNeighbor(FSegId fseg, bool forward) const;
+  pair<Joint::Id, uint32_t> FindNeighbor(FSegId fseg, bool forward) const;
 
   template <class TSink>
   void Serialize(TSink & sink) const
@@ -111,11 +111,11 @@ public:
 
   uint32_t GetSize() const { return m_roads.size(); }
 
-  JointId GetJointId(FSegId fseg) const
+  Joint::Id GetJointId(FSegId fseg) const
   {
     auto const it = m_roads.find(fseg.GetFeatureId());
     if (it == m_roads.end())
-      return kInvalidJointId;
+      return Joint::kInvalidId;
 
     return it->second.GetJointId(fseg.GetSegId());
   }

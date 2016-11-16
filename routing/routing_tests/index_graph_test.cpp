@@ -72,7 +72,7 @@ void TestRoute(IndexGraph & graph, FSegId const & start, FSegId const & finish,
               finish.GetFeatureId(), ",", finish.GetSegId()));
 
   AStarAlgorithm<IndexGraph> algorithm;
-  RoutingResult<JointId> routingResult;
+  RoutingResult<Joint::Id> routingResult;
 
   AStarAlgorithm<IndexGraph>::Result const resultCode = algorithm.FindPath(
       graph, graph.InsertJoint(start), graph.InsertJoint(finish), routingResult, {}, {});

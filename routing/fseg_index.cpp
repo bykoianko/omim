@@ -8,7 +8,7 @@ namespace routing
 {
 void FSegIndex::Import(vector<Joint> const & joints)
 {
-  for (JointId jointId = 0; jointId < joints.size(); ++jointId)
+  for (Joint::Id jointId = 0; jointId < joints.size(); ++jointId)
   {
     Joint const & joint = joints[jointId];
     for (uint32_t i = 0; i < joint.GetSize(); ++i)
@@ -20,7 +20,7 @@ void FSegIndex::Import(vector<Joint> const & joints)
   }
 }
 
-pair<JointId, uint32_t> FSegIndex::FindNeighbor(FSegId fseg, bool forward) const
+pair<Joint::Id, uint32_t> FSegIndex::FindNeighbor(FSegId fseg, bool forward) const
 {
   auto const it = m_roads.find(fseg.GetFeatureId());
   if (it == m_roads.cend())
@@ -31,11 +31,11 @@ pair<JointId, uint32_t> FSegIndex::FindNeighbor(FSegId fseg, bool forward) const
 
   for (uint32_t segId = fseg.GetSegId() + step; segId < joints.GetSize(); segId += step)
   {
-    JointId const jointId = joints.GetJointId(segId);
-    if (jointId != kInvalidJointId)
+    Joint::Id const jointId = joints.GetJointId(segId);
+    if (jointId != Joint::kInvalidId)
       return make_pair(jointId, segId);
   }
 
-  return make_pair(kInvalidJointId, 0);
+  return make_pair(Joint::kInvalidId, 0);
 }
 }  // namespace routing

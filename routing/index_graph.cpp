@@ -11,22 +11,22 @@ IndexGraph::IndexGraph(unique_ptr<GeometryLoader> loader, shared_ptr<EdgeEstimat
   ASSERT(m_estimator, ());
 }
 
-void IndexGraph::GetOutgoingEdgesList(JointId jointId, vector<TEdgeType> & edges) const
+void IndexGraph::GetOutgoingEdgesList(Joint::Id jointId, vector<TEdgeType> & edges) const
 {
   GetEdgesList(jointId, true, edges);
 }
 
-void IndexGraph::GetIngoingEdgesList(JointId jointId, vector<TEdgeType> & edges) const
+void IndexGraph::GetIngoingEdgesList(Joint::Id jointId, vector<TEdgeType> & edges) const
 {
   GetEdgesList(jointId, false, edges);
 }
 
-double IndexGraph::HeuristicCostEstimate(JointId jointFrom, JointId jointTo) const
+double IndexGraph::HeuristicCostEstimate(Joint::Id jointFrom, Joint::Id jointTo) const
 {
   return m_estimator->CalcHeuristic(GetPoint(jointFrom), GetPoint(jointTo));
 }
 
-m2::PointD const & IndexGraph::GetPoint(JointId jointId) const
+m2::PointD const & IndexGraph::GetPoint(Joint::Id jointId) const
 {
   return m_geometry.GetPoint(m_jointIndex.GetFSeg(jointId));
 }
@@ -37,13 +37,13 @@ void IndexGraph::Import(vector<Joint> const & joints)
   m_jointIndex.Build(m_fsegIndex, joints.size());
 }
 
-JointId IndexGraph::InsertJoint(FSegId const & fseg)
+Joint::Id IndexGraph::InsertJoint(FSegId const & fseg)
 {
-  JointId const existId = m_fsegIndex.GetJointId(fseg);
-  if (existId != kInvalidJointId)
+  Joint::Id const existId = m_fsegIndex.GetJointId(fseg);
+  if (existId != Joint::kInvalidId)
     return existId;
 
-  JointId const jointId = m_jointIndex.InsertJoint(fseg);
+  Joint::Id const jointId = m_jointIndex.InsertJoint(fseg);
   m_fsegIndex.AddJoint(fseg, jointId);
   return jointId;
 }
@@ -51,7 +51,7 @@ JointId IndexGraph::InsertJoint(FSegId const & fseg)
 // Add intermediate points to route (those doesn't correspond any joint).
 //
 // Also convert joint id to feature id, point id.
-vector<FSegId> IndexGraph::RedressRoute(vector<JointId> const & route) const
+vector<FSegId> IndexGraph::RedressRoute(vector<Joint::Id> const & route) const
 {
   vector<FSegId> fsegs;
   if (route.size() < 2)
@@ -65,8 +65,8 @@ vector<FSegId> IndexGraph::RedressRoute(vector<JointId> const & route) const
 
   for (size_t i = 0; i < route.size() - 1; ++i)
   {
-    JointId const prevJoint = route[i];
-    JointId const nextJoint = route[i + 1];
+    Joint::Id const prevJoint = route[i];
+    Joint::Id const nextJoint = route[i + 1];
 
     auto const & pair = m_jointIndex.FindCommonFeature(prevJoint, nextJoint);
     if (i == 0)
@@ -99,15 +99,15 @@ vector<FSegId> IndexGraph::RedressRoute(vector<JointId> const & route) const
 inline void IndexGraph::AddNeighboringEdge(RoadGeometry const & road, FSegId fseg, bool forward,
                                            vector<TEdgeType> & edges) const
 {
-  pair<JointId, uint32_t> const & pair = m_fsegIndex.FindNeighbor(fseg, forward);
-  if (pair.first != kInvalidJointId)
+  pair<Joint::Id, uint32_t> const & pair = m_fsegIndex.FindNeighbor(fseg, forward);
+  if (pair.first != Joint::kInvalidId)
   {
     double const distance = m_estimator->CalcEdgesWeight(road, fseg.GetSegId(), pair.second);
     edges.push_back({pair.first, distance});
   }
 }
 
-inline void IndexGraph::GetEdgesList(JointId jointId, bool forward, vector<TEdgeType> & edges) const
+inline void IndexGraph::GetEdgesList(Joint::Id jointId, bool forward, vector<TEdgeType> & edges) const
 {
   edges.clear();
 

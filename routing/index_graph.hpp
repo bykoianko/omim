@@ -23,19 +23,19 @@ namespace routing
 class JointEdge final
 {
 public:
-  JointEdge(JointId target, double weight) : m_target(target), m_weight(weight) {}
-  JointId GetTarget() const { return m_target; }
+  JointEdge(Joint::Id target, double weight) : m_target(target), m_weight(weight) {}
+  Joint::Id GetTarget() const { return m_target; }
   double GetWeight() const { return m_weight; }
 
 private:
-  JointId const m_target;
+  Joint::Id const m_target;
   double const m_weight;
 };
 
 class IndexGraph final
 {
 public:
-  using TVertexType = JointId;
+  using TVertexType = Joint::Id;
   using TEdgeType = JointEdge;
 
   IndexGraph() = default;
@@ -47,18 +47,18 @@ public:
   double HeuristicCostEstimate(TVertexType from, TVertexType to) const;
 
   Geometry const & GetGeometry() const { return m_geometry; }
-  m2::PointD const & GetPoint(JointId jointId) const;
+  m2::PointD const & GetPoint(Joint::Id jointId) const;
   size_t GetNumRoads() const { return m_fsegIndex.GetSize(); }
   size_t GetNumJoints() const { return m_jointIndex.GetNumJoints(); }
   size_t GetNumFtPoints() const { return m_jointIndex.GetNumFtPoints(); }
   void Import(vector<Joint> const & joints);
-  JointId InsertJoint(FSegId const & fseg);
-  vector<FSegId> RedressRoute(vector<JointId> const & route) const;
+  Joint::Id InsertJoint(FSegId const & fseg);
+  vector<FSegId> RedressRoute(vector<Joint::Id> const & route) const;
 
   template <class TSink>
   void Serialize(TSink & sink) const
   {
-    WriteToSink(sink, static_cast<JointId>(GetNumJoints()));
+    WriteToSink(sink, static_cast<Joint::Id>(GetNumJoints()));
     m_fsegIndex.Serialize(sink);
   }
 
@@ -73,7 +73,7 @@ public:
 private:
   void AddNeighboringEdge(RoadGeometry const & road, FSegId fseg, bool forward,
                           vector<TEdgeType> & edges) const;
-  void GetEdgesList(JointId jointId, bool forward, vector<TEdgeType> & edges) const;
+  void GetEdgesList(Joint::Id jointId, bool forward, vector<TEdgeType> & edges) const;
 
   Geometry m_geometry;
   shared_ptr<EdgeEstimator> m_estimator;

@@ -29,6 +29,7 @@ SOURCES += \
     fseg_index.cpp \
     geometry.cpp \
     index_graph.cpp \
+    joint.cpp \
     joint_index.cpp \
     nearest_edge_finder.cpp \
     online_absent_fetcher.cpp \

@@ -2,15 +2,15 @@
 
 namespace routing
 {
-JointId JointIndex::InsertJoint(FSegId const & fseg)
+Joint::Id JointIndex::InsertJoint(FSegId const & fseg)
 {
-  JointId const jointId = m_slices.size();
+  Joint::Id const jointId = m_slices.size();
   m_slices.emplace_back(Slice(m_fsegs.size(), m_fsegs.size() + 1));
   m_fsegs.emplace_back(fseg);
   return jointId;
 }
 
-pair<FSegId, FSegId> JointIndex::FindCommonFeature(JointId jointId0, JointId jointId1) const
+pair<FSegId, FSegId> JointIndex::FindCommonFeature(Joint::Id jointId0, Joint::Id jointId1) const
 {
   Slice const & slice0 = GetSlice(jointId0);
   Slice const & slice1 = GetSlice(jointId1);
@@ -36,7 +36,7 @@ void JointIndex::Build(FSegIndex const & fsegIndex, uint32_t jointsAmount)
   m_slices.assign(jointsAmount, {0, 0});
 
   fsegIndex.ForEachRoad([this](uint32_t /* featureId */, RoadJointIds const & road) {
-    road.ForEachJoint([this](uint32_t /* segId */, JointId jointId) {
+    road.ForEachJoint([this](uint32_t /* segId */, Joint::Id jointId) {
       ASSERT_LESS(jointId, m_slices.size(), ());
       m_slices[jointId].IncSize();
     });
@@ -58,7 +58,7 @@ void JointIndex::Build(FSegIndex const & fsegIndex, uint32_t jointsAmount)
   m_fsegs.resize(offset);
 
   fsegIndex.ForEachRoad([this](uint32_t featureId, RoadJointIds const & road) {
-    road.ForEachJoint([this, featureId](uint32_t segId, JointId jointId) {
+    road.ForEachJoint([this, featureId](uint32_t segId, Joint::Id jointId) {
       ASSERT_LESS(jointId, m_slices.size(), ());
       Slice & slice = m_slices[jointId];
       m_fsegs[slice.End()] = {featureId, segId};
