@@ -10,6 +10,7 @@
 #include "base/assert.hpp"
 
 #include "std/algorithm.hpp"
+#include "std/unique_ptr.hpp"
 #include "std/unordered_map.hpp"
 #include "std/vector.hpp"
 
@@ -54,10 +55,14 @@ Joint MakeJoint(vector<FSegId> const & points)
 {
   Joint joint;
   for (auto const & point : points)
-  {
     joint.AddEntry(point);
-  }
+
   return joint;
+}
+
+shared_ptr<EdgeEstimator> CreateEstimator()
+{
+  return CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel());
 }
 
 void CheckRoute(IndexGraph & graph, FSegId const & start, FSegId const & finish,
@@ -82,7 +87,7 @@ uint32_t AbsDelta(uint32_t v0, uint32_t v1) { return v0 > v1 ? v0 - v1 : v1 - v0
 
 namespace routing_test
 {
-//            R1:
+//  Roads     R1:
 //
 //            -2
 //            -1
@@ -98,8 +103,7 @@ UNIT_TEST(FindPathCross)
   loader->AddRoad(1, buffer_vector<m2::PointD, 32>(
                          {{0.0, -2.0}, {-1.0, 0.0}, {0.0, 0.0}, {0.0, 1.0}, {0.0, 2.0}}));
 
-  IndexGraph graph(move(loader),
-                   CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
+  IndexGraph graph(move(loader), CreateEstimator());
 
   graph.Export({MakeJoint({{0, 2}, {1, 2}})});
 
@@ -124,15 +128,15 @@ UNIT_TEST(FindPathCross)
   }
 }
 
-//      R4  R5  R6  R7
+// Roads   R4  R5  R6  R7
 //
-//  R0:  0 - * - * - *
-//       |   |   |   |
-//  R1:  * - 1 - * - *
-//       |   |   |   |
-//  R2   * - * - 2 - *
-//       |   |   |   |
-//  R3   * - * - * - 3
+//    R0   0 - * - * - *
+//         |   |   |   |
+//    R1   * - 1 - * - *
+//         |   |   |   |
+//    R2   * - * - 2 - *
+//         |   |   |   |
+//    R3   * - * - * - 3
 //
 UNIT_TEST(FindPathManhattan)
 {
@@ -140,19 +144,18 @@ UNIT_TEST(FindPathManhattan)
   unique_ptr<TestGeometryLoader> loader = make_unique<TestGeometryLoader>();
   for (uint32_t i = 0; i < kCitySize; ++i)
   {
-    buffer_vector<m2::PointD, 32> horizontalRoad;
-    buffer_vector<m2::PointD, 32> verticalRoad;
+    buffer_vector<m2::PointD, 32> street;
+    buffer_vector<m2::PointD, 32> avenue;
     for (uint32_t j = 0; j < kCitySize; ++j)
     {
-      horizontalRoad.emplace_back((double)i, (double)j);
-      verticalRoad.emplace_back((double)j, (double)i);
+      street.emplace_back(static_cast<double>(i), static_cast<double>(j));
+      avenue.emplace_back(static_cast<double>(j), static_cast<double>(i));
     }
-    loader->AddRoad(i, horizontalRoad);
-    loader->AddRoad(i + kCitySize, verticalRoad);
+    loader->AddRoad(i, street);
+    loader->AddRoad(i + kCitySize, avenue);
   }
 
-  IndexGraph graph(move(loader),
-                   CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
+  IndexGraph graph(move(loader), CreateEstimator());
 
   vector<Joint> joints;
   for (uint32_t i = 0; i < kCitySize; ++i)

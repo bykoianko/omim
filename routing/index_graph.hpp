@@ -12,6 +12,10 @@
 #include "geometry/point2d.hpp"
 
 #include "std/cstdint.hpp"
+#include "std/shared_ptr.hpp"
+#include "std/unique_ptr.hpp"
+#include "std/utility.hpp"
+#include "std/vector.hpp"
 
 namespace routing
 {
@@ -47,7 +51,7 @@ public:
   size_t GetJointsAmount() const { return m_jointOffsets.size(); }
   size_t GetFSegsAmount() const { return m_fsegs.size(); }
   void Export(vector<Joint> const & joints);
-  JointId InsertJoint(FSegId fseg);
+  JointId InsertJoint(FSegId const & fseg);
   vector<FSegId> RedressRoute(vector<JointId> const & route) const;
 
   template <class TSink>
@@ -66,12 +70,10 @@ public:
   }
 
 private:
-  // Access methods.
+  void BuildJoints(uint32_t jointsAmount);
   FSegId GetFSeg(JointId jointId) const;
   JointOffset const & GetJointOffset(JointId jointId) const;
-  pair<FSegId, FSegId> FindSharedFeature(JointId jointId0, JointId jointId1) const;
-
-  void BuildJoints(uint32_t jointsAmount);
+  pair<FSegId, FSegId> FindCommonFeature(JointId jointId0, JointId jointId1) const;
 
   // Edge methods.
   void AddNeigborEdge(RoadGeometry const & road, vector<TEdgeType> & edges, FSegId fseg,

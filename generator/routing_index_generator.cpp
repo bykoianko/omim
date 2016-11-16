@@ -12,10 +12,10 @@
 #include "indexer/routing_section.hpp"
 #include "indexer/scales.hpp"
 
-#include "coding/file_name_utils.hpp"
-
 #include "platform/country_file.hpp"
 #include "platform/local_country_file.hpp"
+
+#include "coding/file_name_utils.hpp"
 
 #include "base/logging.hpp"
 
@@ -70,23 +70,18 @@ public:
     for (size_t fromSegId = 0; fromSegId < pointsCount; ++fromSegId)
     {
       uint64_t const locationKey = CalcLocationKey(f.GetPoint(fromSegId));
-      m_pos2Joint[locationKey].AddEntry(FSegId(id, fromSegId));
+      m_posToJoint[locationKey].AddEntry(FSegId(id, fromSegId));
     }
   }
 
-  void ForEachFeature() { m_index.ForEachInScale(*this, scales::GetUpperScale()); }
+  void ProcessAllFeatures() { m_index.ForEachInScale(*this, scales::GetUpperScale()); }
 
-  bool IsRoad(FeatureType const & f) const
+  void RemoveNonConnections()
   {
-    return m_pedestrianModel->IsRoad(f) || m_bicycleModel->IsRoad(f) || m_carModel->IsRoad(f);
-  }
-
-  void RemoveNonCrosses()
-  {
-    for (auto it = m_pos2Joint.begin(); it != m_pos2Joint.end();)
+    for (auto it = m_posToJoint.begin(); it != m_posToJoint.end();)
     {
       if (it->second.GetSize() < 2)
-        it = m_pos2Joint.erase(it);
+        it = m_posToJoint.erase(it);
       else
         ++it;
     }
@@ -95,19 +90,24 @@ public:
   void BuildGraph(IndexGraph & graph) const
   {
     vector<Joint> joints;
-    joints.reserve(m_pos2Joint.size());
-    for (auto it = m_pos2Joint.begin(); it != m_pos2Joint.end(); ++it)
-      joints.emplace_back(it->second);
+    joints.reserve(m_posToJoint.size());
+    for (auto const & it : m_posToJoint)
+      joints.emplace_back(it.second);
 
     graph.Export(joints);
   }
 
 private:
+  bool IsRoad(FeatureType const & f) const
+  {
+    return m_pedestrianModel->IsRoad(f) || m_bicycleModel->IsRoad(f) || m_carModel->IsRoad(f);
+  }
+
   Index m_index;
   shared_ptr<IVehicleModel> m_pedestrianModel;
   shared_ptr<IVehicleModel> m_bicycleModel;
   shared_ptr<IVehicleModel> m_carModel;
-  unordered_map<uint64_t, Joint> m_pos2Joint;
+  unordered_map<uint64_t, Joint> m_posToJoint;
 };
 }  // namespace
 
@@ -115,20 +115,19 @@ namespace routing
 {
 void BuildRoutingIndex(string const & dir, string const & country)
 {
-  LOG(LINFO, ("dir =", dir, "country", country));
+  LOG(LINFO, ("Building routing index for", country, "in directory", dir));
   try
   {
     Processor processor(dir, country);
     string const datFile = my::JoinFoldersToPath(dir, country + DATA_FILE_EXTENSION);
     LOG(LINFO, ("datFile =", datFile));
-    processor.ForEachFeature();
-    processor.RemoveNonCrosses();
+    processor.ProcessAllFeatures();
+    processor.RemoveNonConnections();
 
     IndexGraph graph;
     processor.BuildGraph(graph);
-    LOG(LINFO, ("roads =", graph.GetRoadsAmount()));
-    LOG(LINFO, ("joints =", graph.GetJointsAmount()));
-    LOG(LINFO, ("fsegs =", graph.GetFSegsAmount()));
+    LOG(LINFO, ("Routing index contains", graph.GetRoadsAmount(), "roads", graph.GetJointsAmount(),
+                "joints", graph.GetFSegsAmount(), "fsegs"));
 
     FilesContainerW cont(datFile, FileWriter::OP_WRITE_EXISTING);
     FileWriter writer = cont.GetWriter(ROUTING_FILE_TAG);

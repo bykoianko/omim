@@ -71,7 +71,7 @@ private:
 class FSegIndex final
 {
 public:
-  void Export(vector<Joint> const & joints);
+  void Import(vector<Joint> const & joints);
 
   void AddJoint(FSegId fseg, JointId jointId)
   {
@@ -85,11 +85,11 @@ public:
   void Serialize(TSink & sink) const
   {
     WriteToSink(sink, static_cast<uint32_t>(m_roads.size()));
-    for (auto it = m_roads.begin(); it != m_roads.end(); ++it)
+    for (auto const & it : m_roads)
     {
-      uint32_t const featureId = it->first;
+      uint32_t const featureId = it.first;
       WriteToSink(sink, featureId);
-      it->second.Serialize(sink);
+      it.second.Serialize(sink);
     }
   }
 
@@ -118,12 +118,12 @@ public:
   template <typename F>
   void ForEachRoad(F && f) const
   {
-    for (auto it = m_roads.begin(); it != m_roads.end(); ++it)
-      f(it->first, it->second);
+    for (auto const & it : m_roads)
+      f(it.first, it.second);
   }
 
 private:
-  // map from feature id to RoadJointIds.
+  // Map from feature id to RoadJointIds.
   unordered_map<uint32_t, RoadJointIds> m_roads;
 };
 }  // namespace routing

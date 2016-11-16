@@ -2,18 +2,18 @@
 
 #include "routing/fseg.hpp"
 
-#include "coding/reader.hpp"
-#include "coding/write_to_sink.hpp"
+#include "base/buffer_vector.hpp"
 
 #include "std/cstdint.hpp"
 #include "std/limits.hpp"
-#include "std/vector.hpp"
 
 namespace routing
 {
 using JointId = uint32_t;
 JointId constexpr kInvalidJointId = numeric_limits<JointId>::max();
 
+// Joint represents roads connection.
+// It contains feature id, segment id for each road connected.
 class Joint final
 {
 public:
@@ -23,29 +23,8 @@ public:
 
   FSegId const & GetEntry(size_t i) const { return m_entries[i]; }
 
-  template <class TSink>
-  void Serialize(TSink & sink) const
-  {
-    WriteToSink(sink, static_cast<uint32_t>(m_entries.size()));
-    for (auto const & entry : m_entries)
-    {
-      entry.Serialize(sink);
-    }
-  }
-
-  template <class TSource>
-  void Deserialize(TSource & src)
-  {
-    size_t const size = static_cast<size_t>(ReadPrimitiveFromSource<uint32_t>(src));
-    m_entries.resize(size);
-    for (size_t i = 0; i < size; ++i)
-    {
-      m_entries[i].Deserialize(src);
-    }
-  }
-
 private:
-  vector<FSegId> m_entries;
+  buffer_vector<FSegId, 2> m_entries;
 };
 
 class JointOffset final
@@ -53,7 +32,10 @@ class JointOffset final
 public:
   JointOffset() : m_begin(0), m_end(0) {}
 
-  JointOffset(uint32_t begin, uint32_t end) : m_begin(begin), m_end(end) {}
+  JointOffset(uint32_t begin, uint32_t end) : m_begin(begin), m_end(end)
+  {
+    ASSERT_LESS_OR_EQUAL(begin, end, ());
+  }
 
   uint32_t Begin() const { return m_begin; }
 

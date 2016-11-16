@@ -1,6 +1,7 @@
 #include "index_graph.hpp"
 
 #include "base/assert.hpp"
+#include "base/exception.hpp"
 
 namespace routing
 {
@@ -32,11 +33,11 @@ m2::PointD const & IndexGraph::GetPoint(JointId jointId) const
 
 void IndexGraph::Export(vector<Joint> const & joints)
 {
-  m_fsegIndex.Export(joints);
+  m_fsegIndex.Import(joints);
   BuildJoints(joints.size());
 }
 
-JointId IndexGraph::InsertJoint(FSegId fseg)
+JointId IndexGraph::InsertJoint(FSegId const & fseg)
 {
   JointId const existId = m_fsegIndex.GetJointId(fseg);
   if (existId != kInvalidJointId)
@@ -66,13 +67,7 @@ vector<FSegId> IndexGraph::RedressRoute(vector<JointId> const & route) const
     JointId const prevJoint = route[i];
     JointId const nextJoint = route[i + 1];
 
-    auto const & pair = FindSharedFeature(prevJoint, nextJoint);
-    if (!pair.first.IsValid())
-    {
-      fsegs.clear();
-      return fsegs;
-    }
-
+    auto const & pair = FindCommonFeature(prevJoint, nextJoint);
     if (i == 0)
       fsegs.push_back(pair.first);
 
@@ -80,18 +75,19 @@ vector<FSegId> IndexGraph::RedressRoute(vector<JointId> const & route) const
     uint32_t const segFrom = pair.first.GetSegId();
     uint32_t const segTo = pair.second.GetSegId();
 
-    ASSERT_NOT_EQUAL(segFrom, segTo, ());
-
     if (segFrom < segTo)
     {
       for (uint32_t seg = segFrom + 1; seg < segTo; ++seg)
         fsegs.push_back({featureId, seg});
     }
-    else
+    else if (segFrom > segTo)
     {
       for (uint32_t seg = segFrom - 1; seg > segTo; --seg)
         fsegs.push_back({featureId, seg});
     }
+    else
+      MYTHROW(RootException,
+              ("Wrong equality segFrom = segTo =", segFrom, ", featureId = ", featureId));
 
     fsegs.push_back(pair.second);
   }
@@ -110,7 +106,7 @@ inline JointOffset const & IndexGraph::GetJointOffset(JointId jointId) const
   return m_jointOffsets[jointId];
 }
 
-pair<FSegId, FSegId> IndexGraph::FindSharedFeature(JointId jointId0, JointId jointId1) const
+pair<FSegId, FSegId> IndexGraph::FindCommonFeature(JointId jointId0, JointId jointId1) const
 {
   JointOffset const & offset0 = GetJointOffset(jointId0);
   JointOffset const & offset1 = GetJointOffset(jointId1);
@@ -126,18 +122,17 @@ pair<FSegId, FSegId> IndexGraph::FindSharedFeature(JointId jointId0, JointId joi
     }
   }
 
-  LOG(LERROR, ("Can't find shared feature for joints", jointId0, jointId1));
-  return make_pair(FSegId::MakeInvalid(), FSegId::MakeInvalid());
+  MYTHROW(RootException, ("Can't find common feature for joints", jointId0, jointId1));
 }
 
 void IndexGraph::BuildJoints(uint32_t jointsAmount)
 {
   // +2 is reserved space for start and finish
   m_jointOffsets.reserve(jointsAmount + 2);
-  m_jointOffsets.resize(jointsAmount, {0, 0});
+  m_jointOffsets.assign(jointsAmount, {0, 0});
 
-  m_fsegIndex.ForEachRoad([this](uint32_t featureId, RoadJointIds const & road) {
-    road.ForEachJoint([this](uint32_t segId, uint32_t jointId) {
+  m_fsegIndex.ForEachRoad([this](uint32_t /* featureId */, RoadJointIds const & road) {
+    road.ForEachJoint([this](uint32_t /* segId */, uint32_t jointId) {
       ASSERT_LESS(jointId, m_jointOffsets.size(), ());
       m_jointOffsets[jointId].IncSize();
     });

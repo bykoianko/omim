@@ -1,10 +1,10 @@
-#include "fseg_index.hpp"
+#include "routing/fseg_index.hpp"
 
 #include "std/utility.hpp"
 
 namespace routing
 {
-void FSegIndex::Export(vector<Joint> const & joints)
+void FSegIndex::Import(vector<Joint> const & joints)
 {
   for (JointId jointId = 0; jointId < joints.size(); ++jointId)
   {

@@ -15,14 +15,17 @@
 #include "indexer/routing_section.hpp"
 
 #include "geometry/distance.hpp"
+#include "geometry/mercator.hpp"
 #include "geometry/point2d.hpp"
+
+#include "base/exception.hpp"
+
+using namespace routing;
 
 namespace
 {
 size_t constexpr kMaxRoadCandidates = 6;
 float constexpr kProgressInterval = 2;
-
-using namespace routing;
 
 vector<Junction> ConvertToJunctions(IndexGraph const & graph, vector<JointId> const & joints)
 {
@@ -65,9 +68,27 @@ AStarRouter::AStarRouter(const char * name, Index const & index,
 
 IRouter::ResultCode AStarRouter::CalculateRoute(MwmSet::MwmId const & mwmId,
                                                 m2::PointD const & startPoint,
-                                                m2::PointD const & /* startDirection */,
+                                                m2::PointD const & startDirection,
                                                 m2::PointD const & finalPoint,
                                                 RouterDelegate const & delegate, Route & route)
+{
+  try
+  {
+    return DoCalculateRoute(mwmId, startPoint, startDirection, finalPoint, delegate, route);
+  }
+  catch (RootException const & e)
+  {
+    LOG(LERROR, ("Can't find path from", MercatorBounds::ToLatLon(startPoint), "to",
+                 MercatorBounds::ToLatLon(finalPoint), ":\n ", e.what()));
+    return IRouter::InternalError;
+  }
+}
+
+IRouter::ResultCode AStarRouter::DoCalculateRoute(MwmSet::MwmId const & mwmId,
+                                                  m2::PointD const & startPoint,
+                                                  m2::PointD const & /* startDirection */,
+                                                  m2::PointD const & finalPoint,
+                                                  RouterDelegate const & delegate, Route & route)
 {
   string const country = m_countryFileFn(startPoint);
 
@@ -86,16 +107,18 @@ IRouter::ResultCode AStarRouter::CalculateRoute(MwmSet::MwmId const & mwmId,
                                         m_vehicleModelFactory->GetVehicleModelForCountry(country)),
                    m_estimator);
 
-  if (!LoadIndex(mwmId, graph))
+  if (!LoadIndex(mwmId, country, graph))
     return IRouter::RouteFileNotExist;
 
   AStarProgress progress(0, 100);
+  progress.Initialize(graph.GetGeometry().GetPoint(start), graph.GetGeometry().GetPoint(finish));
 
-  auto onVisitJunctionFn = [&delegate, &progress, &graph](JointId const & from,
-                                                          JointId const & /*finish*/) {
+  auto onVisitJunction = [&delegate, &progress, &graph](JointId const & from,
+                                                        JointId const & target) {
     m2::PointD const & point = graph.GetPoint(from);
+    m2::PointD const & targetPoint = graph.GetPoint(target);
     auto const lastValue = progress.GetLastValue();
-    auto const newValue = progress.GetProgressForDirectedAlgo(point);
+    auto const newValue = progress.GetProgressForBidirectedAlgo(point, targetPoint);
     if (newValue - lastValue > kProgressInterval)
       delegate.OnProgress(newValue);
     delegate.OnPointCheck(point);
@@ -106,7 +129,7 @@ IRouter::ResultCode AStarRouter::CalculateRoute(MwmSet::MwmId const & mwmId,
   RoutingResult<JointId> routingResult;
   AStarAlgorithm<IndexGraph>::Result const resultCode =
       algorithm.FindPathBidirectional(graph, graph.InsertJoint(start), graph.InsertJoint(finish),
-                                      routingResult, delegate, onVisitJunctionFn);
+                                      routingResult, delegate, onVisitJunction);
 
   switch (resultCode)
   {
@@ -144,25 +167,20 @@ bool AStarRouter::FindClosestEdge(MwmSet::MwmId const & mwmId, m2::PointD const 
     }
   }
 
-  if (minIndex < candidates.size())
-  {
-    closestEdge = candidates[minIndex].first;
-    return true;
-  }
+  if (minIndex == candidates.size())
+    return false;
 
-  return false;
+  closestEdge = candidates[minIndex].first;
+  return true;
 }
 
-bool AStarRouter::LoadIndex(MwmSet::MwmId const & mwmId, IndexGraph & graph)
+bool AStarRouter::LoadIndex(MwmSet::MwmId const & mwmId, string const & country, IndexGraph & graph)
 {
   MwmSet::MwmHandle mwmHandle = m_index.GetMwmHandleById(mwmId);
-  MwmValue const * mwmValue = mwmHandle.GetValue<MwmValue>();
-  if (!mwmValue)
-  {
-    LOG(LERROR, ("mwmValue == null"));
+  if (!mwmHandle.IsAlive())
     return false;
-  }
 
+  MwmValue const * mwmValue = mwmHandle.GetValue<MwmValue>();
   try
   {
     my::Timer timer;
@@ -171,7 +189,8 @@ bool AStarRouter::LoadIndex(MwmSet::MwmId const & mwmId, IndexGraph & graph)
     feature::RoutingSectionHeader header;
     header.Deserialize(src);
     graph.Deserialize(src);
-    LOG(LINFO, (ROUTING_FILE_TAG, "section loaded in ", timer.ElapsedSeconds(), "seconds"));
+    LOG(LINFO,
+        (ROUTING_FILE_TAG, "section for", country, "loaded in", timer.ElapsedSeconds(), "seconds"));
     return true;
   }
   catch (Reader::OpenException const & e)

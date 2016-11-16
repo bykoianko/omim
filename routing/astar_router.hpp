@@ -31,9 +31,13 @@ public:
                                      Route & route);
 
 private:
+  IRouter::ResultCode DoCalculateRoute(MwmSet::MwmId const & mwmId, m2::PointD const & startPoint,
+                                       m2::PointD const & startDirection,
+                                       m2::PointD const & finalPoint,
+                                       RouterDelegate const & delegate, Route & route);
   bool FindClosestEdge(MwmSet::MwmId const & mwmId, m2::PointD const & point,
                        Edge & closestEdge) const;
-  bool LoadIndex(MwmSet::MwmId const & mwmId, IndexGraph & graph);
+  bool LoadIndex(MwmSet::MwmId const & mwmId, string const & country, IndexGraph & graph);
 
   string m_name;
   Index const & m_index;
