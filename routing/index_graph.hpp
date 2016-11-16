@@ -55,15 +55,15 @@ public:
   Joint::Id InsertJoint(FtPoint const & ftp);
   vector<FtPoint> RedressRoute(vector<Joint::Id> const & route) const;
 
-  template <class TSink>
-  void Serialize(TSink & sink) const
+  template <class Sink>
+  void Serialize(Sink & sink) const
   {
     WriteToSink(sink, static_cast<Joint::Id>(GetNumJoints()));
     m_ftPointIndex.Serialize(sink);
   }
 
-  template <class TSource>
-  void Deserialize(TSource & src)
+  template <class Source>
+  void Deserialize(Source & src)
   {
     uint32_t const jointsSize = ReadPrimitiveFromSource<uint32_t>(src);
     m_ftPointIndex.Deserialize(src);

@@ -26,6 +26,7 @@ namespace
 {
 size_t constexpr kMaxRoadCandidates = 6;
 float constexpr kProgressInterval = 2;
+uint32_t constexpr kDrawPointsPeriod = 10;
 
 vector<Junction> ConvertToJunctions(IndexGraph const & graph, vector<Joint::Id> const & joints)
 {
@@ -113,15 +114,18 @@ IRouter::ResultCode AStarRouter::DoCalculateRoute(MwmSet::MwmId const & mwmId,
   AStarProgress progress(0, 100);
   progress.Initialize(graph.GetGeometry().GetPoint(start), graph.GetGeometry().GetPoint(finish));
 
-  auto onVisitJunction = [&delegate, &progress, &graph](Joint::Id const & from,
-                                                        Joint::Id const & target) {
+  uint32_t drawPointsStep = 0;
+  auto onVisitJunction = [&delegate, &progress, &graph, &drawPointsStep](Joint::Id const & from,
+                                                                         Joint::Id const & target) {
     m2::PointD const & point = graph.GetPoint(from);
     m2::PointD const & targetPoint = graph.GetPoint(target);
     auto const lastValue = progress.GetLastValue();
     auto const newValue = progress.GetProgressForBidirectedAlgo(point, targetPoint);
     if (newValue - lastValue > kProgressInterval)
       delegate.OnProgress(newValue);
-    delegate.OnPointCheck(point);
+    if (drawPointsStep % kDrawPointsPeriod == 0)
+      delegate.OnPointCheck(point);
+    ++drawPointsStep;
   };
 
   AStarAlgorithm<IndexGraph> algorithm;
