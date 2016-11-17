@@ -1,6 +1,6 @@
 #pragma once
 
-#include "routing/ftpoint.hpp"
+#include "routing/road_point.hpp"
 #include "routing/vehicle_model.hpp"
 
 #include "indexer/index.hpp"
@@ -69,9 +69,9 @@ public:
     return road;
   }
 
-  m2::PointD const & GetPoint(FtPoint const & ftp) const
+  m2::PointD const & GetPoint(RoadPoint const & rp) const
   {
-    return GetRoad(ftp.GetFeatureId()).GetPoint(ftp.GetPointId());
+    return GetRoad(rp.GetFeatureId()).GetPoint(rp.GetPointId());
   }
 
 private:

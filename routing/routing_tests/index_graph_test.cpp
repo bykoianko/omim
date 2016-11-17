@@ -51,7 +51,7 @@ void TestGeometryLoader::AddRoad(uint32_t featureId, buffer_vector<m2::PointD, 3
   m_roads[featureId] = RoadGeometry(false, 1.0 /* speed */, points);
 }
 
-Joint MakeJoint(vector<FtPoint> const & points)
+Joint MakeJoint(vector<RoadPoint> const & points)
 {
   Joint joint;
   for (auto const & point : points)
@@ -65,7 +65,7 @@ shared_ptr<EdgeEstimator> CreateEstimator()
   return CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel());
 }
 
-void TestRoute(IndexGraph & graph, FtPoint const & start, FtPoint const & finish,
+void TestRoute(IndexGraph & graph, RoadPoint const & start, RoadPoint const & finish,
                size_t expectedLength)
 {
   LOG(LINFO, ("Test route", start.GetFeatureId(), ",", start.GetPointId(), "=>",
@@ -76,7 +76,7 @@ void TestRoute(IndexGraph & graph, FtPoint const & start, FtPoint const & finish
 
   AStarAlgorithm<IndexGraph>::Result const resultCode = algorithm.FindPath(
       graph, graph.InsertJoint(start), graph.InsertJoint(finish), routingResult, {}, {});
-  vector<FtPoint> const & ftPoints = graph.RedressRoute(routingResult.path);
+  vector<RoadPoint> const & ftPoints = graph.RedressRoute(routingResult.path);
 
   TEST_EQUAL(resultCode, AStarAlgorithm<IndexGraph>::Result::OK, ());
   TEST_EQUAL(ftPoints.size(), expectedLength, ());
@@ -109,7 +109,7 @@ UNIT_TEST(FindPathCross)
 
   graph.Import({MakeJoint({{0, 2}, {1, 2}})});
 
-  vector<FtPoint> points;
+  vector<RoadPoint> points;
   for (uint32_t i = 0; i < 5; ++i)
   {
     points.emplace_back(0, i);

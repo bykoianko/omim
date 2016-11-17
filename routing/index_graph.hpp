@@ -1,11 +1,11 @@
 #pragma once
 
 #include "routing/edge_estimator.hpp"
-#include "routing/ftpoint.hpp"
-#include "routing/ftpoint_index.hpp"
 #include "routing/geometry.hpp"
 #include "routing/joint.hpp"
 #include "routing/joint_index.hpp"
+#include "routing/road_index.hpp"
+#include "routing/road_point.hpp"
 
 #include "coding/reader.hpp"
 #include "coding/write_to_sink.hpp"
@@ -48,36 +48,36 @@ public:
 
   Geometry const & GetGeometry() const { return m_geometry; }
   m2::PointD const & GetPoint(Joint::Id jointId) const;
-  size_t GetNumRoads() const { return m_ftPointIndex.GetSize(); }
+  size_t GetNumRoads() const { return m_roadIndex.GetSize(); }
   size_t GetNumJoints() const { return m_jointIndex.GetNumJoints(); }
-  size_t GetNumFtPoints() const { return m_jointIndex.GetNumFtPoints(); }
+  size_t GetNumFtPoints() const { return m_jointIndex.GetNumPoints(); }
   void Import(vector<Joint> const & joints);
-  Joint::Id InsertJoint(FtPoint const & ftp);
-  vector<FtPoint> RedressRoute(vector<Joint::Id> const & route) const;
+  Joint::Id InsertJoint(RoadPoint const & rp);
+  vector<RoadPoint> RedressRoute(vector<Joint::Id> const & route) const;
 
   template <class Sink>
   void Serialize(Sink & sink) const
   {
     WriteToSink(sink, static_cast<Joint::Id>(GetNumJoints()));
-    m_ftPointIndex.Serialize(sink);
+    m_roadIndex.Serialize(sink);
   }
 
   template <class Source>
   void Deserialize(Source & src)
   {
     uint32_t const jointsSize = ReadPrimitiveFromSource<uint32_t>(src);
-    m_ftPointIndex.Deserialize(src);
-    m_jointIndex.Build(m_ftPointIndex, jointsSize);
+    m_roadIndex.Deserialize(src);
+    m_jointIndex.Build(m_roadIndex, jointsSize);
   }
 
 private:
-  void AddNeighboringEdge(RoadGeometry const & road, FtPoint ftp, bool forward,
+  void AddNeighboringEdge(RoadGeometry const & road, RoadPoint rp, bool forward,
                           vector<TEdgeType> & edges) const;
   void GetEdgesList(Joint::Id jointId, bool forward, vector<TEdgeType> & edges) const;
 
   Geometry m_geometry;
   shared_ptr<EdgeEstimator> m_estimator;
-  FtPointIndex m_ftPointIndex;
+  RoadIndex m_roadIndex;
   JointIndex m_jointIndex;
 };
 }  // namespace routing

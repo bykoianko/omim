@@ -71,23 +71,23 @@ private:
   vector<Joint::Id> m_jointIds;
 };
 
-class FtPointIndex final
+class RoadIndex final
 {
 public:
   void Import(vector<Joint> const & joints);
 
-  void AddJoint(FtPoint ftp, Joint::Id jointId)
+  void AddJoint(RoadPoint rp, Joint::Id jointId)
   {
-    m_roads[ftp.GetFeatureId()].AddJoint(ftp.GetPointId(), jointId);
+    m_roads[rp.GetFeatureId()].AddJoint(rp.GetPointId(), jointId);
   }
 
   // Find nearest point with normal joint id.
   // If forward == true: neighbor with larger point id (right neighbor)
   // If forward == false: neighbor with smaller point id (left neighbor)
-  pair<Joint::Id, uint32_t> FindNeighbor(FtPoint ftp, bool forward) const;
+  pair<Joint::Id, uint32_t> FindNeighbor(RoadPoint rp, bool forward) const;
 
-  template <class TSink>
-  void Serialize(TSink & sink) const
+  template <class Sink>
+  void Serialize(Sink & sink) const
   {
     WriteToSink(sink, static_cast<uint32_t>(m_roads.size()));
     for (auto const & it : m_roads)
@@ -98,8 +98,8 @@ public:
     }
   }
 
-  template <class TSource>
-  void Deserialize(TSource & src)
+  template <class Source>
+  void Deserialize(Source & src)
   {
     size_t const roadsSize = static_cast<size_t>(ReadPrimitiveFromSource<uint32_t>(src));
     for (size_t i = 0; i < roadsSize; ++i)
@@ -111,13 +111,13 @@ public:
 
   uint32_t GetSize() const { return m_roads.size(); }
 
-  Joint::Id GetJointId(FtPoint ftp) const
+  Joint::Id GetJointId(RoadPoint rp) const
   {
-    auto const it = m_roads.find(ftp.GetFeatureId());
+    auto const it = m_roads.find(rp.GetFeatureId());
     if (it == m_roads.end())
       return Joint::kInvalidId;
 
-    return it->second.GetJointId(ftp.GetPointId());
+    return it->second.GetJointId(rp.GetPointId());
   }
 
   template <typename F>

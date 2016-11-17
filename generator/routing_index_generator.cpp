@@ -88,7 +88,7 @@ private:
     for (size_t fromSegId = 0; fromSegId < pointsCount; ++fromSegId)
     {
       uint64_t const locationKey = PointToInt64(f.GetPoint(fromSegId), POINT_COORD_BITS);
-      m_posToJoint[locationKey].AddEntry(FtPoint(id, fromSegId));
+      m_posToJoint[locationKey].AddEntry(RoadPoint(id, fromSegId));
     }
   }
 

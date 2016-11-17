@@ -30,14 +30,14 @@ uint32_t constexpr kDrawPointsPeriod = 10;
 
 vector<Junction> ConvertToJunctions(IndexGraph const & graph, vector<Joint::Id> const & joints)
 {
-  vector<FtPoint> const & fsegs = graph.RedressRoute(joints);
+  vector<RoadPoint> const & fsegs = graph.RedressRoute(joints);
 
   vector<Junction> junctions;
   junctions.reserve(fsegs.size());
 
   Geometry const & geometry = graph.GetGeometry();
   // TODO: Use real altitudes for pedestrian and bicycle routing.
-  for (FtPoint const & fseg : fsegs)
+  for (RoadPoint const & fseg : fsegs)
     junctions.emplace_back(geometry.GetPoint(fseg), feature::kDefaultAltitudeMeters);
 
   return junctions;
@@ -101,8 +101,8 @@ IRouter::ResultCode AStarRouter::DoCalculateRoute(MwmSet::MwmId const & mwmId,
   if (!FindClosestEdge(mwmId, finalPoint, finishEdge))
     return IRouter::EndPointNotFound;
 
-  FtPoint const start(startEdge.GetFeatureId().m_index, startEdge.GetSegId());
-  FtPoint const finish(finishEdge.GetFeatureId().m_index, finishEdge.GetSegId());
+  RoadPoint const start(startEdge.GetFeatureId().m_index, startEdge.GetSegId());
+  RoadPoint const finish(finishEdge.GetFeatureId().m_index, finishEdge.GetSegId());
 
   IndexGraph graph(CreateGeometryLoader(m_index, mwmId,
                                         m_vehicleModelFactory->GetVehicleModelForCountry(country)),

@@ -8,12 +8,12 @@
 
 namespace routing
 {
-class FtPoint final
+class RoadPoint final
 {
 public:
-  FtPoint() : m_featureId(0), m_pointId(0) {}
+  RoadPoint() : m_featureId(0), m_pointId(0) {}
 
-  FtPoint(uint32_t featureId, uint32_t pointId) : m_featureId(featureId), m_pointId(pointId) {}
+  RoadPoint(uint32_t featureId, uint32_t pointId) : m_featureId(featureId), m_pointId(pointId) {}
 
   uint32_t GetFeatureId() const { return m_featureId; }
 

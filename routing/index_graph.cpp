@@ -33,27 +33,27 @@ m2::PointD const & IndexGraph::GetPoint(Joint::Id jointId) const
 
 void IndexGraph::Import(vector<Joint> const & joints)
 {
-  m_ftPointIndex.Import(joints);
-  m_jointIndex.Build(m_ftPointIndex, joints.size());
+  m_roadIndex.Import(joints);
+  m_jointIndex.Build(m_roadIndex, joints.size());
 }
 
-Joint::Id IndexGraph::InsertJoint(FtPoint const & ftp)
+Joint::Id IndexGraph::InsertJoint(RoadPoint const & rp)
 {
-  Joint::Id const existId = m_ftPointIndex.GetJointId(ftp);
+  Joint::Id const existId = m_roadIndex.GetJointId(rp);
   if (existId != Joint::kInvalidId)
     return existId;
 
-  Joint::Id const jointId = m_jointIndex.InsertJoint(ftp);
-  m_ftPointIndex.AddJoint(ftp, jointId);
+  Joint::Id const jointId = m_jointIndex.InsertJoint(rp);
+  m_roadIndex.AddJoint(rp, jointId);
   return jointId;
 }
 
 // Add intermediate points to route (those doesn't correspond any joint).
 //
 // Also convert joint id to feature id, point id.
-vector<FtPoint> IndexGraph::RedressRoute(vector<Joint::Id> const & route) const
+vector<RoadPoint> IndexGraph::RedressRoute(vector<Joint::Id> const & route) const
 {
-  vector<FtPoint> ftPoints;
+  vector<RoadPoint> ftPoints;
   if (route.size() < 2)
   {
     if (route.size() == 1)
@@ -96,13 +96,13 @@ vector<FtPoint> IndexGraph::RedressRoute(vector<Joint::Id> const & route) const
   return ftPoints;
 }
 
-inline void IndexGraph::AddNeighboringEdge(RoadGeometry const & road, FtPoint ftp, bool forward,
+inline void IndexGraph::AddNeighboringEdge(RoadGeometry const & road, RoadPoint rp, bool forward,
                                            vector<TEdgeType> & edges) const
 {
-  pair<Joint::Id, uint32_t> const & pair = m_ftPointIndex.FindNeighbor(ftp, forward);
+  pair<Joint::Id, uint32_t> const & pair = m_roadIndex.FindNeighbor(rp, forward);
   if (pair.first != Joint::kInvalidId)
   {
-    double const distance = m_estimator->CalcEdgesWeight(road, ftp.GetPointId(), pair.second);
+    double const distance = m_estimator->CalcEdgesWeight(road, rp.GetPointId(), pair.second);
     edges.push_back({pair.first, distance});
   }
 }
@@ -112,17 +112,17 @@ inline void IndexGraph::GetEdgesList(Joint::Id jointId, bool forward,
 {
   edges.clear();
 
-  m_jointIndex.ForEachFtSeg(jointId, [this, &edges, forward](FtPoint const & ftp) {
-    RoadGeometry const & road = m_geometry.GetRoad(ftp.GetFeatureId());
+  m_jointIndex.ForEachPoint(jointId, [this, &edges, forward](RoadPoint const & rp) {
+    RoadGeometry const & road = m_geometry.GetRoad(rp.GetFeatureId());
     if (!road.IsRoad())
       return;
 
     bool const twoWay = !road.IsOneWay();
     if (!forward || twoWay)
-      AddNeighboringEdge(road, ftp, false, edges);
+      AddNeighboringEdge(road, rp, false, edges);
 
     if (forward || twoWay)
-      AddNeighboringEdge(road, ftp, true, edges);
+      AddNeighboringEdge(road, rp, true, edges);
   });
 }
 }  // namespace routing

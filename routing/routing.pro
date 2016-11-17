@@ -26,7 +26,6 @@ SOURCES += \
     directions_engine.cpp \
     edge_estimator.cpp \
     features_road_graph.cpp \
-    ftpoint_index.cpp \
     geometry.cpp \
     index_graph.cpp \
     joint.cpp \
@@ -43,6 +42,7 @@ SOURCES += \
     restriction_loader.cpp \
     road_graph.cpp \
     road_graph_router.cpp \
+    road_index.cpp \
     route.cpp \
     router.cpp \
     router_delegate.cpp \
@@ -74,8 +74,6 @@ HEADERS += \
     directions_engine.hpp \
     edge_estimator.hpp \
     features_road_graph.hpp \
-    ftpoint.hpp \
-    ftpoint_index.hpp \
     geometry.hpp \
     index_graph.hpp \
     joint.hpp \
@@ -94,6 +92,8 @@ HEADERS += \
     restriction_loader.hpp \
     road_graph.hpp \
     road_graph_router.hpp \
+    road_index.hpp \
+    road_point.hpp \
     route.hpp \
     router.hpp \
     router_delegate.hpp \
