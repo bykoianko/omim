@@ -15,57 +15,39 @@ namespace routing
 class JointIndex final
 {
 public:
-  size_t GetNumJoints() const { return m_slices.size(); }
+  // Read comments in Build method about -1.
+  size_t GetNumJoints() const { return m_offsets.size() - 1; }
   size_t GetNumPoints() const { return m_points.size(); }
-  RoadPoint GetFtPoint(Joint::Id jointId) const { return m_points[GetSlice(jointId).Begin()]; }
+  RoadPoint GetFtPoint(Joint::Id jointId) const { return m_points[Begin(jointId)]; }
 
   template <typename F>
   void ForEachPoint(Joint::Id jointId, F && f) const
   {
-    Slice const & slice = GetSlice(jointId);
-    for (size_t i = slice.Begin(); i < slice.End(); ++i)
+    for (uint32_t i = Begin(jointId); i < End(jointId); ++i)
       f(m_points[i]);
   }
 
-  void Build(RoadIndex const & ftPointIndex, uint32_t jointsAmount);
+  void Build(RoadIndex const & roadIndex, uint32_t numJoints);
   pair<RoadPoint, RoadPoint> FindCommonFeature(Joint::Id jointId0, Joint::Id jointId1) const;
   Joint::Id InsertJoint(RoadPoint const & rp);
 
 private:
-  class Slice final
+  // Begin index for jointId entries.
+  uint32_t Begin(Joint::Id jointId) const
   {
-  public:
-    Slice() = default;
-
-    Slice(uint32_t begin, uint32_t end) : m_begin(begin), m_end(end)
-    {
-      ASSERT_LESS_OR_EQUAL(begin, end, ());
-    }
-
-    uint32_t Begin() const { return m_begin; }
-
-    uint32_t End() const { return m_end; }
-
-    void Assign(uint32_t offset)
-    {
-      m_begin = offset;
-      m_end = offset;
-    }
-
-    void IncSize() { ++m_end; }
-
-  private:
-    uint32_t m_begin = 0;
-    uint32_t m_end = 0;
-  };
-
-  Slice const & GetSlice(Joint::Id jointId) const
-  {
-    ASSERT_LESS(jointId, m_slices.size(), ("Joint::Id out of bounds"));
-    return m_slices[jointId];
+    ASSERT_LESS(jointId, m_offsets.size(), ());
+    return m_offsets[jointId];
   }
 
-  vector<Slice> m_slices;
+  // End index (not inclusive) for jointId entries.
+  uint32_t End(Joint::Id jointId) const
+  {
+    Joint::Id const nextId = jointId + 1;
+    ASSERT_LESS(nextId, m_offsets.size(), ());
+    return m_offsets[nextId];
+  }
+
+  vector<uint32_t> m_offsets;
   vector<RoadPoint> m_points;
 };
 }  // namespace routing
