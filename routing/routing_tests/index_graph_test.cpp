@@ -18,13 +18,13 @@ namespace
 {
 using namespace routing;
 
-class TestGeometryLoader : public GeometryLoader
+class TestGeometryLoader final : public GeometryLoader
 {
 public:
   // GeometryLoader overrides:
   void Load(uint32_t featureId, RoadGeometry & road) const override;
 
-  void AddRoad(uint32_t featureId, buffer_vector<m2::PointD, 32> const & points);
+  void AddRoad(uint32_t featureId, bool oneWay, RoadGeometry::Points const & points);
 
 private:
   unordered_map<uint32_t, RoadGeometry> m_roads;
@@ -39,7 +39,8 @@ void TestGeometryLoader::Load(uint32_t featureId, RoadGeometry & road) const
   road = it->second;
 }
 
-void TestGeometryLoader::AddRoad(uint32_t featureId, buffer_vector<m2::PointD, 32> const & points)
+void TestGeometryLoader::AddRoad(uint32_t featureId, bool oneWay,
+                                 RoadGeometry::Points const & points)
 {
   auto it = m_roads.find(featureId);
   if (it != m_roads.end())
@@ -48,7 +49,7 @@ void TestGeometryLoader::AddRoad(uint32_t featureId, buffer_vector<m2::PointD, 3
     return;
   }
 
-  m_roads[featureId] = RoadGeometry(false, 1.0 /* speed */, points);
+  m_roads[featureId] = RoadGeometry(oneWay, 1.0 /* speed */, points);
 }
 
 Joint MakeJoint(vector<RoadPoint> const & points)
@@ -82,8 +83,93 @@ void TestRoute(IndexGraph & graph, RoadPoint const & start, RoadPoint const & fi
   TEST_EQUAL(ftPoints.size(), expectedLength, ());
 }
 
+void TestEdges(IndexGraph const & graph, Joint::Id jointId,
+               vector<Joint::Id> const & expectedTargets, bool forward)
+{
+  vector<JointEdge> edges;
+  if (forward)
+    graph.GetOutgoingEdgesList(jointId, edges);
+  else
+    graph.GetIngoingEdgesList(jointId, edges);
+
+  vector<Joint::Id> targets;
+  for (JointEdge const & edge : edges)
+    targets.push_back(edge.GetTarget());
+
+  sort(targets.begin(), targets.end());
+
+  ASSERT_EQUAL(targets.size(), expectedTargets.size(), ());
+  for (size_t i = 0; i < targets.size(); ++i)
+    ASSERT_EQUAL(targets[i], expectedTargets[i], ());
+}
+
+void TestOutgoingEdges(IndexGraph const & graph, Joint::Id jointId,
+                       vector<Joint::Id> const & expectedTargets)
+{
+  TestEdges(graph, jointId, expectedTargets, true);
+}
+
+void TestIngoingEdges(IndexGraph const & graph, Joint::Id jointId,
+                      vector<Joint::Id> const & expectedTargets)
+{
+  TestEdges(graph, jointId, expectedTargets, false);
+}
+
 uint32_t AbsDelta(uint32_t v0, uint32_t v1) { return v0 > v1 ? v0 - v1 : v1 - v0; }
 }  // namespace
+
+//                   R4 (one way down)
+//
+// R1     J2--------J3         -1
+//         ^         v
+//         ^         v
+// R0 *---J0----*---J1----*     0
+//         ^         v
+//         ^         v
+// R2     J4--------J5          1
+//
+//        R3 (one way up)       y
+//
+// x: 0    1    2    3    4
+//
+UNIT_TEST(EdgesTest)
+{
+  unique_ptr<TestGeometryLoader> loader = make_unique<TestGeometryLoader>();
+  loader->AddRoad(
+      0 /* featureId */, false,
+      RoadGeometry::Points({{0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}, {3.0, 0.0}, {4.0, 0.0}}));
+  loader->AddRoad(1 /* featureId */, false, RoadGeometry::Points({{1.0, -1.0}, {3.0, -1.0}}));
+  loader->AddRoad(2 /* featureId */, false, RoadGeometry::Points({{1.0, -1.0}, {3.0, -1.0}}));
+  loader->AddRoad(3 /* featureId */, true,
+                  RoadGeometry::Points({{1.0, 1.0}, {1.0, 0.0}, {1.0, -1.0}}));
+  loader->AddRoad(4 /* featureId */, true,
+                  RoadGeometry::Points({{3.0, -1.0}, {3.0, 0.0}, {3.0, 1.0}}));
+
+  IndexGraph graph(move(loader), CreateEstimator());
+
+  vector<Joint> joints;
+  joints.emplace_back(MakeJoint({{0, 1}, {3, 1}}));  // J0
+  joints.emplace_back(MakeJoint({{0, 3}, {4, 1}}));  // J1
+  joints.emplace_back(MakeJoint({{1, 0}, {3, 2}}));  // J2
+  joints.emplace_back(MakeJoint({{1, 1}, {4, 0}}));  // J3
+  joints.emplace_back(MakeJoint({{2, 0}, {3, 0}}));  // J4
+  joints.emplace_back(MakeJoint({{2, 1}, {4, 2}}));  // J5
+  graph.Import(joints);
+
+  TestOutgoingEdges(graph, 0, {1, 2});
+  TestOutgoingEdges(graph, 1, {0, 5});
+  TestOutgoingEdges(graph, 2, {3});
+  TestOutgoingEdges(graph, 3, {1, 2});
+  TestOutgoingEdges(graph, 4, {0, 5});
+  TestOutgoingEdges(graph, 5, {4});
+
+  TestIngoingEdges(graph, 0, {1, 4});
+  TestIngoingEdges(graph, 1, {0, 3});
+  TestIngoingEdges(graph, 2, {0, 3});
+  TestIngoingEdges(graph, 3, {2});
+  TestIngoingEdges(graph, 4, {5});
+  TestIngoingEdges(graph, 5, {1, 4});
+}
 
 namespace routing_test
 {
@@ -91,19 +177,19 @@ namespace routing_test
 //
 //            -2
 //            -1
-//  R0: -2 -1  0  1  2
+//  R0  -2 -1  0  1  2
 //             1
 //             2
 //
 UNIT_TEST(FindPathCross)
 {
   unique_ptr<TestGeometryLoader> loader = make_unique<TestGeometryLoader>();
-  loader->AddRoad(0 /* featureId */,
-                  buffer_vector<m2::PointD, 32>(
-                      {{-2.0, 0.0}, {-1.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}}));
-  loader->AddRoad(1 /* featureId */,
-                  buffer_vector<m2::PointD, 32>(
-                      {{0.0, -2.0}, {-1.0, 0.0}, {0.0, 0.0}, {0.0, 1.0}, {0.0, 2.0}}));
+  loader->AddRoad(
+      0 /* featureId */, false,
+      RoadGeometry::Points({{-2.0, 0.0}, {-1.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}}));
+  loader->AddRoad(
+      1 /* featureId */, false,
+      RoadGeometry::Points({{0.0, -2.0}, {-1.0, 0.0}, {0.0, 0.0}, {0.0, 1.0}, {0.0, 2.0}}));
 
   IndexGraph graph(move(loader), CreateEstimator());
 
@@ -150,15 +236,15 @@ UNIT_TEST(FindPathManhattan)
   unique_ptr<TestGeometryLoader> loader = make_unique<TestGeometryLoader>();
   for (uint32_t i = 0; i < kCitySize; ++i)
   {
-    buffer_vector<m2::PointD, 32> street;
-    buffer_vector<m2::PointD, 32> avenue;
+    RoadGeometry::Points street;
+    RoadGeometry::Points avenue;
     for (uint32_t j = 0; j < kCitySize; ++j)
     {
       street.emplace_back(static_cast<double>(i), static_cast<double>(j));
       avenue.emplace_back(static_cast<double>(j), static_cast<double>(i));
     }
-    loader->AddRoad(i, street);
-    loader->AddRoad(i + kCitySize, avenue);
+    loader->AddRoad(i, false, street);
+    loader->AddRoad(i + kCitySize, false, avenue);
   }
 
   IndexGraph graph(move(loader), CreateEstimator());

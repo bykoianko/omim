@@ -10,7 +10,7 @@
 namespace routing
 {
 // Joint represents roads connection.
-// It contains feature id, segment id for each road connected.
+// It contains RoadPoint for each connected road.
 class Joint final
 {
 public:

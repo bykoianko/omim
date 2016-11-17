@@ -46,7 +46,7 @@ void GeometryLoaderImpl::Load(uint32_t featureId, RoadGeometry & road) const
 
 namespace routing
 {
-RoadGeometry::RoadGeometry(bool oneWay, double speed, buffer_vector<m2::PointD, 32> const & points)
+RoadGeometry::RoadGeometry(bool oneWay, double speed, Points const & points)
   : m_isRoad(true), m_isOneWay(oneWay), m_speed(speed), m_points(points)
 {
 }

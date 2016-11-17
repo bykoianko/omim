@@ -19,7 +19,7 @@ class IndexGraph;
 class AStarRouter
 {
 public:
-  AStarRouter(const char * name, Index const & index, TCountryFileFn const & countryFileFn,
+  AStarRouter(string const & name, Index const & index,
               shared_ptr<VehicleModelFactory> vehicleModelFactory,
               shared_ptr<EdgeEstimator> estimator, unique_ptr<IDirectionsEngine> directionsEngine);
 
@@ -41,13 +41,11 @@ private:
 
   string m_name;
   Index const & m_index;
-  TCountryFileFn m_countryFileFn;
   unique_ptr<IRoadGraph> m_roadGraph;
   shared_ptr<VehicleModelFactory> m_vehicleModelFactory;
   shared_ptr<EdgeEstimator> m_estimator;
   unique_ptr<IDirectionsEngine> m_directionsEngine;
 };
 
-unique_ptr<AStarRouter> CreateCarAStarBidirectionalRouter(Index & index,
-                                                          TCountryFileFn const & countryFileFn);
+unique_ptr<AStarRouter> CreateCarAStarBidirectionalRouter(Index & index);
 }  // namespace routing

@@ -18,8 +18,10 @@ namespace routing
 class RoadGeometry final
 {
 public:
+  using Points = buffer_vector<m2::PointD, 32>;
+
   RoadGeometry() = default;
-  RoadGeometry(bool oneWay, double speed, buffer_vector<m2::PointD, 32> const & points);
+  RoadGeometry(bool oneWay, double speed, Points const & points);
 
   void Load(IVehicleModel const & vehicleModel, FeatureType & feature);
 
@@ -41,7 +43,7 @@ private:
   bool m_isRoad = false;
   bool m_isOneWay = false;
   double m_speed = 0.0;
-  buffer_vector<m2::PointD, 32> m_points;
+  Points m_points;
 };
 
 class GeometryLoader

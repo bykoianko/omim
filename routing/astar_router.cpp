@@ -46,21 +46,18 @@ vector<Junction> ConvertToJunctions(IndexGraph const & graph, vector<Joint::Id> 
 
 namespace routing
 {
-AStarRouter::AStarRouter(const char * name, Index const & index,
-                         TCountryFileFn const & countryFileFn,
+AStarRouter::AStarRouter(string const & name, Index const & index,
                          shared_ptr<VehicleModelFactory> vehicleModelFactory,
                          shared_ptr<EdgeEstimator> estimator,
                          unique_ptr<IDirectionsEngine> directionsEngine)
   : m_name(name)
   , m_index(index)
-  , m_countryFileFn(countryFileFn)
   , m_roadGraph(
         make_unique<FeaturesRoadGraph>(index, IRoadGraph::Mode::ObeyOnewayTag, vehicleModelFactory))
   , m_vehicleModelFactory(vehicleModelFactory)
   , m_estimator(estimator)
   , m_directionsEngine(move(directionsEngine))
 {
-  ASSERT(name, ());
   ASSERT(!m_name.empty(), ());
   ASSERT(m_vehicleModelFactory, ());
   ASSERT(m_estimator, ());
@@ -91,7 +88,7 @@ IRouter::ResultCode AStarRouter::DoCalculateRoute(MwmSet::MwmId const & mwmId,
                                                   m2::PointD const & finalPoint,
                                                   RouterDelegate const & delegate, Route & route)
 {
-  string const country = m_countryFileFn(startPoint);
+  string const & country = mwmId.GetInfo()->GetCountryName();
 
   Edge startEdge = Edge::MakeFake({} /* startJunction */, {} /* endJunction */);
   if (!FindClosestEdge(mwmId, startPoint, startEdge))
@@ -161,9 +158,9 @@ bool AStarRouter::FindClosestEdge(MwmSet::MwmId const & mwmId, m2::PointD const 
     if (edge.GetFeatureId().m_mwmId != mwmId)
       continue;
 
-    m2::DistanceToLineSquare<m2::PointD> squareDistance;
-    squareDistance.SetBounds(edge.GetStartJunction().GetPoint(), edge.GetEndJunction().GetPoint());
-    double const distance = squareDistance(point);
+    m2::DistanceToLineSquare<m2::PointD> squaredDistance;
+    squaredDistance.SetBounds(edge.GetStartJunction().GetPoint(), edge.GetEndJunction().GetPoint());
+    double const distance = squaredDistance(point);
     if (distance < minDistance)
     {
       minDistance = distance;
@@ -205,8 +202,7 @@ bool AStarRouter::LoadIndex(MwmSet::MwmId const & mwmId, string const & country,
   }
 }
 
-unique_ptr<AStarRouter> CreateCarAStarBidirectionalRouter(Index & index,
-                                                          TCountryFileFn const & countryFileFn)
+unique_ptr<AStarRouter> CreateCarAStarBidirectionalRouter(Index & index)
 {
   shared_ptr<VehicleModelFactory> vehicleModelFactory = make_shared<CarModelFactory>();
   // @TODO Bicycle turn generation engine is used now. It's ok for the time being.
@@ -215,8 +211,8 @@ unique_ptr<AStarRouter> CreateCarAStarBidirectionalRouter(Index & index,
   shared_ptr<EdgeEstimator> estimator =
       CreateCarEdgeEstimator(vehicleModelFactory->GetVehicleModel());
   unique_ptr<AStarRouter> router =
-      make_unique<AStarRouter>("astar-bidirectional-car", index, countryFileFn,
-                               move(vehicleModelFactory), estimator, move(directionsEngine));
+      make_unique<AStarRouter>("astar-bidirectional-car", index, move(vehicleModelFactory),
+                               estimator, move(directionsEngine));
   return router;
 }
 }  // namespace routing
