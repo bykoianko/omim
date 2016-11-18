@@ -18,18 +18,28 @@ public:
   // Read comments in Build method about -1.
   size_t GetNumJoints() const { return m_offsets.size() - 1; }
   size_t GetNumPoints() const { return m_points.size(); }
-  RoadPoint GetFtPoint(Joint::Id jointId) const { return m_points[Begin(jointId)]; }
+  RoadPoint GetPoint(Joint::Id jointId) const { return m_points[Begin(jointId)]; }
 
   template <typename F>
   void ForEachPoint(Joint::Id jointId, F && f) const
   {
     for (uint32_t i = Begin(jointId); i < End(jointId); ++i)
       f(m_points[i]);
+
+    auto const & it = m_dynamicJoints.find(jointId);
+    if (it != m_dynamicJoints.end())
+    {
+      Joint const & joint = it->second;
+      for (size_t i = 0; i < joint.GetSize(); ++i)
+        f(joint.GetEntry(i));
+    }
   }
 
   void Build(RoadIndex const & roadIndex, uint32_t numJoints);
-  pair<RoadPoint, RoadPoint> FindCommonFeature(Joint::Id jointId0, Joint::Id jointId1) const;
+  void FindCommonFeature(Joint::Id jointId0, Joint::Id jointId1, RoadPoint & result0,
+                         RoadPoint & result1) const;
   Joint::Id InsertJoint(RoadPoint const & rp);
+  void AppendJoint(Joint::Id jointId, RoadPoint rp);
 
 private:
   // Begin index for jointId entries.
@@ -49,5 +59,6 @@ private:
 
   vector<uint32_t> m_offsets;
   vector<RoadPoint> m_points;
+  unordered_map<Joint::Id, Joint> m_dynamicJoints;
 };
 }  // namespace routing

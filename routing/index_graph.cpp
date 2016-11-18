@@ -28,7 +28,7 @@ double IndexGraph::HeuristicCostEstimate(Joint::Id jointFrom, Joint::Id jointTo)
 
 m2::PointD const & IndexGraph::GetPoint(Joint::Id jointId) const
 {
-  return m_geometry.GetPoint(m_jointIndex.GetFtPoint(jointId));
+  return m_geometry.GetPoint(m_jointIndex.GetPoint(jointId));
 }
 
 void IndexGraph::Import(vector<Joint> const & joints)
@@ -57,7 +57,7 @@ vector<RoadPoint> IndexGraph::RedressRoute(vector<Joint::Id> const & route) cons
   if (route.size() < 2)
   {
     if (route.size() == 1)
-      ftPoints.emplace_back(m_jointIndex.GetFtPoint(route[0]));
+      ftPoints.emplace_back(m_jointIndex.GetPoint(route[0]));
     return ftPoints;
   }
 
@@ -68,13 +68,15 @@ vector<RoadPoint> IndexGraph::RedressRoute(vector<Joint::Id> const & route) cons
     Joint::Id const prevJoint = route[i];
     Joint::Id const nextJoint = route[i + 1];
 
-    auto const & pair = m_jointIndex.FindCommonFeature(prevJoint, nextJoint);
+    RoadPoint rp0;
+    RoadPoint rp1;
+    m_jointIndex.FindCommonFeature(prevJoint, nextJoint, rp0, rp1);
     if (i == 0)
-      ftPoints.push_back(pair.first);
+      ftPoints.push_back(rp0);
 
-    uint32_t const featureId = pair.first.GetFeatureId();
-    uint32_t const segFrom = pair.first.GetPointId();
-    uint32_t const segTo = pair.second.GetPointId();
+    uint32_t const featureId = rp0.GetFeatureId();
+    uint32_t const segFrom = rp0.GetPointId();
+    uint32_t const segTo = rp1.GetPointId();
 
     if (segFrom < segTo)
     {
@@ -90,7 +92,7 @@ vector<RoadPoint> IndexGraph::RedressRoute(vector<Joint::Id> const & route) cons
       MYTHROW(RootException,
               ("Wrong equality segFrom = segTo =", segFrom, ", featureId = ", featureId));
 
-    ftPoints.push_back(pair.second);
+    ftPoints.push_back(rp1);
   }
 
   return ftPoints;
@@ -99,11 +101,11 @@ vector<RoadPoint> IndexGraph::RedressRoute(vector<Joint::Id> const & route) cons
 inline void IndexGraph::AddNeighboringEdge(RoadGeometry const & road, RoadPoint rp, bool forward,
                                            vector<TEdgeType> & edges) const
 {
-  pair<Joint::Id, uint32_t> const & pair = m_roadIndex.FindNeighbor(rp, forward);
-  if (pair.first != Joint::kInvalidId)
+  pair<Joint::Id, uint32_t> const & neighbor = m_roadIndex.FindNeighbor(rp, forward);
+  if (neighbor.first != Joint::kInvalidId)
   {
-    double const distance = m_estimator->CalcEdgesWeight(road, rp.GetPointId(), pair.second);
-    edges.push_back({pair.first, distance});
+    double const distance = m_estimator->CalcEdgesWeight(road, rp.GetPointId(), neighbor.second);
+    edges.push_back({neighbor.first, distance});
   }
 }
 

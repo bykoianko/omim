@@ -30,15 +30,15 @@ uint32_t constexpr kDrawPointsPeriod = 10;
 
 vector<Junction> ConvertToJunctions(IndexGraph const & graph, vector<Joint::Id> const & joints)
 {
-  vector<RoadPoint> const & fsegs = graph.RedressRoute(joints);
+  vector<RoadPoint> const & points = graph.RedressRoute(joints);
 
   vector<Junction> junctions;
-  junctions.reserve(fsegs.size());
+  junctions.reserve(points.size());
 
   Geometry const & geometry = graph.GetGeometry();
   // TODO: Use real altitudes for pedestrian and bicycle routing.
-  for (RoadPoint const & fseg : fsegs)
-    junctions.emplace_back(geometry.GetPoint(fseg), feature::kDefaultAltitudeMeters);
+  for (RoadPoint const & point : points)
+    junctions.emplace_back(geometry.GetPoint(point), feature::kDefaultAltitudeMeters);
 
   return junctions;
 }

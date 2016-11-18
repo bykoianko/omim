@@ -56,7 +56,7 @@ Joint MakeJoint(vector<RoadPoint> const & points)
 {
   Joint joint;
   for (auto const & point : points)
-    joint.AddEntry(point);
+    joint.AddPoint(point);
 
   return joint;
 }

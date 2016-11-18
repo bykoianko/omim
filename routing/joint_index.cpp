@@ -10,21 +10,29 @@ Joint::Id JointIndex::InsertJoint(RoadPoint const & rp)
   return jointId;
 }
 
-pair<RoadPoint, RoadPoint> JointIndex::FindCommonFeature(Joint::Id jointId0,
-                                                         Joint::Id jointId1) const
+void JointIndex::AppendJoint(Joint::Id jointId, RoadPoint rp)
 {
-  for (size_t i = Begin(jointId0); i < End(jointId0); ++i)
-  {
-    RoadPoint const & rp0 = m_points[i];
-    for (size_t j = Begin(jointId1); j < End(jointId1); ++j)
-    {
-      RoadPoint const & rp1 = m_points[j];
-      if (rp0.GetFeatureId() == rp1.GetFeatureId())
-        return make_pair(rp0, rp1);
-    }
-  }
+  m_dynamicJoints[jointId].AddPoint(rp);
+}
 
-  MYTHROW(RootException, ("Can't find common feature for joints", jointId0, jointId1));
+void JointIndex::FindCommonFeature(Joint::Id jointId0, Joint::Id jointId1, RoadPoint & result0,
+                                   RoadPoint & result1) const
+{
+  bool found = false;
+
+  ForEachPoint(jointId0, [&](RoadPoint const & rp0) {
+    ForEachPoint(jointId1, [&](RoadPoint const & rp1) {
+      if (rp0.GetFeatureId() == rp1.GetFeatureId() && !found)
+      {
+        result0 = rp0;
+        result1 = rp1;
+        found = true;
+      }
+    });
+  });
+
+  if (!found)
+    MYTHROW(RootException, ("Can't find common feature for joints", jointId0, jointId1));
 }
 
 void JointIndex::Build(RoadIndex const & roadIndex, uint32_t numJoints)

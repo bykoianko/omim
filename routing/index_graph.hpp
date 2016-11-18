@@ -28,6 +28,7 @@ public:
   double GetWeight() const { return m_weight; }
 
 private:
+  // Target is vertex going to for outgoing edges, vertex going from for ingoing edges.
   Joint::Id const m_target;
   double const m_weight;
 };
@@ -50,7 +51,7 @@ public:
   m2::PointD const & GetPoint(Joint::Id jointId) const;
   size_t GetNumRoads() const { return m_roadIndex.GetSize(); }
   size_t GetNumJoints() const { return m_jointIndex.GetNumJoints(); }
-  size_t GetNumFtPoints() const { return m_jointIndex.GetNumPoints(); }
+  size_t GetNumPoints() const { return m_jointIndex.GetNumPoints(); }
   void Import(vector<Joint> const & joints);
   Joint::Id InsertJoint(RoadPoint const & rp);
   vector<RoadPoint> RedressRoute(vector<Joint::Id> const & route) const;

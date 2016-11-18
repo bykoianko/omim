@@ -17,13 +17,13 @@ public:
   using Id = uint32_t;
   static Id constexpr kInvalidId = numeric_limits<Id>::max();
 
-  void AddEntry(RoadPoint entry) { m_entries.emplace_back(entry); }
+  void AddPoint(RoadPoint rp) { m_points.emplace_back(rp); }
 
-  size_t GetSize() const { return m_entries.size(); }
+  size_t GetSize() const { return m_points.size(); }
 
-  RoadPoint const & GetEntry(size_t i) const { return m_entries[i]; }
+  RoadPoint const & GetEntry(size_t i) const { return m_points[i]; }
 
 private:
-  buffer_vector<RoadPoint, 2> m_entries;
+  buffer_vector<RoadPoint, 2> m_points;
 };
 }  // namespace routing

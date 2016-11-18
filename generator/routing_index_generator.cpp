@@ -88,7 +88,7 @@ private:
     for (size_t fromSegId = 0; fromSegId < pointsCount; ++fromSegId)
     {
       uint64_t const locationKey = PointToInt64(f.GetPoint(fromSegId), POINT_COORD_BITS);
-      m_posToJoint[locationKey].AddEntry(RoadPoint(id, fromSegId));
+      m_posToJoint[locationKey].AddPoint(RoadPoint(id, fromSegId));
     }
   }
 
@@ -134,7 +134,7 @@ void BuildRoutingIndex(string const & dir, string const & country)
     IndexGraph graph;
     processor.BuildGraph(graph);
     LOG(LINFO, ("Routing index contains", graph.GetNumRoads(), "roads", graph.GetNumJoints(),
-                "joints", graph.GetNumFtPoints(), "points"));
+                "joints", graph.GetNumPoints(), "points"));
 
     FilesContainerW cont(filename, FileWriter::OP_WRITE_EXISTING);
     FileWriter writer = cont.GetWriter(ROUTING_FILE_TAG);
