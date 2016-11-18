@@ -311,7 +311,7 @@ UNIT_TEST(FindPathManhattan)
 // * without feature F2
 // * without feature F2 and F3
 // Note. F0, F1 and F2 are one segment features. F3 is a two segment feature.
-UNIT_TEST(FindPathDisableEdge)
+UNIT_TEST(FindPathFourFeatureTriangularGraph)
 {
   auto const loader = []()
   {
@@ -335,7 +335,7 @@ UNIT_TEST(FindPathDisableEdge)
   RoadPoint const kStart(2, 0);
   RoadPoint const kFinish(1, 1);
 
-  // Removing edges.
+  // Disabling edges.
   {
     IndexGraph graph(loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
     graph.Import(joints, {} /* restrictions */);
@@ -353,6 +353,18 @@ UNIT_TEST(FindPathDisableEdge)
     graph.DisableEdge(graph.GetJointIdForTesting({3 /* feature id */, 0 /* point id */}),
                       graph.GetJointIdForTesting({3, 2}));
     TestRouteSegments(graph, kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::NoPath, {});
+  }
+
+  // Restriction "No".
+  {
+    IndexGraph graph(loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
+    graph.Import(joints, {} /* restrictions */);
+    graph.ApplyRestrictionNo({2 /* feature id */, 1 /* seg id */}, {1, 0},
+                             graph.GetJointIdForTesting({1, 0}));
+    vector<RoadPoint> const expectedRouteRestrictionF2F1No = {{3 /* feature id */, 0 /* seg id */},
+                                                              {3, 1}, {3, 2}, {0, 1}};
+    TestRouteSegments(graph, kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK,
+                      expectedRouteRestrictionF2F1No);
   }
 }
 
@@ -394,8 +406,8 @@ UNIT_TEST(FindPathAddingOneLinkFakeFeature)
   // Adding a shortcut fake feature.
   graph.AddFakeFeature(graph.GetJointIdForTesting(kStart), graph.GetJointIdForTesting(kFinish),
                        {} /* viaPointGeometry */);
-  vector<RoadPoint> const expectedRouteByFakeFeature = {{IndexGraph::kStartFakeFeaturesId, 0 /* seg id */},
-                                                        {IndexGraph::kStartFakeFeaturesId, 1 /* seg id */}};
+  vector<RoadPoint> const expectedRouteByFakeFeature = {{IndexGraph::kStartFakeFeatureIds, 0 /* seg id */},
+                                                        {IndexGraph::kStartFakeFeatureIds, 1 /* seg id */}};
   TestRouteSegments(graph, kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK, expectedRouteByFakeFeature);
 }
 
@@ -477,9 +489,9 @@ UNIT_TEST(FindPathAddingThreeOneLinkFakeFeatures)
   graph.AddFakeFeature({2 /* feature id */, 1 /* point id */},
                        graph.GetJointIdForTesting({6 /* feature id */, 1 /* point id */}));
   vector<RoadPoint> const expectedRoute1Fake0 = {{2 /* feature id */, 0 /* seg id */},
-                                                 {2, 1}, {IndexGraph::kStartFakeFeaturesId, 1}};
+                                                 {2, 1}, {IndexGraph::kStartFakeFeatureIds, 1}};
   vector<RoadPoint> const expectedRoute2Fake0 = {{2 /* feature id */, 0 /* seg id */},
-                                                 {2, 1}, {IndexGraph::kStartFakeFeaturesId, 1}, {5, 1}};
+                                                 {2, 1}, {IndexGraph::kStartFakeFeatureIds, 1}, {5, 1}};
   testRoutes(graph, expectedRoute0, expectedRoute1Fake0, expectedRoute2Fake0);
 
   // Adding Fake-1 and Fake-2 features.
@@ -488,14 +500,14 @@ UNIT_TEST(FindPathAddingThreeOneLinkFakeFeatures)
   graph.AddFakeFeature(graph.GetJointIdForTesting({2 /* feature id */, 0 /* point id */}),
                        graph.GetJointIdForTesting({1 /* feature id */, 1 /* point id */}),
                        {} /* via points */);
-  vector<RoadPoint> const expectedRoute2Fake012 = {{IndexGraph::kStartFakeFeaturesId + 2 /* Fake 2 */, 0},
-                                                   {IndexGraph::kStartFakeFeaturesId + 2 /* Fake 2 */, 1},
-                                                   {IndexGraph::kStartFakeFeaturesId + 1 /* Fake 1 */, 1}};
+  vector<RoadPoint> const expectedRoute2Fake012 = {{IndexGraph::kStartFakeFeatureIds + 2 /* Fake 2 */, 0},
+                                                   {IndexGraph::kStartFakeFeatureIds + 2 /* Fake 2 */, 1},
+                                                   {IndexGraph::kStartFakeFeatureIds + 1 /* Fake 1 */, 1}};
   testRoutes(graph, expectedRoute0, expectedRoute1Fake0, expectedRoute2Fake012);
 
   // Disabling Fake-2 feature.
-  graph.DisableEdge(graph.GetJointIdForTesting({IndexGraph::kStartFakeFeaturesId + 2 /* Fake 2 */, 0}),
-                    graph.GetJointIdForTesting({IndexGraph::kStartFakeFeaturesId + 2 /* Fake 2 */, 1}));
+  graph.DisableEdge(graph.GetJointIdForTesting({IndexGraph::kStartFakeFeatureIds + 2 /* Fake 2 */, 0}),
+                    graph.GetJointIdForTesting({IndexGraph::kStartFakeFeatureIds + 2 /* Fake 2 */, 1}));
   testRoutes(graph, expectedRoute0, expectedRoute1Fake0, expectedRoute2Fake0);
 }
 }  // namespace routing_test

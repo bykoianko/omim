@@ -101,12 +101,55 @@ void IndexGraph::AddFakeFeature(RoadPoint const & fromPnt, Joint::Id to)
   AddFakeFeature(InsertJoint(fromPnt), to, {} /* viaPointGeometry */);
 }
 
-void IndexGraph::ApplyRestrictionNo(routing::RoadPoint const & from, routing::RoadPoint const & to,
-                                    Joint::Id jointId)
+void IndexGraph::ApplyRestrictionNo(RoadPoint const & from, RoadPoint const & to,
+                                    Joint::Id centerId)
 {
+  auto findOneStepAsideRoadPoint = [&](RoadPoint const & center, vector<TEdgeType> const & edges,
+      Joint::Id & oneStepAside)
+  {
+    auto const itOneStepAside = find_if(edges.cbegin(), edges.cend(), [&](TEdgeType const & e){
+      // @TODO This place is possible to implement faster. It should be taken into account
+      // if a profiler shows this place.
+      return m_jointIndex.FindCommonFeature(centerId, e.GetTarget()).first.GetFeatureId() == center.GetFeatureId();
+    });
+    if (itOneStepAside == edges.cend())
+      return false;
+    oneStepAside = itOneStepAside->GetTarget();
+    return true;
+  };
+
+  vector<TEdgeType> ingoingEdges;
+  GetIngoingEdgesList(centerId, ingoingEdges);
+  Joint::Id fromOneStepAside = Joint::kInvalidId;
+  if (!findOneStepAsideRoadPoint(from, ingoingEdges, fromOneStepAside))
+    return;
+
+  vector<TEdgeType> outgoingEdges;
+  GetOutgoingEdgesList(centerId, outgoingEdges);
+  Joint::Id toOneStepAside = Joint::kInvalidId;
+  if (!findOneStepAsideRoadPoint(to, outgoingEdges, toOneStepAside))
+    return;
+
+  // One ingoing edge case.
+  if (ingoingEdges.size() == 1)
+  {
+    DisableEdge(centerId, toOneStepAside);
+    return;
+  }
+
+  // One outgoing edge case.
+  if (outgoingEdges.size() == 1)
+  {
+    DisableEdge(fromOneStepAside, centerId);
+    return;
+  }
+
+  // Prohibition of moving from one segment to another in any number of ingoing and outgoing edges.
+  // The idea is to tranform navigation graph...
+
 }
 
-void IndexGraph::ApplyRestrictionOnly(routing::RoadPoint const & from, routing::RoadPoint const & to,
+void IndexGraph::ApplyRestrictionOnly(RoadPoint const & from, RoadPoint const & to,
                                       Joint::Id jointId)
 {
 }

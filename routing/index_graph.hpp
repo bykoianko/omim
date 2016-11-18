@@ -109,7 +109,7 @@ public:
   /// \brief Add restrictions in |restrictions| to |m_ftPointIndex|.
   void ApplyRestrictions(RestrictionVec const & restrictions);
 
-  static uint32_t const kStartFakeFeaturesId = 1024 * 1024 * 1024;
+  static uint32_t const kStartFakeFeatureIds = 1024 * 1024 * 1024;
 
 private:
   void AddNeighboringEdge(RoadGeometry const & road, RoadPoint rp, bool forward,
@@ -130,7 +130,7 @@ private:
   JointIndex m_jointIndex;
 
   set<pair<Joint::Id, Joint::Id>> m_blockedEdges;
-  uint32_t m_nextFakeFeatureId = kStartFakeFeaturesId;
+  uint32_t m_nextFakeFeatureId = kStartFakeFeatureIds;
   // Mapping from fake feature id to fake feature geometry.
   map<uint32_t, RoadGeometry> m_fakeFeatureGeometry;
 };
