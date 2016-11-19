@@ -31,8 +31,8 @@ public:
 
 private:
   // Target is vertex going to for outgoing edges, vertex going from for ingoing edges.
-  Joint::Id const m_target;
-  double const m_weight;
+  Joint::Id m_target;
+  double m_weight;
 };
 
 class IndexGraph final
@@ -85,12 +85,8 @@ public:
   /// \brief Connects joint |from| and |to| with a fake oneway feature. Geometry for end of
   /// the feature is taken form first point of |from| and |to|. If |viaPointGeometry| is not empty
   /// the feature is created with intermediate (not joint) point(s).
-  void AddFakeFeature(Joint::Id from, Joint::Id to, vector<RoadPoint> const & viaPointGeometry);
-
-  /// \brief Connects point |form| and joint |to| with a one segment, oneway fake feature.
-  /// If |form| corresponds a joint, the joint and |to| are connected with a fake feature.
-  /// If not, creates a joint for |from| and then connects it with |to|.
-  void AddFakeFeature(RoadPoint const & from, Joint::Id to);
+  /// \returns feature id which was added.
+  uint32_t AddFakeFeature(Joint::Id from, Joint::Id to, vector<RoadPoint> const & viaPointGeometry);
 
   /// \brief Adds restriction to navigation graph which says that it's prohibited to go from
   /// |from| to |to|.
@@ -113,7 +109,7 @@ public:
 
 private:
   void AddNeighboringEdge(RoadGeometry const & road, RoadPoint rp, bool forward,
-                          vector<TEdgeType> & edges) const;
+                          bool outgoing, vector<TEdgeType> & edges) const;
   void GetEdgesList(Joint::Id jointId, bool forward, vector<TEdgeType> & edges) const;
   void Build(uint32_t jointNumber, RestrictionVec const & restrictions);
 
@@ -123,6 +119,21 @@ private:
   void CreateFakeFeatureGeometry(vector<RoadPoint> const & geometrySource, RoadGeometry & geometry) const;
 
   double GetSpeed(RoadPoint ftp) const;
+
+  /// \brief Finds neghboring of |centerId| joint on feature id of |center|
+  /// which is contained in |edges| and fills |oneStepAside| with it.
+  /// \note If oneStepAside is empty no neghboring nodes were found.
+  /// \note Taking into account the way of setting restrictions almost always |oneStepAside|
+  /// will contain one or zero items. Besides the it it's posible to draw map
+  /// the (wrong) way |oneStepAside| will contain any number of items.
+  void FindFirstOneStepAsideRoadPoint(RoadPoint const & center, Joint::Id centerId,
+                                      vector<TEdgeType> const & edges,
+                                      vector<Joint::Id> & oneStepAside) const;
+
+  bool ApplyRestrictionPrepareData(RoadPoint const & from, RoadPoint const & to,
+                                   Joint::Id centerId,
+                                   vector<TEdgeType> & ingoingEdges, vector<TEdgeType> & outgoingEdges,
+                                   Joint::Id & fromFirstOneStepAside, Joint::Id & toFirstOneStepAside);
 
   Geometry m_geometry;
   shared_ptr<EdgeEstimator> m_estimator;

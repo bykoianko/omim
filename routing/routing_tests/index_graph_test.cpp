@@ -81,8 +81,8 @@ AStarAlgorithm<IndexGraph>::Result CalculateRoute(IndexGraph & graph,
 void TestRoute(IndexGraph & graph, RoadPoint const & start, RoadPoint const & finish,
                size_t expectedLength)
 {
-  LOG(LINFO, ("Test route", start.GetFeatureId(), ",", start.GetPointId(), "=>",
-              finish.GetFeatureId(), ",", finish.GetPointId()));
+//  LOG(LINFO, ("Test route", start.GetFeatureId(), ",", start.GetPointId(), "=>",
+//              finish.GetFeatureId(), ",", finish.GetPointId()));
 
   vector<RoadPoint> route;
   AStarAlgorithm<IndexGraph>::Result const resultCode = CalculateRoute(graph, start, finish, route);
@@ -385,9 +385,9 @@ UNIT_TEST(FindPathAddingOneLinkFakeFeature)
   auto const loader = []()
   {
     unique_ptr<TestGeometryLoader> loader = make_unique<TestGeometryLoader>();
-    loader->AddRoad(0 /* featureId */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
+    loader->AddRoad(0 /* feature id */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
                            {{0.0, 0.0}, {0.0, 2.0}}));
-    loader->AddRoad(1 /* featureId */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
+    loader->AddRoad(1 /* feature id */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
                            {{2.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}}));
     return loader;
   };
@@ -399,7 +399,7 @@ UNIT_TEST(FindPathAddingOneLinkFakeFeature)
 
   IndexGraph graph(loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
   graph.Import(joints, {} /* restrictions */);
-  vector<RoadPoint> const expectedRoute = {{1 /* feature id */, 0 /* seg id */},
+  vector<RoadPoint> const expectedRoute = {{1 /* feature id */, 0 /* point id */},
                                            {1, 1}, {1, 2}, {0, 1}};
   TestRouteSegments(graph, kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK, expectedRoute);
 
@@ -434,19 +434,19 @@ UNIT_TEST(FindPathAddingThreeOneLinkFakeFeatures)
   auto const loader = []()
   {
     unique_ptr<TestGeometryLoader> loader = make_unique<TestGeometryLoader>();
-    loader->AddRoad(0 /* featureId */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
+    loader->AddRoad(0 /* feature id */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
                            {{0.0, 0.0}, {0.0, 2.0}}));
-    loader->AddRoad(1 /* featureId */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
+    loader->AddRoad(1 /* feature id */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
                            {{1.0, 0.0}, {1.0, 1.0}, {1.0, 2.0}}));
-    loader->AddRoad(2 /* featureId */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
+    loader->AddRoad(2 /* feature id */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
                            {{2.0, 0.0}, {2.0, 1.0}, {2.0, 2.0}}));
-    loader->AddRoad(3 /* featureId */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
+    loader->AddRoad(3 /* feature id */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
                            {{2.0, 0.0}, {1.0, 0.0}}));
-    loader->AddRoad(4 /* featureId */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
+    loader->AddRoad(4 /* feature id */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
                            {{1.0, 0.0}, {0.0, 0.0}}));
-    loader->AddRoad(5 /* featureId */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
+    loader->AddRoad(5 /* feature id */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
                            {{1.0, 2.0}, {0.0, 2.0}}));
-    loader->AddRoad(6 /* featureId */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
+    loader->AddRoad(6 /* feature id */, true /* oneWay */, buffer_vector<m2::PointD, 32>(
                            {{2.0, 2.0}, {1.0, 2.0}}));
     return loader;
   };
@@ -460,7 +460,7 @@ UNIT_TEST(FindPathAddingThreeOneLinkFakeFeatures)
     MakeJoint({{2, 2}, {6, 0}}), /* joint at point (2, 2) */
   };
 
-  RoadPoint const kStart(2 /* featureId */, 0 /* pointId */);
+  RoadPoint const kStart(2 /* feature id */, 0 /* point id */);
   RoadPoint const kFinish0(6, 0);
   RoadPoint const kFinish1(6, 1);
   RoadPoint const kFinish2(5, 1);
@@ -477,26 +477,26 @@ UNIT_TEST(FindPathAddingThreeOneLinkFakeFeatures)
   IndexGraph graph(loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
   graph.Import(joints, {} /* restrictions */);
 
-  vector<RoadPoint> const expectedRoute0 = {{2 /* feature id */, 0 /* seg id */},
+  vector<RoadPoint> const expectedRoute0 = {{2 /* feature id */, 0 /* point id */},
                                             {2, 1}, {2, 2}};
-  vector<RoadPoint> const expectedRoute1 = {{2 /* feature id */, 0 /* seg id */},
+  vector<RoadPoint> const expectedRoute1 = {{2 /* feature id */, 0 /* point id */},
                                             {2, 1}, {2, 2}, {6, 1}};
-  vector<RoadPoint> const expectedRoute2 = {{2 /* feature id */, 0 /* seg id */},
+  vector<RoadPoint> const expectedRoute2 = {{2 /* feature id */, 0 /* point id */},
                                             {2, 1}, {2, 2}, {6, 1}, {5, 1}};
   testRoutes(graph, expectedRoute0, expectedRoute1, expectedRoute2);
 
   // Adding Fake-0 features.
-  graph.AddFakeFeature({2 /* feature id */, 1 /* point id */},
-                       graph.GetJointIdForTesting({6 /* feature id */, 1 /* point id */}));
-  vector<RoadPoint> const expectedRoute1Fake0 = {{2 /* feature id */, 0 /* seg id */},
+  graph.AddFakeFeature(graph.InsertJoint({2 /* feature id */, 1 /* point id */}),
+                       graph.GetJointIdForTesting({6 /* feature id */, 1 /* point id */}), {} /* via points */);
+  vector<RoadPoint> const expectedRoute1Fake0 = {{2 /* feature id */, 0 /* point id */},
                                                  {2, 1}, {IndexGraph::kStartFakeFeatureIds, 1}};
-  vector<RoadPoint> const expectedRoute2Fake0 = {{2 /* feature id */, 0 /* seg id */},
+  vector<RoadPoint> const expectedRoute2Fake0 = {{2 /* feature id */, 0 /* point id */},
                                                  {2, 1}, {IndexGraph::kStartFakeFeatureIds, 1}, {5, 1}};
   testRoutes(graph, expectedRoute0, expectedRoute1Fake0, expectedRoute2Fake0);
 
   // Adding Fake-1 and Fake-2 features.
-  graph.AddFakeFeature({1 /* feature id */, 1 /* point id */},
-                       graph.GetJointIdForTesting({5 /* feature id */, 1 /* point id */}));
+  graph.AddFakeFeature(graph.InsertJoint({1 /* feature id */, 1 /* point id */}),
+                       graph.GetJointIdForTesting({5 /* feature id */, 1 /* point id */}), {} /* via points */);
   graph.AddFakeFeature(graph.GetJointIdForTesting({2 /* feature id */, 0 /* point id */}),
                        graph.GetJointIdForTesting({1 /* feature id */, 1 /* point id */}),
                        {} /* via points */);
@@ -509,5 +509,111 @@ UNIT_TEST(FindPathAddingThreeOneLinkFakeFeatures)
   graph.DisableEdge(graph.GetJointIdForTesting({IndexGraph::kStartFakeFeatureIds + 2 /* Fake 2 */, 0}),
                     graph.GetJointIdForTesting({IndexGraph::kStartFakeFeatureIds + 2 /* Fake 2 */, 1}));
   testRoutes(graph, expectedRoute0, expectedRoute1Fake0, expectedRoute2Fake0);
+}
+
+//      Finish
+// 1 *-F4-*-F5-*
+//   |         |
+//   F2        F3
+//   |         |
+// 0 *---F1----*---F0---* Start
+//   0         1        2
+// The idea of the test to prohibit a turn from F0 to F3 and build a route from Start to Finish.
+// All featrures are two-way. (It's possible to move along any direction of the features.)
+UNIT_TEST(FindPathRestrictionNoAndOnlyComplicatedCase)
+{
+  auto const edgeTest = [](Joint::Id vertex, size_t expectedIntgoingNum, size_t expectedOutgoingNum,
+                           IndexGraph & graph)
+  {
+    vector<IndexGraph::TEdgeType> ingoing;
+    graph.GetIngoingEdgesList(vertex, ingoing);
+    TEST_EQUAL(ingoing.size(), expectedIntgoingNum, ());
+
+    vector<IndexGraph::TEdgeType> outgoing;
+    graph.GetOutgoingEdgesList(vertex, outgoing);
+    TEST_EQUAL(outgoing.size(), expectedOutgoingNum, ());
+  };
+
+  auto const loader = []()
+  {
+    unique_ptr<TestGeometryLoader> loader = make_unique<TestGeometryLoader>();
+    loader->AddRoad(0 /* featureId */, false /* oneWay */, buffer_vector<m2::PointD, 32>(
+                           {{2.0, 0.0}, {1.0, 0.0}}));
+    loader->AddRoad(1 /* featureId */, false /* oneWay */, buffer_vector<m2::PointD, 32>(
+                           {{1.0, 0.0}, {0.0, 0.0}}));
+    loader->AddRoad(2 /* featureId */, false /* oneWay */, buffer_vector<m2::PointD, 32>(
+                           {{0.0, 0.0}, {0.0, 1.0}}));
+    loader->AddRoad(3 /* featureId */, false /* oneWay */, buffer_vector<m2::PointD, 32>(
+                           {{1.0, 0.0}, {1.0, 1.0}}));
+    loader->AddRoad(4 /* featureId */, false /* oneWay */, buffer_vector<m2::PointD, 32>(
+                           {{0.0, 1.0}, {0.5, 1.0}}));
+    loader->AddRoad(5 /* featureId */, false /* oneWay */, buffer_vector<m2::PointD, 32>(
+                           {{0.5, 1.0}, {1.0, 1.0}}));
+    return loader;
+  };
+
+  vector<Joint> const joints = {
+    MakeJoint({{1 /* featureId */, 1 /* pointId */}, {2, 0}}), /* joint at point (0, 0) */
+    MakeJoint({{2, 1}, {4, 0}}), /* joint at point (0, 1) */
+    MakeJoint({{4, 1}, {5, 0}}), /* joint at point (0.5, 1) */
+    MakeJoint({{1, 0}, {3, 0}, {0, 1}}), /* joint at point (1, 0) */
+    MakeJoint({{3, 1}, {5, 1}}), /* joint at point (1, 1) */
+  };
+
+  RoadPoint const kStart(0 /* featureId */, 0 /* pointId */);
+  RoadPoint const kFinish(5, 0);
+
+  vector<RoadPoint> const expectedRoute = {{0 /* feature id */, 0 /* point id */},
+                                            {0, 1}, {3, 1}, {5, 0}};
+
+  // Restriction no test.
+  {
+    IndexGraph graph(loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
+    graph.Import(joints, {} /* restrictions */);
+    Joint::Id const restictionCenterId = graph.GetJointIdForTesting({0, 1});
+
+    // Route without restriction.
+    // Note. While creating the route joints for |kStart| and for |kFinish| is being added to  |graph|.
+    // It influences next tests in this scope.
+    TestRouteSegments(graph, kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK, expectedRoute);
+
+    // Route with one no restriciton from F0 to F3.
+    edgeTest(restictionCenterId, 3 /* expectedIntgoingNum */, 3 /* expectedOutgoingNum */, graph);
+    graph.ApplyRestrictionNo({0 /* feature id */, 1 /* point id */}, {3 /* feature id */, 0 /* point id */},
+                             restictionCenterId);
+    edgeTest(restictionCenterId, 2 /* expectedIntgoingNum */, 3 /* expectedOutgoingNum */, graph);
+
+    vector<RoadPoint> const expectedLongRoute = {{IndexGraph::kStartFakeFeatureIds, 0 /* point id */},
+                                                 {IndexGraph::kStartFakeFeatureIds, 1},
+                                                 {IndexGraph::kStartFakeFeatureIds + 1, 1},
+                                                 {2 /* feature id */, 1 /* point id */},
+                                                 {4, 1}};
+    TestRouteSegments(graph, kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK, expectedLongRoute);
+
+    // Route with one no restriciton from F0 to F3 and form F0 to F1.
+    // @TODO(bykoianko) It's necessary to implement put several no restriction on the same junction
+    // ingoing edges of the same jucntion.
+  }
+
+  // Restriction only test.
+  {
+    IndexGraph graph(loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
+    graph.Import(joints, {} /* restrictions */);
+    Joint::Id const restictionCenterId = graph.GetJointIdForTesting({0, 1});
+
+    // Route without restriction.
+    // Note. While creating the route joints for |kStart| and for |kFinish| is being added to  |graph|.
+    // It influences next tests in this scope.
+    TestRouteSegments(graph, kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK, expectedRoute);
+
+    vector<RoadPoint> const expectedLongRoute = {{IndexGraph::kStartFakeFeatureIds, 0 /* point id */},
+                                                 {IndexGraph::kStartFakeFeatureIds, 1},
+                                                 {IndexGraph::kStartFakeFeatureIds, 2},
+                                                 {2 /* feature id */, 1 /* point id */},
+                                                 {4, 1}};
+    graph.ApplyRestrictionOnly({0 /* feature id */, 1 /* point id */}, {1 /* feature id */, 0 /* point id */},
+                               restictionCenterId);
+    TestRouteSegments(graph, kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK, expectedLongRoute);
+  }
 }
 }  // namespace routing_test

@@ -70,7 +70,7 @@ void IndexGraph::CreateFakeFeatureGeometry(vector<RoadPoint> const & geometrySou
   geometry = RoadGeometry(true /* oneWay */, averageSpeed, points);
 }
 
-void IndexGraph::AddFakeFeature(Joint::Id from, Joint::Id to, vector<RoadPoint> const & viaPointGeometry)
+uint32_t IndexGraph::AddFakeFeature(Joint::Id from, Joint::Id to, vector<RoadPoint> const & viaPointGeometry)
 {
   CHECK_LESS(from, m_jointIndex.GetNumJoints(), ());
   CHECK_LESS(to, m_jointIndex.GetNumJoints(), ());
@@ -83,9 +83,9 @@ void IndexGraph::AddFakeFeature(Joint::Id from, Joint::Id to, vector<RoadPoint> 
   CreateFakeFeatureGeometry(geometrySource, geom);
   m_fakeFeatureGeometry.insert(make_pair(m_nextFakeFeatureId, geom));
 
-  // Adding to indexes.
-  RoadPoint const fromFakeFtPoint(m_nextFakeFeatureId, 0);
-  RoadPoint const toFakeFtPoint(m_nextFakeFeatureId, 1);
+  // Adding to indexes for fake feature: |from|->{via point}->|to|.
+  RoadPoint const fromFakeFtPoint(m_nextFakeFeatureId, 0 /* Before via points */);
+  RoadPoint const toFakeFtPoint(m_nextFakeFeatureId, viaPointGeometry.size() + 1/* After via points */);
 
   m_roadIndex.AddJoint(fromFakeFtPoint, from);
   m_roadIndex.AddJoint(toFakeFtPoint, to);
@@ -93,65 +93,157 @@ void IndexGraph::AddFakeFeature(Joint::Id from, Joint::Id to, vector<RoadPoint> 
   m_jointIndex.AppendJoint(from, fromFakeFtPoint);
   m_jointIndex.AppendJoint(to, toFakeFtPoint);
 
-  ++m_nextFakeFeatureId;
+  return m_nextFakeFeatureId++;
 }
 
-void IndexGraph::AddFakeFeature(RoadPoint const & fromPnt, Joint::Id to)
+void IndexGraph::FindFirstOneStepAsideRoadPoint(RoadPoint const & center, Joint::Id centerId,
+                                                vector<TEdgeType> const & edges,
+                                                vector<Joint::Id> & oneStepAside) const
 {
-  AddFakeFeature(InsertJoint(fromPnt), to, {} /* viaPointGeometry */);
+  oneStepAside.clear();
+  m_roadIndex.ForEachJoint(center.GetFeatureId(),
+                           [&](uint32_t /*pointId*/, Joint::Id jointId){
+    for (TEdgeType const & e : edges)
+    {
+      if (e.GetTarget() == jointId)
+        oneStepAside.push_back(jointId);
+    }
+  });
+}
+
+bool IndexGraph::ApplyRestrictionPrepareData(RoadPoint const & from, RoadPoint const & to,
+                                             Joint::Id centerId,
+                                             vector<TEdgeType> & ingoingEdges, vector<TEdgeType> & outgoingEdges,
+                                             Joint::Id & fromFirstOneStepAside, Joint::Id & toFirstOneStepAside)
+{
+  GetIngoingEdgesList(centerId, ingoingEdges);
+  vector<Joint::Id> fromOneStepAside;
+  FindFirstOneStepAsideRoadPoint(from, centerId, ingoingEdges, fromOneStepAside);
+  if (fromOneStepAside.empty())
+    return false;
+
+  GetOutgoingEdgesList(centerId, outgoingEdges);
+  vector<Joint::Id> toOneStepAside;
+  FindFirstOneStepAsideRoadPoint(to, centerId, outgoingEdges, toOneStepAside);
+  if (toOneStepAside.empty())
+    return false;
+
+  fromFirstOneStepAside = fromOneStepAside.back();
+  toFirstOneStepAside = toOneStepAside.back();
+  return true;
 }
 
 void IndexGraph::ApplyRestrictionNo(RoadPoint const & from, RoadPoint const & to,
                                     Joint::Id centerId)
 {
-  auto findOneStepAsideRoadPoint = [&](RoadPoint const & center, vector<TEdgeType> const & edges,
-      Joint::Id & oneStepAside)
-  {
-    auto const itOneStepAside = find_if(edges.cbegin(), edges.cend(), [&](TEdgeType const & e){
-      // @TODO This place is possible to implement faster. It should be taken into account
-      // if a profiler shows this place.
-      return m_jointIndex.FindCommonFeature(centerId, e.GetTarget()).first.GetFeatureId() == center.GetFeatureId();
-    });
-    if (itOneStepAside == edges.cend())
-      return false;
-    oneStepAside = itOneStepAside->GetTarget();
-    return true;
-  };
-
   vector<TEdgeType> ingoingEdges;
-  GetIngoingEdgesList(centerId, ingoingEdges);
-  Joint::Id fromOneStepAside = Joint::kInvalidId;
-  if (!findOneStepAsideRoadPoint(from, ingoingEdges, fromOneStepAside))
-    return;
-
   vector<TEdgeType> outgoingEdges;
-  GetOutgoingEdgesList(centerId, outgoingEdges);
-  Joint::Id toOneStepAside = Joint::kInvalidId;
-  if (!findOneStepAsideRoadPoint(to, outgoingEdges, toOneStepAside))
+  Joint::Id fromFirstOneStepAside = Joint::kInvalidId;
+  Joint::Id toFirstOneStepAside = Joint::kInvalidId;
+  if (!ApplyRestrictionPrepareData(from, to, centerId, ingoingEdges, outgoingEdges,
+                                   fromFirstOneStepAside, toFirstOneStepAside))
+  {
     return;
+  }
 
   // One ingoing edge case.
   if (ingoingEdges.size() == 1)
   {
-    DisableEdge(centerId, toOneStepAside);
+    DisableEdge(centerId, toFirstOneStepAside);
     return;
   }
 
   // One outgoing edge case.
   if (outgoingEdges.size() == 1)
   {
-    DisableEdge(fromOneStepAside, centerId);
+    DisableEdge(fromFirstOneStepAside, centerId);
     return;
   }
 
-  // Prohibition of moving from one segment to another in any number of ingoing and outgoing edges.
-  // The idea is to tranform navigation graph...
+  // Prohibition of moving from one segment to another in case of any number of ingoing and outgoing edges.
+  // The idea is to tranform the navigation graph for every non-degenerate case as it's shown below.
+  // At the picture below a restriction for prohibition moving from 4 to O to 3 is shown.
+  // So to implement it it's necessary to remove (disable) an edge 4-O and add features (edges) 4-N-1 and N-2.
+  //
+  // 1       2       3                     1       2       3
+  // *       *       *                     *       *       *
+  //  ↖     ^     ↗                       ^↖   ↗^     ↗
+  //    ↖   |   ↗                         |  ↖   |   ↗
+  //      ↖ | ↗                           |↗   ↖| ↗
+  //         *  O             ==>        N *       *  O
+  //      ↗ ^ ↖                           ^       ^ ↖
+  //    ↗   |   ↖                         |       |   ↖
+  //  ↗     |     ↖                       |       |     ↖
+  // *       *       *                     *       *       *
+  // 4       5       7                     4       5       7
 
+  DisableEdge(fromFirstOneStepAside, centerId);
+  outgoingEdges.erase(remove_if(outgoingEdges.begin(), outgoingEdges.end(),
+                                [&toFirstOneStepAside](TEdgeType const & e){
+                        return e.GetTarget() == toFirstOneStepAside;
+                      }), outgoingEdges.end());
+  Joint::Id newJoint = Joint::kInvalidId;
+  for (auto it = outgoingEdges.cbegin(); it != outgoingEdges.cend(); ++it)
+  {
+    if (it == outgoingEdges.cbegin())
+    {
+      uint32_t const featureId = AddFakeFeature(fromFirstOneStepAside, it->GetTarget(), {from});
+      newJoint = InsertJoint({featureId, 1 /* Intermediate point of added feature */});
+    }
+    else
+    {
+      AddFakeFeature(newJoint, it->GetTarget(), {} /* via points */);
+    }
+  }
 }
 
 void IndexGraph::ApplyRestrictionOnly(RoadPoint const & from, RoadPoint const & to,
-                                      Joint::Id jointId)
+                                      Joint::Id centerId)
 {
+  vector<TEdgeType> ingoingEdges;
+  vector<TEdgeType> outgoingEdges;
+  Joint::Id fromFirstOneStepAside = Joint::kInvalidId;
+  Joint::Id toFirstOneStepAside = Joint::kInvalidId;
+  if (!ApplyRestrictionPrepareData(from, to, centerId, ingoingEdges, outgoingEdges,
+                                   fromFirstOneStepAside, toFirstOneStepAside))
+  {
+    return;
+  }
+
+  // One ingoing edge case.
+  if (ingoingEdges.size() == 1)
+  {
+    DisableEdge(fromFirstOneStepAside, centerId);
+    return;
+  }
+
+  // One outgoing edge case.
+  if (outgoingEdges.size() == 1)
+  {
+    DisableEdge(centerId, toFirstOneStepAside);
+    return;
+  }
+
+  // It's possible to move only from one segment to another in case of any number of ingoing and outgoing edges.
+  // The idea is to tranform the navigation graph for every non-degenerate case as it's shown below.
+  // At the picture below a restriction for permission moving only from 7 to O to 3 is shown.
+  // So to implement it it's necessary to remove (disable) an edge 7-O and add feature (edge) 4-N-3.
+  // Adding N is important for a route recovery stage. (The geometry of O will be copied to N.)
+  //
+  // 1       2       3                     1       2       3
+  // *       *       *                     *       *       *
+  //  ↖     ^     ↗                        ↖     ^     ↗^
+  //    ↖   |   ↗                            ↖   |   ↗  |
+  //      ↖ | ↗                                ↖| ↗     |
+  //         *  O             ==>                  *  O    * N
+  //      ↗ ^ ↖                                 ↗^       ^
+  //    ↗   |   ↖                             ↗  |       |
+  //  ↗     |     ↖                         ↗    |       |
+  // *       *       *                     *       *       *
+  // 4       5       7                     4       5       7
+
+  DisableEdge(fromFirstOneStepAside, centerId);
+  AddFakeFeature(fromFirstOneStepAside, toFirstOneStepAside, {from});
 }
 
 void IndexGraph::ApplyRestrictions(RestrictionVec const & restrictions)
@@ -244,14 +336,16 @@ vector<RoadPoint> IndexGraph::RedressRoute(vector<Joint::Id> const & route) cons
 }
 
 inline void IndexGraph::AddNeighboringEdge(RoadGeometry const & road, RoadPoint rp, bool forward,
-                                           vector<TEdgeType> & edges) const
+                                           bool outgoing, vector<TEdgeType> & edges) const
 {
   pair<Joint::Id, uint32_t> const & neighbor = m_roadIndex.FindNeighbor(rp, forward);
   if (neighbor.first == Joint::kInvalidId)
     return;
 
-  Joint::Id const from = m_roadIndex.GetJointId(rp);
-  if (m_blockedEdges.find(make_pair(from, neighbor.first)) != m_blockedEdges.end())
+  Joint::Id const rbJointId = m_roadIndex.GetJointId(rp);
+  auto const edge = outgoing ? make_pair(rbJointId, neighbor.first)
+                             : make_pair(neighbor.first, rbJointId);
+  if (m_blockedEdges.find(edge) != m_blockedEdges.end())
     return;
 
   double const distance = m_estimator->CalcEdgesWeight(road, rp.GetPointId(), neighbor.second);
@@ -279,10 +373,10 @@ inline void IndexGraph::GetEdgesList(Joint::Id jointId, bool forward,
 
     bool const twoWay = !road.IsOneWay();
     if (!forward || twoWay)
-      AddNeighboringEdge(road, rp, false, edges);
+      AddNeighboringEdge(road, rp, false, forward, edges);
 
     if (forward || twoWay)
-      AddNeighboringEdge(road, rp, true, edges);
+      AddNeighboringEdge(road, rp, true, forward, edges);
   });
 }
 }  // namespace routing
