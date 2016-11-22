@@ -81,9 +81,6 @@ AStarAlgorithm<IndexGraph>::Result CalculateRoute(IndexGraph & graph,
 void TestRoute(IndexGraph & graph, RoadPoint const & start, RoadPoint const & finish,
                size_t expectedLength)
 {
-//  LOG(LINFO, ("Test route", start.GetFeatureId(), ",", start.GetPointId(), "=>",
-//              finish.GetFeatureId(), ",", finish.GetPointId()));
-
   vector<RoadPoint> route;
   AStarAlgorithm<IndexGraph>::Result const resultCode = CalculateRoute(graph, start, finish, route);
 
@@ -399,11 +396,38 @@ UNIT_TEST(FindPathAddingOneLinkFakeFeature)
 
   IndexGraph graph(loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
   graph.Import(joints, {} /* restrictions */);
+
+  // Route along F1 and F0.
   vector<RoadPoint> const expectedRoute = {{1 /* feature id */, 0 /* point id */},
                                            {1, 1}, {1, 2}, {0, 1}};
   TestRouteSegments(graph, kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK, expectedRoute);
 
-  // Adding a shortcut fake feature.
+  // Creating route point list test.
+  // Note. It's used in the test that joints for start and finish are added while routing before.
+  vector<RoadPoint> roadPoints;
+  graph.CreateRoadPointsList(graph.GetJointIdForTesting({1, 0}),
+                             graph.GetJointIdForTesting({1, 2}), roadPoints);
+  vector<RoadPoint> const expectedDirectOrder = {{1, 0}, {1, 1}, {1, 2}};
+  TEST_EQUAL(roadPoints, expectedDirectOrder, ());
+  RoadGeometry geometryDirect;
+  graph.CreateFakeFeatureGeometry(roadPoints, geometryDirect);
+  RoadGeometry expectedGeomentryDirect(true /* one way */, 1.0 /* speed */,
+                                       buffer_vector<m2::PointD, 32>({{2.0, 0.0}, {1.0, 0.0},
+                                                                     {0.0, 0.0}}));
+  TEST_EQUAL(geometryDirect, expectedGeomentryDirect, ());
+
+  graph.CreateRoadPointsList(graph.GetJointIdForTesting({1 /* feature id */, 2 /* point id */}),
+                             graph.GetJointIdForTesting({1, 0}), roadPoints);
+  vector<RoadPoint> const expectedBackOrder = {{1, 2}, {1, 1}, {1, 0}};
+  TEST_EQUAL(roadPoints, expectedBackOrder, ());
+  RoadGeometry geometryBack;
+  graph.CreateFakeFeatureGeometry(roadPoints, geometryBack);
+  RoadGeometry expectedGeomentryBack(true /* one way */, 1.0 /* speed */,
+                                     buffer_vector<m2::PointD, 32>({{0.0, 0.0}, {1.0, 0.0},
+                                                                    {2.0, 0.0}}));
+  TEST_EQUAL(geometryBack, expectedGeomentryBack, ());
+
+  // Adding a shortcut fake feature and building route.
   graph.AddFakeFeature(graph.GetJointIdForTesting(kStart), graph.GetJointIdForTesting(kFinish),
                        {} /* viaPointGeometry */);
   vector<RoadPoint> const expectedRouteByFakeFeature = {{IndexGraph::kStartFakeFeatureIds, 0 /* seg id */},
@@ -484,6 +508,35 @@ UNIT_TEST(FindPathAddingThreeOneLinkFakeFeatures)
   vector<RoadPoint> const expectedRoute2 = {{2 /* feature id */, 0 /* point id */},
                                             {2, 1}, {2, 2}, {6, 1}, {5, 1}};
   testRoutes(graph, expectedRoute0, expectedRoute1, expectedRoute2);
+
+  // Getting intermediate points.
+  vector<Joint::Id> jointsF3 = {graph.GetJointIdForTesting({3 /* feature id */, 0 /* point id */}),
+                                graph.GetJointIdForTesting({3, 1})};
+  vector<RoadPoint> roadPointsF3;
+  vector<size_t> internalJointIdxF3;
+  graph.GetIntermediatePoints(jointsF3, roadPointsF3, internalJointIdxF3);
+  TEST(roadPointsF3.empty(), ());
+  TEST(internalJointIdxF3.empty(), ());
+
+  vector<Joint::Id> jointsF1 = {graph.GetJointIdForTesting({1 /* feature id */, 0}),
+                                graph.GetJointIdForTesting({1, 2})};
+  vector<RoadPoint> roadPointsF1;
+  vector<size_t> internalJointIdxF1;
+  graph.GetIntermediatePoints(jointsF1, roadPointsF1, internalJointIdxF1);
+  vector<RoadPoint> const expectedRoadPointsF1 = {{1, 1}};
+  TEST_EQUAL(expectedRoadPointsF1, roadPointsF1, ());
+  TEST(internalJointIdxF1.empty(), ());
+
+  vector<Joint::Id> jointsF3F1 = {graph.GetJointIdForTesting({3 /* feature id */, 0 /* point id */}),
+                                  graph.GetJointIdForTesting({3, 1}),
+                                  graph.GetJointIdForTesting({1, 2})};
+  vector<RoadPoint> roadPointsF3F1;
+  vector<size_t> internalJointIdxF3F1;
+  graph.GetIntermediatePoints(jointsF3F1, roadPointsF3F1, internalJointIdxF3F1);
+  vector<RoadPoint> const expectedRoadPointsF3F1 = {{1, 0}, {1, 1}};
+  vector<size_t> const expectedInternalJointIdxF1 = {0 /* Intermediate joint index. */};
+  TEST_EQUAL(expectedRoadPointsF3F1, roadPointsF3F1, ());
+  TEST_EQUAL(internalJointIdxF3F1, expectedInternalJointIdxF1, ());
 
   // Adding Fake-0 features.
   graph.AddFakeFeature(graph.InsertJoint({2 /* feature id */, 1 /* point id */}),
@@ -585,7 +638,7 @@ UNIT_TEST(FindPathRestrictionNoAndOnlyComplicatedCase)
 
     vector<RoadPoint> const expectedLongRoute = {{IndexGraph::kStartFakeFeatureIds, 0 /* point id */},
                                                  {IndexGraph::kStartFakeFeatureIds, 1},
-                                                 {IndexGraph::kStartFakeFeatureIds + 1, 1},
+                                                 {IndexGraph::kStartFakeFeatureIds, 2},
                                                  {2 /* feature id */, 1 /* point id */},
                                                  {4, 1}};
     TestRouteSegments(graph, kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK, expectedLongRoute);

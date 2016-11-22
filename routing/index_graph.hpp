@@ -105,6 +105,19 @@ public:
   /// \brief Add restrictions in |restrictions| to |m_ftPointIndex|.
   void ApplyRestrictions(RestrictionVec const & restrictions);
 
+  /// \brief Creates a list of RoadPoint from joint |from| to joint |to| if |from| and
+  /// |to| belongs to one feature. Points |from| and |to| are included in |roadPoints|.
+  /// The order on points in |roadPoints| is from |from| to |to|.
+  void CreateRoadPointsList(Joint::Id from, Joint::Id to, vector<RoadPoint> & roadPoints);
+
+  /// \brief Fills |roadPoints| with points of path composed of |newFeatureJoints|.
+  /// Removes the begining point and the end point of the path.
+  void GetIntermediatePoints(vector<Joint::Id> const & newFeatureJoints,
+                             vector<RoadPoint> & roadPoints,
+                             vector<size_t> & internalJointIdx);
+
+  void CreateFakeFeatureGeometry(vector<RoadPoint> const & geometrySource, RoadGeometry & geometry) const;
+
   static uint32_t const kStartFakeFeatureIds = 1024 * 1024 * 1024;
 
 private:
@@ -116,8 +129,6 @@ private:
   /// \returns RoadGeometry by a real or fake featureId.
   RoadGeometry const & GetRoad(uint32_t featureId) const;
 
-  void CreateFakeFeatureGeometry(vector<RoadPoint> const & geometrySource, RoadGeometry & geometry) const;
-
   double GetSpeed(RoadPoint ftp) const;
 
   /// \brief Finds neghboring of |centerId| joint on feature id of |center|
@@ -126,12 +137,10 @@ private:
   /// \note Taking into account the way of setting restrictions almost always |oneStepAside|
   /// will contain one or zero items. Besides the it it's posible to draw map
   /// the (wrong) way |oneStepAside| will contain any number of items.
-  void FindFirstOneStepAsideRoadPoint(RoadPoint const & center, Joint::Id centerId,
-                                      vector<TEdgeType> const & edges,
-                                      vector<Joint::Id> & oneStepAside) const;
+  void FindOneStepAsideRoadPoint(RoadPoint const & center, Joint::Id centerId,
+                                 vector<TEdgeType> const & edges, vector<Joint::Id> & oneStepAside) const;
 
-  bool ApplyRestrictionPrepareData(RoadPoint const & from, RoadPoint const & to,
-                                   Joint::Id centerId,
+  bool ApplyRestrictionPrepareData(RoadPoint const & from, RoadPoint const & to, Joint::Id centerId,
                                    vector<TEdgeType> & ingoingEdges, vector<TEdgeType> & outgoingEdges,
                                    Joint::Id & fromFirstOneStepAside, Joint::Id & toFirstOneStepAside);
 

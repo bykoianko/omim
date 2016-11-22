@@ -4,6 +4,8 @@
 
 #include "base/assert.hpp"
 
+#include "std/iostream.hpp"
+
 using namespace routing;
 
 namespace
@@ -62,6 +64,17 @@ void RoadGeometry::Load(IVehicleModel const & vehicleModel, FeatureType & featur
 Geometry::Geometry(unique_ptr<GeometryLoader> loader) : m_loader(move(loader))
 {
   ASSERT(m_loader, ());
+}
+
+string DebugPrint(RoadGeometry const & roadGeometry)
+{
+  stringstream str;
+  str << "RoadGeometry [ m_isRoad: " << roadGeometry.m_isRoad
+      << ", m_isOneWay: " << roadGeometry.m_isOneWay
+      << ", m_speed: " << roadGeometry.m_speed
+      << ", m_points: " << DebugPrint(roadGeometry.m_points)
+      << " ]";
+  return str.str();
 }
 
 unique_ptr<GeometryLoader> CreateGeometryLoader(Index const & index, MwmSet::MwmId const & mwmId,

@@ -55,6 +55,59 @@ void IndexGraph::Import(vector<Joint> const & joints, RestrictionVec const & res
   Build(joints.size(), restrictions);
 }
 
+void IndexGraph::CreateRoadPointsList(Joint::Id from, Joint::Id to, vector<RoadPoint> & roadPoints)
+{
+  CHECK_NOT_EQUAL(from, Joint::kInvalidId, ());
+  CHECK_NOT_EQUAL(to, Joint::kInvalidId, ());
+
+  RoadPoint fromPoint;
+  RoadPoint toPoint;
+
+  m_jointIndex.FindCommonFeature(from, to, fromPoint, toPoint);
+
+  CHECK_EQUAL(fromPoint.GetFeatureId(), toPoint.GetFeatureId(), ());
+  roadPoints.clear();
+  if (fromPoint == toPoint)
+  {
+    roadPoints.push_back(fromPoint);
+    return;
+  }
+
+  int shift = toPoint.GetPointId() > fromPoint.GetPointId() ? 1 : -1;
+  for (int i = fromPoint.GetPointId(); i != toPoint.GetPointId(); i += shift)
+    roadPoints.emplace_back(fromPoint.GetFeatureId(), i);
+  roadPoints.emplace_back(fromPoint.GetFeatureId(), toPoint.GetPointId());
+}
+
+void IndexGraph::GetIntermediatePoints(vector<Joint::Id> const & newFeatureJoints,
+                                       vector<RoadPoint> & roadPoints,
+                                       vector<size_t> & internalJointIdx)
+{
+  CHECK_LESS(1, newFeatureJoints.size(), ());
+
+  roadPoints.clear();
+  internalJointIdx.clear();
+  for (size_t i = 1; i < newFeatureJoints.size(); ++i)
+  {
+    vector<RoadPoint> oneEdgeRoadPoints;
+    CreateRoadPointsList(newFeatureJoints[i - 1], newFeatureJoints[i], oneEdgeRoadPoints);
+
+    if (oneEdgeRoadPoints.size() < 2)
+      continue;
+    oneEdgeRoadPoints.pop_back();
+    roadPoints.insert(roadPoints.end(), oneEdgeRoadPoints.cbegin(), oneEdgeRoadPoints.cend());
+    // After removing last item roadPoints.size() is an index of the joint will be added in next loop.
+    // But we need to deduct one because of after the loop finishs the head of |roadPoints|
+    // is removed.
+    internalJointIdx.push_back(roadPoints.size() - 1);
+  }
+  if (!internalJointIdx.empty())
+    internalJointIdx.pop_back();
+
+  if (!roadPoints.empty())
+    roadPoints.erase(roadPoints.cbegin());
+}
+
 void IndexGraph::CreateFakeFeatureGeometry(vector<RoadPoint> const & geometrySource,
                                            RoadGeometry & geometry) const
 {
@@ -96,9 +149,9 @@ uint32_t IndexGraph::AddFakeFeature(Joint::Id from, Joint::Id to, vector<RoadPoi
   return m_nextFakeFeatureId++;
 }
 
-void IndexGraph::FindFirstOneStepAsideRoadPoint(RoadPoint const & center, Joint::Id centerId,
-                                                vector<TEdgeType> const & edges,
-                                                vector<Joint::Id> & oneStepAside) const
+void IndexGraph::FindOneStepAsideRoadPoint(RoadPoint const & center, Joint::Id centerId,
+                                           vector<TEdgeType> const & edges,
+                                           vector<Joint::Id> & oneStepAside) const
 {
   oneStepAside.clear();
   m_roadIndex.ForEachJoint(center.GetFeatureId(),
@@ -111,20 +164,19 @@ void IndexGraph::FindFirstOneStepAsideRoadPoint(RoadPoint const & center, Joint:
   });
 }
 
-bool IndexGraph::ApplyRestrictionPrepareData(RoadPoint const & from, RoadPoint const & to,
-                                             Joint::Id centerId,
+bool IndexGraph::ApplyRestrictionPrepareData(RoadPoint const & from, RoadPoint const & to, Joint::Id centerId,
                                              vector<TEdgeType> & ingoingEdges, vector<TEdgeType> & outgoingEdges,
                                              Joint::Id & fromFirstOneStepAside, Joint::Id & toFirstOneStepAside)
 {
   GetIngoingEdgesList(centerId, ingoingEdges);
   vector<Joint::Id> fromOneStepAside;
-  FindFirstOneStepAsideRoadPoint(from, centerId, ingoingEdges, fromOneStepAside);
+  FindOneStepAsideRoadPoint(from, centerId, ingoingEdges, fromOneStepAside);
   if (fromOneStepAside.empty())
     return false;
 
   GetOutgoingEdgesList(centerId, outgoingEdges);
   vector<Joint::Id> toOneStepAside;
-  FindFirstOneStepAsideRoadPoint(to, centerId, outgoingEdges, toOneStepAside);
+  FindOneStepAsideRoadPoint(to, centerId, outgoingEdges, toOneStepAside);
   if (toOneStepAside.empty())
     return false;
 
@@ -177,24 +229,54 @@ void IndexGraph::ApplyRestrictionNo(RoadPoint const & from, RoadPoint const & to
   // *       *       *                     *       *       *
   // 4       5       7                     4       5       7
 
-  DisableEdge(fromFirstOneStepAside, centerId);
   outgoingEdges.erase(remove_if(outgoingEdges.begin(), outgoingEdges.end(),
-                                [&toFirstOneStepAside](TEdgeType const & e){
-                        return e.GetTarget() == toFirstOneStepAside;
-                      }), outgoingEdges.end());
+                                [&](TEdgeType const & e)
+  {
+    // Removing edge N->3 in example above.
+    return e.GetTarget() == toFirstOneStepAside
+    // Preveting form adding in loop below
+    // cycles |fromFirstOneStepAside|->|centerId|->|fromFirstOneStepAside|.
+        || e.GetTarget() == fromFirstOneStepAside
+    // Removing edges |centerId|->|centerId|.
+        || e.GetTarget() == centerId;
+  }), outgoingEdges.end());
+
   Joint::Id newJoint = Joint::kInvalidId;
   for (auto it = outgoingEdges.cbegin(); it != outgoingEdges.cend(); ++it)
   {
+    vector<RoadPoint> geometrySource;
+    vector<size_t> internalJointIdxs;
     if (it == outgoingEdges.cbegin())
     {
-      uint32_t const featureId = AddFakeFeature(fromFirstOneStepAside, it->GetTarget(), {from});
-      newJoint = InsertJoint({featureId, 1 /* Intermediate point of added feature */});
+      // Adding the edge 4->N->1 in example above.
+      if (fromFirstOneStepAside == centerId || centerId == it->GetTarget())
+      {
+        // @TODO(bykoianko) In rare cases it's posible that outgoing edges staring from |centerId|
+        // contain as targets |centerId|. The same thing with ingoing edges.
+        // The most likely it's a consequence of adding
+        // restrictions with type no for some bidirectional roads. It's necessary to
+        // investigate this case, to undestand the reasons of appearing such edges clearly,
+        // prevent appearing of such edges and write unit tests on it.
+        return;
+      }
+      GetIntermediatePoints(vector<Joint::Id>({fromFirstOneStepAside, centerId,
+          it->GetTarget()}), geometrySource, internalJointIdxs);
+
+      CHECK_EQUAL(internalJointIdxs.size(), 1, ());
+      CHECK_LESS(internalJointIdxs.front(), geometrySource.size() + 2 /* beginnign and ending */, ());
+      uint32_t const featureId = AddFakeFeature(fromFirstOneStepAside, it->GetTarget(), geometrySource);
+      newJoint = InsertJoint({featureId,
+                              static_cast<uint32_t>(internalJointIdxs[0]) /* Intermediate joint of added feature */});
     }
     else
     {
-      AddFakeFeature(newJoint, it->GetTarget(), {} /* via points */);
+      // Adding the edge N->2 in example above.
+      GetIntermediatePoints(vector<Joint::Id>({centerId, it->GetTarget()}),
+                                 geometrySource, internalJointIdxs);
+      AddFakeFeature(newJoint, it->GetTarget(), geometrySource);
     }
   }
+  DisableEdge(fromFirstOneStepAside, centerId);
 }
 
 void IndexGraph::ApplyRestrictionOnly(RoadPoint const & from, RoadPoint const & to,
@@ -210,17 +292,25 @@ void IndexGraph::ApplyRestrictionOnly(RoadPoint const & from, RoadPoint const & 
     return;
   }
 
-  // One ingoing edge case.
-  if (ingoingEdges.size() == 1)
-  {
-    DisableEdge(fromFirstOneStepAside, centerId);
-    return;
-  }
-
   // One outgoing edge case.
   if (outgoingEdges.size() == 1)
   {
-    DisableEdge(centerId, toFirstOneStepAside);
+    for (auto const & e : ingoingEdges)
+    {
+      if (e.GetTarget() != fromFirstOneStepAside)
+        DisableEdge(e.GetTarget(), centerId);
+    }
+    return;
+  }
+
+  // One ingoing edge case.
+  if (ingoingEdges.size() == 1)
+  {
+    for (auto const & e : outgoingEdges)
+    {
+      if (e.GetTarget() != toFirstOneStepAside)
+        DisableEdge(centerId, e.GetTarget());
+    }
     return;
   }
 
@@ -242,8 +332,13 @@ void IndexGraph::ApplyRestrictionOnly(RoadPoint const & from, RoadPoint const & 
   // *       *       *                     *       *       *
   // 4       5       7                     4       5       7
 
+  vector<RoadPoint> geometrySource;
+  vector<size_t> internalJointIdxs;
+  GetIntermediatePoints(vector<Joint::Id>({fromFirstOneStepAside, centerId,
+      toFirstOneStepAside}), geometrySource, internalJointIdxs);
+
+  AddFakeFeature(fromFirstOneStepAside, toFirstOneStepAside, geometrySource);
   DisableEdge(fromFirstOneStepAside, centerId);
-  AddFakeFeature(fromFirstOneStepAside, toFirstOneStepAside, {from});
 }
 
 void IndexGraph::ApplyRestrictions(RestrictionVec const & restrictions)
@@ -264,12 +359,18 @@ void IndexGraph::ApplyRestrictions(RestrictionVec const & restrictions)
     {
       continue; // Restriction is not contain adjacent features.
     }
-    // @TODO(bykoianko) By knowing |from|, |to|, |jointId| and |restriction.m_type|
-    // |m_geometry| should be edited.
-    switch (restriction.m_type)
+
+    try
     {
-    case Restriction::Type::No: ApplyRestrictionNo(from, to, jointId); continue;
-    case Restriction::Type::Only: ApplyRestrictionOnly(from, to, jointId); continue;
+      switch (restriction.m_type)
+      {
+      case Restriction::Type::No: ApplyRestrictionNo(from, to, jointId); continue;
+      case Restriction::Type::Only: ApplyRestrictionOnly(from, to, jointId); continue;
+      }
+    }
+    catch(RootException const & e)
+    {
+      LOG(LERROR, ("Exception while applying restrictions. Message:", e.Msg()));
     }
   }
 }

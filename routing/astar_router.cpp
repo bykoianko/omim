@@ -8,6 +8,7 @@
 #include "routing/features_road_graph.hpp"
 #include "routing/index_graph.hpp"
 #include "routing/pedestrian_model.hpp"
+#include "routing/restriction_loader.hpp"
 #include "routing/route.hpp"
 #include "routing/turns_generator.hpp"
 
@@ -188,8 +189,11 @@ bool AStarRouter::LoadIndex(MwmSet::MwmId const & mwmId, string const & country,
     ReaderSource<FilesContainerR::TReader> src(reader);
     feature::RoutingSectionHeader header;
     header.Deserialize(src);
-    // @TODO(bykoianko) Deserialize restrictions.
     graph.Deserialize(src, {} /* restrictions */);
+    RestrictionLoader restrictionLoader(*mwmValue);
+    if (restrictionLoader.HasRestrictions())
+      graph.ApplyRestrictions(restrictionLoader.GetRestrictions());
+
     LOG(LINFO,
         (ROUTING_FILE_TAG, "section for", country, "loaded in", timer.ElapsedSeconds(), "seconds"));
     return true;
