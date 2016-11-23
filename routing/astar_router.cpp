@@ -191,7 +191,7 @@ bool AStarRouter::LoadIndex(MwmSet::MwmId const & mwmId, string const & country,
     ReaderSource<FilesContainerR::TReader> src(reader);
     feature::RoutingSectionHeader header;
     header.Deserialize(src);
-    graph.Deserialize(src, {} /* restrictions */);
+    graph.Deserialize(src);
     RestrictionLoader restrictionLoader(*mwmValue);
     if (restrictionLoader.HasRestrictions())
       graph.ApplyRestrictions(restrictionLoader.GetRestrictions());

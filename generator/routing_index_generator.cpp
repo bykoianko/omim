@@ -40,7 +40,7 @@ public:
         joints.emplace_back(it.second);
     }
 
-    graph.Import(joints, {} /* restrictions */);
+    graph.Import(joints);
   }
 
 private:

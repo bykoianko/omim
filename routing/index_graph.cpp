@@ -43,16 +43,15 @@ double IndexGraph::GetSpeed(RoadPoint ftp) const
   return GetRoad(ftp.GetFeatureId()).GetSpeed();
 }
 
-void IndexGraph::Build(uint32_t jointNumber, RestrictionVec const & restrictions)
+void IndexGraph::Build(uint32_t jointNumber)
 {
   m_jointIndex.Build(m_roadIndex, jointNumber);
-  ApplyRestrictions(restrictions);
 }
 
-void IndexGraph::Import(vector<Joint> const & joints, RestrictionVec const & restrictions)
+void IndexGraph::Import(vector<Joint> const & joints)
 {
   m_roadIndex.Import(joints);
-  Build(joints.size(), restrictions);
+  Build(joints.size());
 }
 
 void IndexGraph::CreateRoadPointsList(Joint::Id from, Joint::Id to, vector<RoadPoint> & roadPoints)

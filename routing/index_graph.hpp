@@ -56,7 +56,7 @@ public:
   size_t GetNumRoads() const { return m_roadIndex.GetSize(); }
   size_t GetNumJoints() const { return m_jointIndex.GetNumJoints(); }
   size_t GetNumPoints() const { return m_jointIndex.GetNumPoints(); }
-  void Import(vector<Joint> const & joints, RestrictionVec const & restrictions);
+  void Import(vector<Joint> const & joints);
   Joint::Id InsertJoint(RoadPoint const & rp);
 
   // Add intermediate points to route (those don't correspond to any joint).
@@ -72,11 +72,11 @@ public:
   }
 
   template <class Source>
-  void Deserialize(Source & src, RestrictionVec const & restrictions)
+  void Deserialize(Source & src)
   {
     uint32_t const jointsSize = ReadPrimitiveFromSource<uint32_t>(src);
     m_roadIndex.Deserialize(src);
-    Build(jointsSize, restrictions);
+    Build(jointsSize);
   }
 
   Joint::Id GetJointIdForTesting(RoadPoint const & ftp) const {return m_roadIndex.GetJointId(ftp); }
@@ -128,7 +128,7 @@ private:
   void AddNeighboringEdge(RoadGeometry const & road, RoadPoint rp, bool forward,
                           bool outgoing, vector<TEdgeType> & edges) const;
   void GetEdgesList(Joint::Id jointId, bool forward, vector<TEdgeType> & edges) const;
-  void Build(uint32_t jointNumber, RestrictionVec const & restrictions);
+  void Build(uint32_t jointNumber);
 
   /// \returns RoadGeometry by a real or fake featureId.
   RoadGeometry const & GetRoad(uint32_t featureId) const;

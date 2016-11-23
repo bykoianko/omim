@@ -100,7 +100,7 @@ UNIT_TEST(EdgesTest)
   joints.emplace_back(MakeJoint({{1, 1}, {4, 0}}));  // J3
   joints.emplace_back(MakeJoint({{2, 0}, {3, 0}}));  // J4
   joints.emplace_back(MakeJoint({{2, 1}, {4, 2}}));  // J5
-  graph.Import(joints, {});
+  graph.Import(joints);
 
   TestOutgoingEdges(graph, 0, {1, 2});
   TestOutgoingEdges(graph, 1, {0, 5});
@@ -139,7 +139,7 @@ UNIT_TEST(FindPathCross)
 
   IndexGraph graph(move(loader), CreateEstimator());
 
-  graph.Import({MakeJoint({{0, 2}, {1, 2}})}, {} /* restrictions */);
+  graph.Import({MakeJoint({{0, 2}, {1, 2}})});
 
   vector<RoadPoint> points;
   for (uint32_t i = 0; i < 5; ++i)
@@ -203,7 +203,7 @@ UNIT_TEST(FindPathManhattan)
       joints.emplace_back(MakeJoint({{i, j}, {j + kCitySize, i}}));
   }
 
-  graph.Import(joints, {} /* restrictions */);
+  graph.Import(joints);
 
   for (uint32_t startY = 0; startY < kCitySize; ++startY)
   {

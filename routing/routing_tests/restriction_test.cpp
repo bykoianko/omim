@@ -75,7 +75,7 @@ unique_ptr<IndexGraph> BuildTriangularGraph()
 
   unique_ptr<IndexGraph> graph = make_unique<IndexGraph>(
         loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
-  graph->Import(joints, {} /* restrictions */);
+  graph->Import(joints);
   return graph;
 }
 
@@ -148,7 +148,7 @@ unique_ptr<IndexGraph> BuildCornerGraph()
 
   unique_ptr<IndexGraph> graph = make_unique<IndexGraph>(
         loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
-  graph->Import(joints, {} /* restrictions */);
+  graph->Import(joints);
   return graph;
 }
 
@@ -268,7 +268,7 @@ unique_ptr<IndexGraph> BuildTwoSquaresGraph()
 
   unique_ptr<IndexGraph> graph = make_unique<IndexGraph>(
         loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
-  graph->Import(joints, {} /* restrictions */);
+  graph->Import(joints);
   return graph;
 }
 
@@ -413,7 +413,7 @@ unique_ptr<IndexGraph> BuildFlagGraph()
 
   unique_ptr<IndexGraph> graph = make_unique<IndexGraph>(
         loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
-  graph->Import(joints, {} /* restrictions */);
+  graph->Import(joints);
   return graph;
 }
 
