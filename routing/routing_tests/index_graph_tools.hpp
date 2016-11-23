@@ -1,8 +1,12 @@
 #pragma once
 
-#include "routing/base/astar_algorithm.hpp"
 #include "routing/edge_estimator.hpp"
 #include "routing/index_graph.hpp"
+#include "routing/road_point.hpp"
+
+#include "routing/base/astar_algorithm.hpp"
+
+#include "geometry/point2d.hpp"
 
 #include "std/algorithm.hpp"
 #include "std/shared_ptr.hpp"
@@ -36,4 +40,8 @@ void TestRouteSegments(routing::IndexGraph & graph, routing::RoadPoint const & s
                        routing::RoadPoint const & finish,
                        routing::AStarAlgorithm<routing::IndexGraph>::Result expectedRouteResult,
                        vector<routing::RoadPoint> const & expectedRoute);
+
+void TestRouteGeometry(routing::RoadPoint const & start, routing::RoadPoint const & finish,
+                       routing::AStarAlgorithm<routing::IndexGraph>::Result expectedRouteResult,
+                       vector<m2::PointD> const & expectedRouteGeom, routing::IndexGraph & graph);
 }  // namespace routing_test

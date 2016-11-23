@@ -4,6 +4,9 @@
 
 #include "routing/car_model.hpp"
 
+#include "routing/geometry.hpp"
+#include "geometry/point2d.hpp"
+
 #include "std/unique_ptr.hpp"
 #include "std/vector.hpp"
 
@@ -37,7 +40,7 @@ void EdgeTest(Joint::Id vertex, size_t expectedIntgoingNum, size_t expectedOutgo
   vector<IndexGraph::TEdgeType> outgoing;
   graph.GetOutgoingEdgesList(vertex, outgoing);
   TEST_EQUAL(outgoing.size(), expectedOutgoingNum, ());
-};
+}
 
 // Finish
 // 2 *
@@ -149,6 +152,8 @@ unique_ptr<IndexGraph> BuildCornerGraph()
   unique_ptr<IndexGraph> graph = make_unique<IndexGraph>(
         loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
   graph->Import(joints);
+  graph->InsertJoint({1 /* feature id */, 0 /* point id */}); // Start joint.
+  graph->InsertJoint({0 /* feature id */, 1 /* point id */}); // Finish joint.
   return graph;
 }
 
@@ -169,8 +174,6 @@ UNIT_TEST(CornerGraph)
 UNIT_TEST(CornerGraph_CreateFakeFeature1Geometry)
 {
   unique_ptr<IndexGraph> graph = BuildCornerGraph();
-  graph->InsertJoint({1 /* feature id */, 0 /* point id */}); // Start joint.
-  graph->InsertJoint({0 /* feature id */, 1 /* point id */}); // Finish joint.
 
   vector<RoadPoint> roadPoints;
   graph->CreateRoadPointsList(graph->GetJointIdForTesting({1 /* feature id */, 0 /* point id */}),
@@ -189,8 +192,6 @@ UNIT_TEST(CornerGraph_CreateFakeFeature1Geometry)
 UNIT_TEST(CornerGraph_CreateFakeReversedFeature1Geometry)
 {
   unique_ptr<IndexGraph> graph = BuildCornerGraph();
-  graph->InsertJoint({1 /* feature id */, 0 /* point id */}); // Start joint.
-  graph->InsertJoint({0 /* feature id */, 1 /* point id */}); // Finish joint.
 
   vector<RoadPoint> roadPoints;
   graph->CreateRoadPointsList(graph->GetJointIdForTesting({1 /* feature id */, 2 /* point id */}),
@@ -211,8 +212,6 @@ UNIT_TEST(CornerGraph_AddFakeFeature)
   RoadPoint const kStart(1, 0);
   RoadPoint const kFinish(0, 1);
   unique_ptr<IndexGraph> graph = BuildCornerGraph();
-  graph->InsertJoint({1 /* feature id */, 0 /* point id */}); // Start joint.
-  graph->InsertJoint({0 /* feature id */, 1 /* point id */}); // Finish joint.
 
   graph->AddFakeFeature(graph->GetJointIdForTesting(kStart), graph->GetJointIdForTesting(kFinish),
                         {} /* viaPointGeometry */);
@@ -414,6 +413,7 @@ unique_ptr<IndexGraph> BuildFlagGraph()
   unique_ptr<IndexGraph> graph = make_unique<IndexGraph>(
         loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
   graph->Import(joints);
+  graph->InsertJoint({0 /* feature id */, 0 /* point id */}); // start
   return graph;
 }
 
@@ -425,13 +425,13 @@ unique_ptr<IndexGraph> BuildFlagGraph()
 UNIT_TEST(FlagGraph)
 {
   unique_ptr<IndexGraph> graph = BuildFlagGraph();
-
   RoadPoint const kStart(0 /* feature id */, 0 /* point id */);
   RoadPoint const kFinish(5, 0);
-  vector<RoadPoint> const expectedRoute = {{0 /* feature id */, 0 /* point id */},
-                                           {0, 1}, {3, 1}, {5, 0}};
 
-  TestRouteSegments(*graph, kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK, expectedRoute);
+  vector<m2::PointD> const expectedGeom = {{2 /* x */, 0 /* y */},
+                                           {1, 0}, {1, 1}, {0.5, 1}};
+  TestRouteGeometry(kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK,
+                    expectedGeom, *graph);
 }
 
 // Route through flag graph with one restriciton (type no) from F0 to F3.
@@ -440,7 +440,7 @@ UNIT_TEST(FlagGraph_RestrictionF0F3No)
   RoadPoint const kStart(0 /* feature id */, 0 /* point id */);
   RoadPoint const kFinish(5, 0);
   unique_ptr<IndexGraph> graph = BuildFlagGraph();
-  graph->InsertJoint(kStart);
+
   Joint::Id const restictionCenterId = graph->GetJointIdForTesting({0, 1});
 
   // Testing outgoing and ingoing edge number near restriction joint.
@@ -450,13 +450,10 @@ UNIT_TEST(FlagGraph_RestrictionF0F3No)
   EdgeTest(restictionCenterId, 2 /* expectedIntgoingNum */, 3 /* expectedOutgoingNum */, *graph);
 
   // Testing route building after adding the restriction.
-  vector<RoadPoint> const expectedRoute = {{IndexGraph::kStartFakeFeatureIds, 0 /* point id */},
-                                           {IndexGraph::kStartFakeFeatureIds, 1},
-                                           {IndexGraph::kStartFakeFeatureIds, 2},
-                                           {2 /* feature id */, 1 /* point id */},
-                                           {4, 1}};
-
-  TestRouteSegments(*graph, kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK, expectedRoute);
+  vector<m2::PointD> const expectedGeom = {{2 /* x */, 0 /* y */},
+                                           {1, 0}, {0, 0}, {0, 1}, {0.5, 1}};
+  TestRouteGeometry(kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK,
+                    expectedGeom, *graph);
 }
 
 // Route through flag graph with one restriciton (type only) from F0 to F1.
@@ -465,11 +462,10 @@ UNIT_TEST(FlagGraph_RestrictionF0F1Only)
   RoadPoint const kStart(0 /* feature id */, 0 /* point id */);
   RoadPoint const kFinish(5, 0);
   unique_ptr<IndexGraph> graph = BuildFlagGraph();
-  graph->InsertJoint(kStart);
 
   Joint::Id const restictionCenterId = graph->GetJointIdForTesting({0, 1});
   graph->ApplyRestrictionOnly({0 /* feature id */, 1 /* point id */}, {1 /* feature id */, 0 /* point id */},
-                             restictionCenterId);
+                              restictionCenterId);
 
   vector<RoadPoint> const expectedRoute = {{IndexGraph::kStartFakeFeatureIds, 0 /* point id */},
                                            {IndexGraph::kStartFakeFeatureIds, 1},
@@ -477,5 +473,98 @@ UNIT_TEST(FlagGraph_RestrictionF0F1Only)
                                            {2 /* feature id */, 1 /* point id */},
                                            {4, 1}};
   TestRouteSegments(*graph, kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK, expectedRoute);
+}
+
+// 1 *-F4-*-F5-*---F6---* Finish
+//   |         |
+//   F2        F3
+//   |         |
+// 0 *---F1----*---F0---* Start
+//   0         1        2
+// Note 1. All features are two-way. (It's possible to move along any direction of the features.)
+// Note 2. Any feature contains of one segment.
+unique_ptr<IndexGraph> BuildPosterGraph()
+{
+  auto loader = []()
+  {
+    unique_ptr<TestGeometryLoader> loader = make_unique<TestGeometryLoader>();
+    loader->AddRoad(0 /* feature id */, false /* one way */, buffer_vector<m2::PointD, 32>(
+                           {{2.0, 0.0}, {1.0, 0.0}}));
+    loader->AddRoad(1 /* feature id */, false /* one way */, buffer_vector<m2::PointD, 32>(
+                           {{1.0, 0.0}, {0.0, 0.0}}));
+    loader->AddRoad(2 /* feature id */, false /* one way */, buffer_vector<m2::PointD, 32>(
+                           {{0.0, 0.0}, {0.0, 1.0}}));
+    loader->AddRoad(3 /* feature id */, false /* one way */, buffer_vector<m2::PointD, 32>(
+                           {{1.0, 0.0}, {1.0, 1.0}}));
+    loader->AddRoad(4 /* feature id */, false /* one way */, buffer_vector<m2::PointD, 32>(
+                           {{0.0, 1.0}, {0.5, 1.0}}));
+    loader->AddRoad(5 /* feature id */, false /* one way */, buffer_vector<m2::PointD, 32>(
+                           {{0.5, 1.0}, {1.0, 1.0}}));
+    loader->AddRoad(6 /* feature id */, false /* one way */, buffer_vector<m2::PointD, 32>(
+                           {{1.0, 1.0}, {2.0, 1.0}}));
+    return loader;
+  };
+
+  vector<Joint> const joints = {
+    MakeJoint({{1 /* feature id */, 1 /* point id */}, {2, 0}}), /* joint at point (0, 0) */
+    MakeJoint({{2, 1}, {4, 0}}), /* joint at point (0, 1) */
+    MakeJoint({{4, 1}, {5, 0}}), /* joint at point (0.5, 1) */
+    MakeJoint({{1, 0}, {3, 0}, {0, 1}}), /* joint at point (1, 0) */
+    MakeJoint({{3, 1}, {5, 1}, {6, 0}}), /* joint at point (1, 1) */
+  };
+
+  unique_ptr<IndexGraph> graph = make_unique<IndexGraph>(
+        loader(), CreateCarEdgeEstimator(make_shared<CarModelFactory>()->GetVehicleModel()));
+  graph->Import(joints);
+  graph->InsertJoint({0 /* feature id */, 0 /* point id */}); // start
+  graph->InsertJoint({6 /* feature id */, 1 /* point id */}); // finish
+
+  return graph;
+}
+
+// Route through poster graph without any restrictions.
+UNIT_TEST(PosterGraph)
+{
+ unique_ptr<IndexGraph> graph = BuildPosterGraph();
+
+ RoadPoint const kStart(0 /* feature id */, 0 /* point id */);
+ RoadPoint const kFinish(6, 1);
+ vector<m2::PointD> const expectedGeom = {{2 /* x */, 0 /* y */},
+                                          {1, 0}, {1, 1}, {2, 1}};
+
+ TestRouteGeometry(kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK,
+                   expectedGeom, *graph);
+}
+
+// Route through poster graph with restrictions F0-F3 (type no).
+UNIT_TEST(PosterGraph_RestrictionF0F3No)
+{
+ unique_ptr<IndexGraph> graph = BuildPosterGraph();
+ Joint::Id const restictionCenterId = graph->GetJointIdForTesting({0, 1});
+ graph->ApplyRestrictionNo({0 /* feature id */, 1 /* point id */}, {3 /* feature id */, 0 /* point id */},
+                           restictionCenterId);
+
+ RoadPoint const kStart(0 /* feature id */, 0 /* point id */);
+ RoadPoint const kFinish(6, 1);
+ vector<m2::PointD> const expectedGeom = {{2 /* x */, 0 /* y */},
+                                          {1, 0}, {0, 0}, {0, 1}, {0.5, 1}, {1, 1}, {2, 1}};
+ TestRouteGeometry(kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK,
+                   expectedGeom, *graph);
+}
+
+// Route through poster graph with restrictions F0-F1 (type only).
+UNIT_TEST(PosterGraph_RestrictionF0F1Only)
+{
+ unique_ptr<IndexGraph> graph = BuildPosterGraph();
+ Joint::Id const restictionCenterId = graph->GetJointIdForTesting({0, 1});
+ graph->ApplyRestrictionOnly({0 /* feature id */, 1 /* point id */}, {1 /* feature id */, 0 /* point id */},
+                             restictionCenterId);
+
+ RoadPoint const kStart(0 /* feature id */, 0 /* point id */);
+ RoadPoint const kFinish(6, 1);
+ vector<m2::PointD> const expectedGeom = {{2 /* x */, 0 /* y */},
+                                          {1, 0}, {0, 0}, {0, 1}, {0.5, 1}, {1, 1}, {2, 1}};
+ TestRouteGeometry(kStart, kFinish, AStarAlgorithm<IndexGraph>::Result::OK,
+                   expectedGeom, *graph);
 }
 }  // namespace

@@ -66,4 +66,20 @@ void TestRouteSegments(IndexGraph & graph, RoadPoint const & start, RoadPoint co
   TEST_EQUAL(resultCode, expectedRouteResult, ());
   TEST_EQUAL(route, expectedRoute, ());
 }
+
+void TestRouteGeometry(RoadPoint const & start, RoadPoint const & finish,
+                       AStarAlgorithm<IndexGraph>::Result expectedRouteResult,
+                       vector<m2::PointD> const & expectedRouteGeom, IndexGraph & graph)
+{
+  vector<RoadPoint> route;
+  AStarAlgorithm<IndexGraph>::Result const resultCode = CalculateRoute(graph, start, finish, route);
+  TEST_EQUAL(resultCode, expectedRouteResult, ());
+  TEST_EQUAL(route.size(), expectedRouteGeom.size(), ());
+  for (size_t i = 0; i < route.size(); ++i)
+  {
+    RoadGeometry roadGeom = graph.GetRoad(route[i].GetFeatureId());
+    CHECK_LESS(route[i].GetPointId(), roadGeom.GetPointsCount(), ());
+    TEST_EQUAL(expectedRouteGeom[i], roadGeom.GetPoint(route[i].GetPointId()), ());
+  }
+}
 }  // namespace routing_test

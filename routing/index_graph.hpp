@@ -122,6 +122,9 @@ public:
 
   void CreateFakeFeatureGeometry(vector<RoadPoint> const & geometrySource, RoadGeometry & geometry) const;
 
+  /// \returns RoadGeometry by a real or fake featureId.
+  RoadGeometry const & GetRoad(uint32_t featureId) const;
+
   static uint32_t const kStartFakeFeatureIds = 1024 * 1024 * 1024;
 
 private:
@@ -129,9 +132,6 @@ private:
                           bool outgoing, vector<TEdgeType> & edges) const;
   void GetEdgesList(Joint::Id jointId, bool forward, vector<TEdgeType> & edges) const;
   void Build(uint32_t jointNumber);
-
-  /// \returns RoadGeometry by a real or fake featureId.
-  RoadGeometry const & GetRoad(uint32_t featureId) const;
 
   double GetSpeed(RoadPoint ftp) const;
 
