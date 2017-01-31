@@ -7,6 +7,7 @@
 #include "storage/storage_defines.hpp"
 #include "storage/index.hpp"
 #include "storage/map_files_downloader.hpp"
+#include "storage/num_mwm_id.hpp"
 #include "storage/queued_country.hpp"
 #include "storage/storage_defines.hpp"
 
@@ -153,6 +154,7 @@ private:
   int64_t m_currentVersion;
 
   TCountryTree m_countries;
+  NumMwmIds m_mwmIds;
 
   /// @todo. It appeared that our application uses m_queue from
   /// different threads without any synchronization. To reproduce it
@@ -493,6 +495,8 @@ public:
   platform::CountryFile const & GetCountryFile(TCountryId const & countryId) const;
   TLocalFilePtr GetLatestLocalFile(platform::CountryFile const & countryFile) const;
   TLocalFilePtr GetLatestLocalFile(TCountryId const & countryId) const;
+
+  NumMwmIds const & GetMwmIds() const { return m_mwmIds; }
 
   /// Slow version, but checks if country is out of date
   Status CountryStatusEx(TCountryId const & countryId) const;

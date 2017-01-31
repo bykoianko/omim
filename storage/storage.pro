@@ -22,6 +22,7 @@ HEADERS += \
   http_map_files_downloader.hpp \
   index.hpp \
   map_files_downloader.hpp \
+  num_mwm_id.hpp \
   queued_country.hpp \
   storage.hpp \
   storage_defines.hpp \

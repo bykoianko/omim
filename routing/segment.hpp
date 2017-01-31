@@ -3,6 +3,8 @@
 #include "routing/num_mwm_id.hpp"
 #include "routing/road_point.hpp"
 
+#include "storage/num_mwm_id.hpp"
+
 #include "std/cstdint.hpp"
 #include "std/sstream.hpp"
 #include "std/string.hpp"

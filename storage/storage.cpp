@@ -653,6 +653,11 @@ void Storage::LoadCountriesFile(string const & pathToCountriesFile, string const
     if (m_currentVersion < 0)
       LOG(LERROR, ("Can't load countries file", pathToCountriesFile));
   }
+
+  m_countries.GetRoot().ForEachInSubtree([this](TCountryTree::Node const & node) {
+    if (node.ChildrenCount() == 0)
+      m_mwmIds.RegisterFile(node.Value().GetFile());
+  });
 }
 
 int Storage::Subscribe(TChangeCountryFunction const & change, TProgressFunction const & progress)
