@@ -1,11 +1,14 @@
 #pragma once
 
+#include "routing/cross_mwm_index_graph_osrm.hpp"
 #include "routing/osrm_data_facade.hpp"
 #include "routing/osrm_engine.hpp"
 #include "routing/route.hpp"
 #include "routing/router.hpp"
 #include "routing/routing_mapping.hpp"
 #include "routing/single_mwm_router.hpp"
+
+#include "storage/num_mwm_id.hpp"
 
 #include "std/unique_ptr.hpp"
 #include "std/vector.hpp"
@@ -116,5 +119,8 @@ private:
   RoutingIndexManager m_indexManager;
 
   unique_ptr<SingleMwmRouter> m_router;
+
+  storage::NumMwmIds m_numMwmIds;
+  CrossMwmIndexGraphOsrm m_crossIndex;
 };
 }  // namespace routing

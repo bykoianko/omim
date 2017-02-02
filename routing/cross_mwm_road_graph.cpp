@@ -196,14 +196,13 @@ void CrossMwmGraph::GetOutgoingEdgesList(BorderCross const & v,
   // Find income node.
   IngoingCrossNode ingoingNode;
   bool found = false;
-  auto findingFn = [&ingoingNode, &v, &found](IngoingCrossNode const & node)
-  {
-                                               if (node.m_nodeId == v.toNode.node)
-                                      {
-                                                 found = true;
-                                          ingoingNode = node;
-  }
-                                             };
+  auto findingFn = [&ingoingNode, &v, &found](IngoingCrossNode const & node) {
+                                                if (node.m_nodeId == v.toNode.node)
+                                                {
+                                                  found = true;
+                                                  ingoingNode = node;
+                                                }
+                                              };
   CHECK(currentContext.ForEachIngoingNodeNearPoint(v.toNode.point, findingFn), ());
 
   CHECK(found, ());
@@ -218,8 +217,8 @@ void CrossMwmGraph::GetOutgoingEdgesList(BorderCross const & v,
                                          for (auto const & target : targets)
                                          {
                                            if (target.toNode.IsValid())
-                                           adj.emplace_back(target, outWeight);
-                                       }
+                                             adj.emplace_back(target, outWeight);
+                                         }
                                        }
                                      });
 }

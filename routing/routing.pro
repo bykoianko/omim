@@ -20,6 +20,7 @@ SOURCES += \
     car_model.cpp \
     car_router.cpp \
     cross_mwm_road_graph.cpp \
+    cross_mwm_index_graph_osrm.cpp \
     cross_mwm_router.cpp \
     cross_routing_context.cpp \
     directions_engine.cpp \

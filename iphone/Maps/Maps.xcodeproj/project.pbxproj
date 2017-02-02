@@ -1724,6 +1724,9 @@
 		6B653B931C7F2DE4007BEFC5 /* cuisine-strings */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "cuisine-strings"; path = "../../data/cuisine-strings"; sourceTree = "<group>"; };
 		6B9978341C89A316003B8AA0 /* editor.config */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = editor.config; path = ../../data/editor.config; sourceTree = "<group>"; };
 		849CF7A31DE842290024A8A5 /* cmMAPS.ME.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = cmMAPS.ME.app; path = "cm dbg.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		845C89301C89837900940D7F /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
+		845C89331C8983F300940D7F /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
+		849CF7A31DE842290024A8A5 /* cm dbg.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "cm dbg.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D1107310486CEB800E47090 /* MAPSME.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = MAPSME.plist; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
 		978D4A30199A11E600D72CA7 /* faq.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = faq.html; path = ../../data/faq.html; sourceTree = "<group>"; };
 		97A5967E19B9CD47007A963F /* copyright.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = copyright.html; path = ../../data/copyright.html; sourceTree = "<group>"; };
@@ -2255,7 +2258,7 @@
 			children = (
 				348E57981B0F49D8000FA02A /* maps.me dbg.app */,
 				6741AA5D1BF340DE002C974C /* xc dbg.app */,
-				849CF7A31DE842290024A8A5 /* cmMAPS.ME.app */,
+				849CF7A31DE842290024A8A5 /* cm dbg.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -3864,7 +3867,7 @@
 			);
 			name = cmMAPS.ME;
 			productName = Maps;
-			productReference = 849CF7A31DE842290024A8A5 /* cmMAPS.ME.app */;
+			productReference = 849CF7A31DE842290024A8A5 /* cm dbg.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
