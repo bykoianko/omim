@@ -1,5 +1,6 @@
 #include "routing/index_router.hpp"
 
+#include "routing/base/astar_algorithm.hpp"
 #include "routing/base/astar_progress.hpp"
 #include "routing/bicycle_directions.hpp"
 #include "routing/index_graph.hpp"
@@ -34,6 +35,24 @@ namespace
 size_t constexpr kMaxRoadCandidates = 6;
 float constexpr kProgressInterval = 2;
 uint32_t constexpr kDrawPointsPeriod = 10;
+
+template <typename Graph>
+IRouter::ResultCode FindPath(
+  typename Graph::TVertexType const & start, typename Graph::TVertexType const & finish,
+  RouterDelegate const & delegate, Graph & graph,
+  typename AStarAlgorithm<Graph>::TOnVisitedVertexCallback const & onVisitedVertexCallback,
+  RoutingResult<typename Graph::TVertexType> & routingResult)
+{
+  AStarAlgorithm<Graph> algorithm;
+  auto const resultCode = algorithm.FindPathBidirectional(graph, start, finish, routingResult,
+                                                          delegate, onVisitedVertexCallback);
+  switch (resultCode)
+  {
+    case AStarAlgorithm<Graph>::Result::NoPath: return IRouter::RouteNotFound;
+    case AStarAlgorithm<Graph>::Result::Cancelled: return IRouter::Cancelled;
+    case AStarAlgorithm<Graph>::Result::OK: return IRouter::NoError;
+  }
+}
 
 bool IsDeadEnd(Segment const & segment, bool isOutgoing, WorldGraph & worldGraph)
 {
