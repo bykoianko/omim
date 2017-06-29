@@ -92,7 +92,7 @@ double Route::GetMercatorDistanceFromBegin() const
 
 uint32_t Route::GetTotalTimeSec() const
 {
-  return m_times.empty() ? 0 : m_times.back().second;
+  return m_routeSegments.empty() ? 0 : m_routeSegments.back().GetTimeFromBeginningS();
 }
 
 uint32_t Route::GetCurrentTimeToEndSec() const
@@ -375,6 +375,32 @@ void Route::SetSubrouteUid(size_t segmentIdx, SubrouteUid subrouteUid)
 {
   CHECK_LESS(segmentIdx, GetSubrouteCount(), ());
   m_subrouteUid = subrouteUid;
+}
+
+void Route::GetAltitudes(feature::TAltitudes & altitudes) const
+{
+  altitudes.clear();
+  for (auto const & s : m_routeSegments)
+    altitudes.push_back(s.GetJunction().GetAltitude());
+}
+
+traffic::SpeedGroup Route::GetTraffic(size_t segmentIdx) const
+{
+  CHECK_LESS(segmentIdx, m_routeSegments.size(), ());
+  return m_routeSegments[segmentIdx].GetTraffic();
+}
+
+void Route::GetTurnsForTesting(vector<turns::TurnItem> & turns) const
+{
+  turns.clear();
+  for (auto const & s : m_routeSegments)
+  {
+    if (s.GetTurn().m_turn != turns::TurnDirection::NoTurn ||
+        s.GetTurn().m_pedestrianTurn != turns::PedestrianDirection::None)
+    {
+      turns.push_back(s.GetTurn());
+    }
+  }
 }
 
 Junction Route::GetJunction(size_t pointIdx) const

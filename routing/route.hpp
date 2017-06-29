@@ -61,6 +61,7 @@ public:
   double GetTimeFromBeginningS() const { return m_timeFromBeginningS; }
   traffic::SpeedGroup GetTraffic() const { return m_traffic; }
 
+
 private:
   Segment m_segment;
   /// Turn (maneuver) information for the turn next to the |m_segment| if any.
@@ -171,7 +172,17 @@ public:
   inline void SetTraffic(vector<traffic::SpeedGroup> && v) { m_traffic = move(v); }
 
   template <class SI>
-  void SetRouteSegments(SI && v) { m_routeSegments = std::forward<SI>(v); }
+  void SetRouteSegments(SI && v)
+  {
+    m_routeSegments = std::forward<SI>(v);
+
+    m_haveAltitudes = true;
+    for (auto const & s : m_routeSegments)
+    {
+      if (s.GetJunction().GetAltitude() == feature::kInvalidAltitude)
+        m_haveAltitudes = false;
+    }
+  }
 
   void SetCurrentSubrouteIdx(size_t currentSubrouteIdx) { m_currentSubrouteIdx = currentSubrouteIdx; }
 
@@ -185,11 +196,13 @@ public:
 
   string const & GetRouterId() const { return m_router; }
   m2::PolylineD const & GetPoly() const { return m_poly.GetPolyline(); }
+
   TTurns const & GetTurns() const { return m_turns; }
   feature::TAltitudes const & GetAltitudes() const { return m_altitudes; }
   vector<traffic::SpeedGroup> const & GetTraffic() const { return m_traffic; }
   size_t GetCurrentSubrouteIdx() const { return m_currentSubrouteIdx; }
   vector<SubrouteAttrs> const & GetSubroutes() const { return m_subrouteAttrs; }
+
   vector<double> const & GetSegDistanceMeters() const { return m_poly.GetSegDistanceM(); }
   bool IsValid() const { return (m_poly.GetPolyline().GetSize() > 1); }
 
@@ -204,7 +217,7 @@ public:
   bool GetCurrentTurn(double & distanceToTurnMeters, turns::TurnItem & turn) const;
 
   /// \brief Returns a name of a street where the user rides at this moment.
-  void GetCurrentStreetName(string &) const;
+  void GetCurrentStreetName(string & name) const;
 
   /// \brief Returns a name of a street next to idx point of the path. Function avoids short unnamed links.
   void GetStreetNameAfterIdx(uint32_t idx, string &) const;
@@ -268,10 +281,16 @@ public:
   /// after the route is removed.
   void SetSubrouteUid(size_t segmentIdx, SubrouteUid subrouteUid);
 
+  void GetAltitudes(feature::TAltitudes & altitudes) const;
+  bool HaveAltitudes() const { return m_haveAltitudes; }
+  traffic::SpeedGroup GetTraffic(size_t segmentIdx) const;
+
+  void GetTurnsForTesting(vector<turns::TurnItem> & turns) const;
+
 private:
   friend string DebugPrint(Route const & r);
 
-  /// Call this fucnction when geometry have changed.
+  /// Call this function when geometry have changed.
   void Update();
   double GetPolySegAngle(size_t ind) const;
   TTurns::const_iterator GetCurrentTurn() const;
@@ -295,6 +314,7 @@ private:
   vector<traffic::SpeedGroup> m_traffic;
 
   std::vector<RouteSegment> m_routeSegments;
+  bool m_haveAltitudes = false;
 
   mutable double m_currentTime;
 
