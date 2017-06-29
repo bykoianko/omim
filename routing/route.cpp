@@ -86,8 +86,13 @@ double Route::GetCurrentDistanceToEndMeters() const
 
 double Route::GetMercatorDistanceFromBegin() const
 {
-  //TODO Maybe better to return FollowedRoute and user will call GetMercatorDistance etc. by itself
-  return m_poly.GetMercatorDistanceFromBegin();
+  auto const & curIter = m_poly.GetCurrentIter();
+  if (curIter.IsValid())
+    return 0;
+  
+  CHECK_LESS(curIter.m_ind, m_routeSegments.size(), ());
+  return m_routeSegments[curIter.m_ind].GetDistFromBeginningMerc() +
+         m_poly.GetDistFromCurPointToRoutePoint();
 }
 
 uint32_t Route::GetTotalTimeSec() const
