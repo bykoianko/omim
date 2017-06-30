@@ -37,7 +37,6 @@ Route::Route(string const & router, vector<m2::PointD> const & points, string co
   : m_router(router), m_routingSettings(GetCarRoutingSettings()),
     m_name(name), m_poly(points.begin(), points.end())
 {
-  Update();
 }
 
 void Route::Swap(Route & rhs)
@@ -45,9 +44,7 @@ void Route::Swap(Route & rhs)
   m_router.swap(rhs.m_router);
   swap(m_routingSettings, rhs.m_routingSettings);
   m_poly.Swap(rhs.m_poly);
-  m_simplifiedPoly.Swap(rhs.m_simplifiedPoly);
   m_name.swap(rhs.m_name);
-  swap(m_currentTime, rhs.m_currentTime);
   swap(m_turns, rhs.m_turns);
   swap(m_times, rhs.m_times);
   swap(m_streets, rhs.m_streets);
@@ -87,12 +84,13 @@ double Route::GetCurrentDistanceToEndMeters() const
 double Route::GetMercatorDistanceFromBegin() const
 {
   auto const & curIter = m_poly.GetCurrentIter();
-  if (curIter.IsValid())
+  if (!curIter.IsValid())
     return 0;
-  
+
   CHECK_LESS(curIter.m_ind, m_routeSegments.size(), ());
-  return m_routeSegments[curIter.m_ind].GetDistFromBeginningMerc() +
-         m_poly.GetDistFromCurPointToRoutePoint();
+  double const distMerc =
+      curIter.m_ind == 0 ? 0.0 : m_routeSegments[curIter.m_ind - 1].GetDistFromBeginningMerc();
+  return distMerc + m_poly.GetDistFromCurPointToRoutePoint();
 }
 
 uint32_t Route::GetTotalTimeSec() const
@@ -253,30 +251,15 @@ bool Route::GetNextTurns(vector<TurnItemDist> & turns) const
 
 void Route::GetCurrentDirectionPoint(m2::PointD & pt) const
 {
-  if (m_routingSettings.m_keepPedestrianInfo && m_simplifiedPoly.IsValid())
-    m_simplifiedPoly.GetCurrentDirectionPoint(pt, kOnEndToleranceM);
-  else
-    m_poly.GetCurrentDirectionPoint(pt, kOnEndToleranceM);
+  m_poly.GetCurrentDirectionPoint(pt, kOnEndToleranceM);
 }
 
 bool Route::MoveIterator(location::GpsInfo const & info) const
 {
-  double predictDistance = -1.0;
-  if (m_currentTime > 0.0 && info.HasSpeed())
-  {
-    /// @todo Need to distinguish GPS and WiFi locations.
-    /// They may have different time metrics in case of incorrect system time on a device.
-    double const deltaT = info.m_timestamp - m_currentTime;
-    if (deltaT > 0.0 && deltaT < kLocationTimeThreshold)
-      predictDistance = info.m_speed * deltaT;
-  }
-
   m2::RectD const rect = MercatorBounds::MetresToXY(
         info.m_longitude, info.m_latitude,
         max(m_routingSettings.m_matchingThresholdM, info.m_horizontalAccuracy));
-  FollowedPolyline::Iter const res = m_poly.UpdateProjectionByPrediction(rect, predictDistance);
-  if (m_simplifiedPoly.IsValid())
-    m_simplifiedPoly.UpdateProjectionByPrediction(rect, predictDistance);
+  FollowedPolyline::Iter const res = m_poly.UpdateProjectionByPrediction(rect, -1.0 /* predictDistance */);
   return res.IsValid();
 }
 
@@ -318,27 +301,6 @@ void Route::MatchLocationToRoute(location::GpsInfo & location, location::RouteMa
       routeMatchingInfo.Set(iter.m_pt, iter.m_ind, GetMercatorDistanceFromBegin());
     }
   }
-}
-
-void Route::Update()
-{
-  if (!m_poly.IsValid())
-    return;
-  if (m_routingSettings.m_keepPedestrianInfo)
-  {
-    vector<m2::PointD> points;
-    auto distFn = m2::DistanceToLineSquare<m2::PointD>();
-    // TODO (ldargunov) Rewrite dist f to distance in meters and avoid 0.00000 constants.
-    SimplifyNearOptimal(20, m_poly.GetPolyline().Begin(), m_poly.GetPolyline().End(), 0.00000001, distFn,
-                        MakeBackInsertFunctor(points));
-    FollowedPolyline(points.begin(), points.end()).Swap(m_simplifiedPoly);
-  }
-  else
-  {
-    // Free memory if we don't need simplified geometry.
-    FollowedPolyline().Swap(m_simplifiedPoly);
-  }
-  m_currentTime = 0.0;
 }
 
 size_t Route::GetSubrouteCount() const { return m_subrouteAttrs.size(); }

@@ -149,7 +149,6 @@ public:
   Route(string const & router, TIter beg, TIter end)
     : m_router(router), m_routingSettings(GetCarRoutingSettings()), m_poly(beg, end)
   {
-    Update();
   }
 
   Route(string const & router, vector<m2::PointD> const & points, string const & name = string());
@@ -162,7 +161,6 @@ public:
       FollowedPolyline().Swap(m_poly);
     else
       FollowedPolyline(beg, end).Swap(m_poly);
-    Update();
   }
 
   inline void SetTurnInstructions(TTurns && v) { m_turns = move(v); }
@@ -248,7 +246,6 @@ public:
   inline void SetRoutingSettings(RoutingSettings const & routingSettings)
   {
     m_routingSettings = routingSettings;
-    Update();
   }
 
   // Subroute interface.
@@ -290,8 +287,6 @@ public:
 private:
   friend string DebugPrint(Route const & r);
 
-  /// Call this function when geometry have changed.
-  void Update();
   double GetPolySegAngle(size_t ind) const;
   TTurns::const_iterator GetCurrentTurn() const;
   TStreets::const_iterator GetCurrentStreetNameIterAfter(FollowedPolyline::Iter iter) const;
@@ -303,7 +298,6 @@ private:
   string m_name;
 
   FollowedPolyline m_poly;
-  FollowedPolyline m_simplifiedPoly;
 
   set<string> m_absentCountries;
 
@@ -315,8 +309,6 @@ private:
 
   std::vector<RouteSegment> m_routeSegments;
   bool m_haveAltitudes = false;
-
-  mutable double m_currentTime;
 
   // Subroute
   SubrouteUid m_subrouteUid = kInvalidSubrouteId;
