@@ -146,7 +146,6 @@ void ReconstructRoute(IDirectionsEngine & engine, RoadGraphBase const & graph,
 
   route.SetGeometry(routeGeometry.begin(), routeGeometry.end());
   route.SetSectionTimes(move(times));
-  route.SetTurnInstructions(move(turnsDir));
   route.SetStreetNames(move(streetNames));
   if (hasAltitude)
   {

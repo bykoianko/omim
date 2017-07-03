@@ -61,7 +61,6 @@ public:
   double GetTimeFromBeginningS() const { return m_timeFromBeginningS; }
   traffic::SpeedGroup GetTraffic() const { return m_traffic; }
 
-
 private:
   Segment m_segment;
   /// Turn (maneuver) information for the turn next to the |m_segment| if any.
@@ -163,7 +162,6 @@ public:
       FollowedPolyline(beg, end).Swap(m_poly);
   }
 
-  inline void SetTurnInstructions(TTurns && v) { m_turns = move(v); }
   inline void SetSectionTimes(TTimes && v) { m_times = move(v); }
   inline void SetStreetNames(TStreets && v) { m_streets = move(v); }
   inline void SetAltitudes(feature::TAltitudes && v) { m_altitudes = move(v); }
@@ -187,17 +185,16 @@ public:
   template <class V>
   void SetSubroteAttrs(V && subroutes) { m_subrouteAttrs = std::forward<V>(subroutes); }
 
-  uint32_t GetTotalTimeSec() const;
-  uint32_t GetCurrentTimeToEndSec() const;
+  /// \returns estimated time for the whole route.
+  double GetTotalTimeSec() const;
+  /// \returns estimated time to reach the route end.
+  double GetCurrentTimeToEndSec() const;
 
   FollowedPolyline const & GetFollowedPolyline() const { return m_poly; }
 
   string const & GetRouterId() const { return m_router; }
   m2::PolylineD const & GetPoly() const { return m_poly.GetPolyline(); }
-
-  TTurns const & GetTurns() const { return m_turns; }
-  feature::TAltitudes const & GetAltitudes() const { return m_altitudes; }
-  vector<traffic::SpeedGroup> const & GetTraffic() const { return m_traffic; }
+  
   size_t GetCurrentSubrouteIdx() const { return m_currentSubrouteIdx; }
   vector<SubrouteAttrs> const & GetSubroutes() const { return m_subrouteAttrs; }
 
@@ -212,7 +209,7 @@ public:
   /// \brief GetCurrentTurn returns information about the nearest turn.
   /// \param distanceToTurnMeters is a distance from current position to the nearest turn.
   /// \param turn is information about the nearest turn.
-  bool GetCurrentTurn(double & distanceToTurnMeters, turns::TurnItem & turn) const;
+  void GetCurrentTurn(double & distanceToTurnMeters, turns::TurnItem & turn) const;
 
   /// \brief Returns a name of a street where the user rides at this moment.
   void GetCurrentStreetName(string & name) const;
@@ -220,14 +217,11 @@ public:
   /// \brief Returns a name of a street next to idx point of the path. Function avoids short unnamed links.
   void GetStreetNameAfterIdx(uint32_t idx, string &) const;
 
-  /// @return true if GetNextTurn() returns a valid result in parameters, false otherwise.
   /// \param distanceToTurnMeters is a distance from current position to the second turn.
   /// \param turn is information about the second turn.
-  /// @return true if its parameters are filled with correct result.
   /// \note All parameters are filled while a GetNextTurn function call.
   bool GetNextTurn(double & distanceToTurnMeters, turns::TurnItem & turn) const;
   /// \brief Extract information about zero, one or two nearest turns depending on current position.
-  /// @return true if its parameter is filled with correct result. (At least with one element.)
   bool GetNextTurns(vector<turns::TurnItemDist> & turns) const;
 
   void GetCurrentDirectionPoint(m2::PointD & pt) const;
@@ -288,10 +282,17 @@ private:
   friend string DebugPrint(Route const & r);
 
   double GetPolySegAngle(size_t ind) const;
-  TTurns::const_iterator GetCurrentTurn() const;
+  void GetClosestTurn(size_t segIdx, turns::TurnItem & turn) const;
   TStreets::const_iterator GetCurrentStreetNameIterAfter(FollowedPolyline::Iter iter) const;
 
   Junction GetJunction(size_t pointIdx) const;
+
+  /// \returns Estimated time to pass the route segment with |segIdx|.
+  double GetTimeToPassSegS(size_t segIdx) const;
+  /// \returns Length of the route segment with |segIdx| in meters.
+  double GetSegLenMeters(size_t segIdx) const;
+  /// \returns ETA to the last passed route point in seconds.
+  double GetETAToLastPassedPointS() const;
 
   string m_router;
   RoutingSettings m_routingSettings;
@@ -301,7 +302,6 @@ private:
 
   set<string> m_absentCountries;
 
-  TTurns m_turns;
   TTimes m_times;
   TStreets m_streets;
   feature::TAltitudes m_altitudes;

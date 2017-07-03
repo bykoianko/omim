@@ -4,6 +4,8 @@
 
 #include "geometry/mercator.hpp"
 
+#include "base/math.hpp"
+
 using namespace routing;
 using namespace routing::turns;
 
@@ -54,7 +56,7 @@ UNIT_TEST(NetherlandsAmsterdamBicycleYes)
   Route const & route = *routeResult.first;
   IRouter::ResultCode const result = routeResult.second;
   TEST_EQUAL(result, IRouter::NoError, ());
-  TEST_EQUAL(route.GetTotalTimeSec(), 356, ());
+  TEST(my::AlmostEqualAbs(route.GetTotalTimeSec(), 356.0, 1.0), ());
 }
 
 UNIT_TEST(NetherlandsAmsterdamSingelStOnewayBicycleNo)

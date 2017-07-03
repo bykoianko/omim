@@ -270,7 +270,7 @@ namespace integration
     string streetName;
     double distance;
     turns::TurnItem turn;
-    TEST(route.GetCurrentTurn(distance, turn), ());
+    route.GetCurrentTurn(distance, turn);
     route.GetStreetNameAfterIdx(turn.m_index, streetName);
     TEST_EQUAL(streetName, expectedStreetName, ());
   }

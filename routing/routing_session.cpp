@@ -44,7 +44,7 @@ size_t constexpr kSpeedCameraLookAheadCount = 50;
 
 double constexpr kCompletionPercentAccuracy = 5;
 
-uint32_t constexpr kMinimumETASec = 60;
+double constexpr kMinimumETASec = 60.0;
 }  // namespace
 
 namespace routing
@@ -299,7 +299,7 @@ void RoutingSession::GetRouteFollowingInfo(FollowingInfo & info) const
   {
     info = FollowingInfo();
     formatDistFn(m_route->GetTotalDistanceMeters(), info.m_distToTarget, info.m_targetUnitsSuffix);
-    info.m_time = max(kMinimumETASec, m_route->GetCurrentTimeToEndSec());
+    info.m_time = static_cast<int>(max(kMinimumETASec, m_route->GetCurrentTimeToEndSec()));
     return;
   }
 
@@ -318,7 +318,7 @@ void RoutingSession::GetRouteFollowingInfo(FollowingInfo & info) const
     info.m_nextTurn = routing::turns::TurnDirection::NoTurn;
 
   info.m_exitNum = turn.m_exitNum;
-  info.m_time = max(kMinimumETASec, m_route->GetCurrentTimeToEndSec());
+  info.m_time = static_cast<int>(max(kMinimumETASec, m_route->GetCurrentTimeToEndSec()));
   m_route->GetCurrentStreetName(info.m_sourceName);
   m_route->GetStreetNameAfterIdx(turn.m_index, info.m_targetName);
   info.m_completionPercent = GetCompletionPercent();

@@ -33,7 +33,8 @@ public:
   double GetTotalDistanceM() const;
   double GetDistanceFromBeginM() const;
   double GetDistanceToEndM() const;
-  double GetDistFromCurPointToRoutePoint() const;
+  double GetDistFromCurPointToRoutePointMerc() const;
+  double GetDistFromCurPointToRoutePointMeters() const;
 
   /*! \brief Return next navigation point for direction widgets.
    *  Returns first geometry point from the polyline after your location if it is farther then

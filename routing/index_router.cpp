@@ -627,8 +627,8 @@ IRouter::ResultCode IndexRouter::RedressRoute(vector<Segment> const & segments,
   // First and last segments are fakes: skip it.
   for (size_t i = 1; i < segments.size() - 1; ++i)
   {
-    times.emplace_back(static_cast<uint32_t>(i), time);
     time += starter.CalcSegmentWeight(segments[i]);
+    times.emplace_back(static_cast<uint32_t>(i), time);
   }
   
   CHECK(m_directionsEngine, ());
