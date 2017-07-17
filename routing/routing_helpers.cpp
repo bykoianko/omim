@@ -100,8 +100,8 @@ void FillSegmentInfo(vector<Segment> const & segments, vector<Junction> const & 
 
 void ReconstructRoute(IDirectionsEngine & engine, RoadGraphBase const & graph,
                       shared_ptr<TrafficStash> const & trafficStash,
-                      my::Cancellable const & cancellable, bool hasAltitude,
-                      vector<Junction> const & path, Route::TTimes && times, Route & route)
+                      my::Cancellable const & cancellable, vector<Junction> const & path,
+                      Route::TTimes && times, Route & route)
 {
   if (path.empty())
   {
@@ -147,12 +147,6 @@ void ReconstructRoute(IDirectionsEngine & engine, RoadGraphBase const & graph,
   route.SetGeometry(routeGeometry.begin(), routeGeometry.end());
   route.SetSectionTimes(move(times));
   route.SetStreetNames(move(streetNames));
-  if (hasAltitude)
-  {
-    feature::TAltitudes altitudes;
-    JunctionsToAltitudes(junctions, altitudes);
-    route.SetAltitudes(move(altitudes));
-  }
 
   vector<traffic::SpeedGroup> traffic;
   if (trafficStash && !segments.empty())

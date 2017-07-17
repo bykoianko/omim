@@ -164,7 +164,6 @@ public:
 
   inline void SetSectionTimes(TTimes && v) { m_times = move(v); }
   inline void SetStreetNames(TStreets && v) { m_streets = move(v); }
-  inline void SetAltitudes(feature::TAltitudes && v) { m_altitudes = move(v); }
   inline void SetTraffic(vector<traffic::SpeedGroup> && v) { m_traffic = move(v); }
 
   template <class SI>
@@ -285,8 +284,6 @@ private:
   void GetClosestTurn(size_t segIdx, turns::TurnItem & turn) const;
   TStreets::const_iterator GetCurrentStreetNameIterAfter(FollowedPolyline::Iter iter) const;
 
-  Junction GetJunction(size_t pointIdx) const;
-
   /// \returns Estimated time to pass the route segment with |segIdx|.
   double GetTimeToPassSegS(size_t segIdx) const;
   /// \returns Length of the route segment with |segIdx| in meters.
@@ -304,10 +301,11 @@ private:
 
   TTimes m_times;
   TStreets m_streets;
-  feature::TAltitudes m_altitudes;
   vector<traffic::SpeedGroup> m_traffic;
 
   std::vector<RouteSegment> m_routeSegments;
+  // |m_haveAltitudes| == true if all route points have altitude information.
+  // |m_haveAltitudes| == false if at least one of route points don't have altitude information.
   bool m_haveAltitudes = false;
 
   // Subroute

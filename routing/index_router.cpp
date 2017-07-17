@@ -632,7 +632,7 @@ IRouter::ResultCode IndexRouter::RedressRoute(vector<Segment> const & segments,
   }
   
   CHECK(m_directionsEngine, ());
-  ReconstructRoute(*m_directionsEngine, roadGraph, m_trafficStash, delegate, false /* hasAltitude */, junctions,
+  ReconstructRoute(*m_directionsEngine, roadGraph, m_trafficStash, delegate, junctions,
                    std::move(times), route);
 
   if (!route.IsValid())

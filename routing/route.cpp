@@ -48,7 +48,6 @@ void Route::Swap(Route & rhs)
   swap(m_times, rhs.m_times);
   swap(m_streets, rhs.m_streets);
   m_absentCountries.swap(rhs.m_absentCountries);
-  m_altitudes.swap(rhs.m_altitudes);
   m_traffic.swap(rhs.m_traffic);
   m_routeSegments.swap(rhs.m_routeSegments);
   m_subrouteAttrs.swap(rhs.m_subrouteAttrs);
@@ -346,18 +345,6 @@ void Route::GetTurnsForTesting(vector<turns::TurnItem> & turns) const
       turns.push_back(s.GetTurn());
     }
   }
-}
-
-Junction Route::GetJunction(size_t pointIdx) const
-{
-  CHECK(IsValid(), ());
-  CHECK_LESS(pointIdx,  m_poly.GetPolyline().GetSize(), ());
-  if (!m_altitudes.empty())
-    CHECK_EQUAL(m_altitudes.size(), m_poly.GetPolyline().GetSize(), ());
-
-  auto const & points = m_poly.GetPolyline().GetPoints();
-  return Junction(points[pointIdx],
-                  m_altitudes.empty() ? feature::kInvalidAltitude : m_altitudes[pointIdx]);
 }
 
 double Route::GetTimeToPassSegS(size_t segIdx) const
