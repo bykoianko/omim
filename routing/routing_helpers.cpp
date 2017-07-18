@@ -146,7 +146,6 @@ void ReconstructRoute(IDirectionsEngine & engine, RoadGraphBase const & graph,
 
   route.SetGeometry(routeGeometry.begin(), routeGeometry.end());
   route.SetSectionTimes(move(times));
-  route.SetStreetNames(move(streetNames));
 
   vector<traffic::SpeedGroup> traffic;
   if (trafficStash && !segments.empty())

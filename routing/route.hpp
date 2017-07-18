@@ -163,7 +163,6 @@ public:
   }
 
   inline void SetSectionTimes(TTimes && v) { m_times = move(v); }
-  inline void SetStreetNames(TStreets && v) { m_streets = move(v); }
   inline void SetTraffic(vector<traffic::SpeedGroup> && v) { m_traffic = move(v); }
 
   template <class SI>
@@ -214,7 +213,7 @@ public:
   void GetCurrentStreetName(string & name) const;
 
   /// \brief Returns a name of a street next to idx point of the path. Function avoids short unnamed links.
-  void GetStreetNameAfterIdx(uint32_t idx, string &) const;
+  void GetStreetNameAfterIdx(uint32_t idx, string & name) const;
 
   /// \param distanceToTurnMeters is a distance from current position to the second turn.
   /// \param turn is information about the second turn.
@@ -282,7 +281,7 @@ private:
 
   double GetPolySegAngle(size_t ind) const;
   void GetClosestTurn(size_t segIdx, turns::TurnItem & turn) const;
-  TStreets::const_iterator GetCurrentStreetNameIterAfter(FollowedPolyline::Iter iter) const;
+  size_t ConvertPointIdxToSegmentIdx(size_t pointIdx) const;
 
   /// \returns Estimated time to pass the route segment with |segIdx|.
   double GetTimeToPassSegS(size_t segIdx) const;
@@ -300,7 +299,6 @@ private:
   set<string> m_absentCountries;
 
   TTimes m_times;
-  TStreets m_streets;
   vector<traffic::SpeedGroup> m_traffic;
 
   std::vector<RouteSegment> m_routeSegments;

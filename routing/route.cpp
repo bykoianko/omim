@@ -46,7 +46,6 @@ void Route::Swap(Route & rhs)
   m_poly.Swap(rhs.m_poly);
   m_name.swap(rhs.m_name);
   swap(m_times, rhs.m_times);
-  swap(m_streets, rhs.m_streets);
   m_absentCountries.swap(rhs.m_absentCountries);
   m_traffic.swap(rhs.m_traffic);
   m_routeSegments.swap(rhs.m_routeSegments);
@@ -112,59 +111,56 @@ double Route::GetCurrentTimeToEndSec() const
     return totalTimeS - etaToLastPassedPointS;
 
   double const curSegTimeS = GetTimeToPassSegS(curIter.m_ind);
-  CHECK_GREATER(curSegTimeS, 0, ("Route cann't contain segments with infinite speed."));
+  CHECK_GREATER(curSegTimeS, 0, ("Route can't contain segments with infinite speed."));
 
   double const curSegSpeedMPerS = curSegLenMeters / curSegTimeS;
-  CHECK_GREATER(curSegSpeedMPerS, 0, ("Route cann't contain segments with zero speed."));
+  CHECK_GREATER(curSegSpeedMPerS, 0, ("Route can't contain segments with zero speed."));
   return totalTimeS - (etaToLastPassedPointS +
                        m_poly.GetDistFromCurPointToRoutePointMeters() / curSegSpeedMPerS);
 }
 
 void Route::GetCurrentStreetName(string & name) const
 {
-  auto it = GetCurrentStreetNameIterAfter(m_poly.GetCurrentIter());
-  if (it == m_streets.cend())
-    name.clear();
-  else
-    name = it->second;
+  name.clear();
+  auto const curIter = m_poly.GetCurrentIter();
+  // Note. curIter.m_ind == 0 means route iter at zero point. No corresponding route segments at
+  // |m_routeSegments| in this case. |name| should be cleared.
+  if (!IsValid() || !curIter.IsValid() || curIter.m_ind == 0)
+    return;
+
+  name = m_routeSegments[ConvertPointIdxToSegmentIdx(curIter.m_ind)].GetStreet();
 }
 
 void Route::GetStreetNameAfterIdx(uint32_t idx, string & name) const
 {
   name.clear();
-  auto polyIter = m_poly.GetIterToIndex(idx);
-  auto it = GetCurrentStreetNameIterAfter(polyIter);
-  if (it == m_streets.cend())
+  auto const iterIdx = m_poly.GetIterToIndex(idx);
+  if (!IsValid() || !iterIdx.IsValid() || iterIdx.m_ind == 0)
     return;
-  for (;it != m_streets.cend(); ++it)
-    if (!it->second.empty())
+
+  size_t i = idx;
+  for (; i < m_poly.GetPolyline().GetSize(); ++i)
+  {
+    string const n = m_routeSegments[ConvertPointIdxToSegmentIdx(i)].GetStreet();
+    if (!n.empty())
     {
-      if (m_poly.GetDistanceM(polyIter, m_poly.GetIterToIndex(max(it->first, static_cast<uint32_t>(polyIter.m_ind)))) < kSteetNameLinkMeters)
-        name = it->second;
+      name = n;
       return;
     }
+    auto const furtherIter = m_poly.GetIterToIndex(i);
+    CHECK(furtherIter.IsValid(), ());
+    if (m_poly.GetDistanceM(iterIdx, furtherIter) > kSteetNameLinkMeters)
+      return;
+  }
 }
 
-Route::TStreets::const_iterator Route::GetCurrentStreetNameIterAfter(FollowedPolyline::Iter iter) const
+size_t Route::ConvertPointIdxToSegmentIdx(size_t pointIdx) const
 {
-  // m_streets empty for pedestrian router.
-  if (m_streets.empty())
-  {
-    return m_streets.cend();
-  }
-
-  TStreets::const_iterator curIter = m_streets.cbegin();
-  TStreets::const_iterator prevIter = curIter;
-  curIter++;
-
-  while (curIter->first < iter.m_ind)
-  {
-    ++prevIter;
-    ++curIter;
-    if (curIter == m_streets.cend())
-      return curIter;
-  }
-  return curIter->first == iter.m_ind ? curIter : prevIter;
+  CHECK_GREATER(pointIdx, 0, ());
+  // Note. |pointIdx| is an index at |m_poly|. Properties of the point gets a segment at |m_routeSegments|
+  // which precedes the point. So to get segment index it's needed to subtract one.
+  CHECK_LESS(pointIdx, m_routeSegments.size() + 1, ());
+  return pointIdx - 1;
 }
 
 void Route::GetClosestTurn(size_t segIdx, TurnItem & turn) const

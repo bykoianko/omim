@@ -30,18 +30,19 @@ static Route::TTimes const kTestTimes({Route::TTimeItem(1, 5), Route::TTimeItem(
                                       Route::TTimeItem(4, 15)});
 
 static Route::TTurns const kTestTurns2(
-    {turns::TurnItem(1, turns::TurnDirection::TurnLeft),
+    {turns::TurnItem(0, turns::TurnDirection::NoTurn),
+     turns::TurnItem(1, turns::TurnDirection::TurnLeft),
      turns::TurnItem(2, turns::TurnDirection::TurnRight),
      turns::TurnItem(3, turns::TurnDirection::NoTurn),
      turns::TurnItem(4, turns::TurnDirection::ReachedYourDestination)});
-static vector<string> const kTestNames2 = {"Street1", "Street2", "", "Street3"};
-static vector<double> const kTestTimes2 = {5.0, 6.0, 10.0, 15.0};
+static vector<string> const kTestNames2 = {"Street0", "Street1", "Street2", "", "Street3"};
+static vector<double> const kTestTimes2 = {0.0, 5.0, 6.0, 10.0, 15.0};
 
 void GetTestRouteSegments(vector<m2::PointD> const & routePoints, Route::TTurns const & turns,
                           vector<string> const & streets, vector<double> const & times,
                           vector<RouteSegment> & routeSegments)
 {
-  CHECK_EQUAL(routePoints.size(), turns.size() + 1, ());
+  CHECK_EQUAL(routePoints.size(), turns.size(), ());
   CHECK_EQUAL(turns.size(), streets.size(), ());
   CHECK_EQUAL(turns.size(), times.size(), ());
 
@@ -54,9 +55,9 @@ void GetTestRouteSegments(vector<m2::PointD> const & routePoints, Route::TTurns 
     routeLengthMeters += MercatorBounds::DistanceOnEarth(routePoints[i - 1], routePoints[i]);
     routeLengthMertc += routePoints[i - 1].Length(routePoints[i]);
     routeSegments.emplace_back(
-        Segment(0 /* mwm id */, static_cast<uint32_t>(i) /* feature id */, 0 /* seg id */, true /* forward */), turns[i - 1],
-        Junction(routePoints[i], feature::kInvalidAltitude), streets[i - 1], routeLengthMeters,
-        routeLengthMertc, times[i - 1], traffic::SpeedGroup::Unknown);
+        Segment(0 /* mwm id */, static_cast<uint32_t>(i) /* feature id */, 0 /* seg id */, true /* forward */), turns[i],
+        Junction(routePoints[i], feature::kInvalidAltitude), streets[i], routeLengthMeters,
+        routeLengthMertc, times[i], traffic::SpeedGroup::Unknown);
   }
 }
 
@@ -213,25 +214,23 @@ UNIT_TEST(RouteNameTest)
   route.SetGeometry(kTestGeometry.begin(), kTestGeometry.end());
   vector<RouteSegment> routeSegments;
   GetTestRouteSegments(kTestGeometry, kTestTurns2, kTestNames2, kTestTimes2, routeSegments);
-
-  Route::TStreets names(kTestNames);
-  route.SetStreetNames(move(names));
+  route.SetRouteSegments(routeSegments);
 
   string name;
   route.GetCurrentStreetName(name);
-  TEST_EQUAL(name, "Street1", ());
+  TEST_EQUAL(name, "", ());
 
   route.GetStreetNameAfterIdx(0, name);
-  TEST_EQUAL(name, "Street1", ());
+  TEST_EQUAL(name, "", ());
 
   route.GetStreetNameAfterIdx(1, name);
-  TEST_EQUAL(name, "Street2", ());
+  TEST_EQUAL(name, "Street1", ());
 
   route.GetStreetNameAfterIdx(2, name);
   TEST_EQUAL(name, "Street2", ());
 
   route.GetStreetNameAfterIdx(3, name);
-  TEST_EQUAL(name, "Street2", ());
+  TEST_EQUAL(name, "Street3", ());
 
   route.GetStreetNameAfterIdx(4, name);
   TEST_EQUAL(name, "Street3", ());
