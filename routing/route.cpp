@@ -45,9 +45,7 @@ void Route::Swap(Route & rhs)
   swap(m_routingSettings, rhs.m_routingSettings);
   m_poly.Swap(rhs.m_poly);
   m_name.swap(rhs.m_name);
-  swap(m_times, rhs.m_times);
   m_absentCountries.swap(rhs.m_absentCountries);
-  m_traffic.swap(rhs.m_traffic);
   m_routeSegments.swap(rhs.m_routeSegments);
   m_subrouteAttrs.swap(rhs.m_subrouteAttrs);
 }

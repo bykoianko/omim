@@ -145,18 +145,6 @@ void ReconstructRoute(IDirectionsEngine & engine, RoadGraphBase const & graph,
   JunctionsToPoints(junctions, routeGeometry);
 
   route.SetGeometry(routeGeometry.begin(), routeGeometry.end());
-  route.SetSectionTimes(move(times));
-
-  vector<traffic::SpeedGroup> traffic;
-  if (trafficStash && !segments.empty())
-  {
-    traffic.reserve(segments.size());
-    for (Segment const & seg : segments)
-      traffic.push_back(trafficStash->GetSpeedGroup(seg));
-    CHECK_EQUAL(segments.size(), traffic.size(), ());
-  }
-
-  route.SetTraffic(move(traffic));
 }
 
 Segment ConvertEdgeToSegment(NumMwmIds const & numMwmIds, Edge const & edge)

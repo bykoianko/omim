@@ -162,9 +162,6 @@ public:
       FollowedPolyline(beg, end).Swap(m_poly);
   }
 
-  inline void SetSectionTimes(TTimes && v) { m_times = move(v); }
-  inline void SetTraffic(vector<traffic::SpeedGroup> && v) { m_traffic = move(v); }
-
   template <class SI>
   void SetRouteSegments(SI && v)
   {
@@ -297,10 +294,6 @@ private:
   FollowedPolyline m_poly;
 
   set<string> m_absentCountries;
-
-  TTimes m_times;
-  vector<traffic::SpeedGroup> m_traffic;
-
   std::vector<RouteSegment> m_routeSegments;
   // |m_haveAltitudes| == true if all route points have altitude information.
   // |m_haveAltitudes| == false if at least one of route points don't have altitude information.
