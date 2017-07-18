@@ -120,25 +120,24 @@ double Route::GetCurrentTimeToEndSec() const
 void Route::GetCurrentStreetName(string & name) const
 {
   name.clear();
-  auto const curIter = m_poly.GetCurrentIter();
-  // Note. curIter.m_ind == 0 means route iter at zero point. No corresponding route segments at
-  // |m_routeSegments| in this case. |name| should be cleared.
-  if (!IsValid() || !curIter.IsValid() || curIter.m_ind == 0)
-    return;
-
-  name = m_routeSegments[ConvertPointIdxToSegmentIdx(curIter.m_ind)].GetStreet();
+  GetStreetNameAfterIdx(static_cast<uint32_t>(m_poly.GetCurrentIter().m_ind), name);
 }
 
 void Route::GetStreetNameAfterIdx(uint32_t idx, string & name) const
 {
   name.clear();
   auto const iterIdx = m_poly.GetIterToIndex(idx);
-  if (!IsValid() || !iterIdx.IsValid() || iterIdx.m_ind == 0)
+  if (!IsValid() || !iterIdx.IsValid())
     return;
 
   size_t i = idx;
   for (; i < m_poly.GetPolyline().GetSize(); ++i)
   {
+    // Note. curIter.m_ind == 0 means route iter at zero point. No corresponding route segments at
+    // |m_routeSegments| in this case. |name| should be cleared.
+    if (i == 0)
+      continue;
+
     string const n = m_routeSegments[ConvertPointIdxToSegmentIdx(i)].GetStreet();
     if (!n.empty())
     {

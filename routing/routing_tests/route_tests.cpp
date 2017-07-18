@@ -218,10 +218,10 @@ UNIT_TEST(RouteNameTest)
 
   string name;
   route.GetCurrentStreetName(name);
-  TEST_EQUAL(name, "", ());
+  TEST_EQUAL(name, "Street1", ());
 
   route.GetStreetNameAfterIdx(0, name);
-  TEST_EQUAL(name, "", ());
+  TEST_EQUAL(name, "Street1", ());
 
   route.GetStreetNameAfterIdx(1, name);
   TEST_EQUAL(name, "Street1", ());
@@ -233,5 +233,12 @@ UNIT_TEST(RouteNameTest)
   TEST_EQUAL(name, "Street3", ());
 
   route.GetStreetNameAfterIdx(4, name);
+  TEST_EQUAL(name, "Street3", ());
+
+  location::GpsInfo info;
+  info.m_longitude = 1.0;
+  info.m_latitude = 2.0;
+  route.MoveIterator(info);
+  route.GetCurrentStreetName(name);
   TEST_EQUAL(name, "Street3", ());
 }
