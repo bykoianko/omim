@@ -4,6 +4,11 @@ namespace routing
 {
 using namespace std;
 
+WorldGraph::~WorldGraph()
+{
+  return;
+}
+
 string DebugPrint(WorldGraph::Mode mode)
 {
   switch (mode)

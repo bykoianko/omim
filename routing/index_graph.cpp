@@ -5,6 +5,7 @@
 #include "base/assert.hpp"
 #include "base/checked_cast.hpp"
 #include "base/exception.hpp"
+#include "base/logging.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -113,6 +114,18 @@ RouteWeight IndexGraph::HeuristicCostEstimate(Segment const & from, Segment cons
 {
   return RouteWeight(
       m_estimator->CalcHeuristic(GetPoint(from, true /* front */), GetPoint(to, true /* front */)));
+}
+
+void IndexGraph::PrintSize() const
+{
+  size_t const sum = m_geometry.GetRoadNumber() + m_geometry.GetRoadNumber() +
+                     m_jointIndex.GetNumPoints() + m_jointIndex.GetNumOffsets() +
+                     m_restrictions.size() + m_roadAccess.GetSegmentTypes().size();
+  LOG(LINFO,
+      ("IndexGraph:", sum, "geometry:", m_geometry.GetRoadNumber(),
+       "roadIndex:", m_geometry.GetRoadNumber(), "jointIndex point:", m_jointIndex.GetNumPoints(),
+       "jointIndex offset:", m_jointIndex.GetNumOffsets(), "restriction:", m_restrictions.size(),
+       "roadAccess:", m_roadAccess.GetSegmentTypes().size()));
 }
 
 RouteWeight IndexGraph::CalcSegmentWeight(Segment const & segment)

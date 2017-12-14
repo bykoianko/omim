@@ -46,6 +46,8 @@ public:
   bool LeapIsAllowed(NumMwmId mwmId) const override;
   std::unique_ptr<TransitInfo> GetTransitInfo(Segment const & segment) override;
 
+  void PrintSize() override;
+
   // This method should be used for tests only
   IndexGraph & GetIndexGraphForTests(NumMwmId numMwmId)
   {

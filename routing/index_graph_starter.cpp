@@ -53,6 +53,11 @@ IndexGraphStarter::IndexGraphStarter(FakeEnding const & startEnding,
   m_startToFinishDistanceM = MercatorBounds::DistanceOnEarth(startPoint, finishPoint);
 }
 
+IndexGraphStarter::~IndexGraphStarter()
+{
+  return;
+}
+
 void IndexGraphStarter::Append(FakeEdgesContainer const & container)
 {
   m_finishId = container.m_finishId;

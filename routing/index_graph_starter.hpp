@@ -49,6 +49,7 @@ public:
   // place two fake edges to the m_segment with both directions.
   IndexGraphStarter(FakeEnding const & startEnding, FakeEnding const & finishEnding,
                     uint32_t fakeNumerationStart, bool strictForward, WorldGraph & graph);
+  ~IndexGraphStarter();
 
   void Append(FakeEdgesContainer const & container);
 

@@ -16,10 +16,11 @@ namespace routing
 class IndexGraphLoader
 {
 public:
-  virtual ~IndexGraphLoader() = default;
+  virtual ~IndexGraphLoader();
 
   virtual IndexGraph & GetIndexGraph(NumMwmId mwmId) = 0;
   virtual void Clear() = 0;
+  virtual void PrintSize() = 0;
 
   static std::unique_ptr<IndexGraphLoader> Create(
       VehicleType vehicleType, bool loadAltitudes, std::shared_ptr<NumMwmIds> numMwmIds,

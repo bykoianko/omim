@@ -77,6 +77,8 @@ public:
     m_jointIndex.ForEachPoint(jointId, forward<F>(f));
   }
 
+  void PrintSize() const;
+
 private:
   RouteWeight CalcSegmentWeight(Segment const & segment);
   void GetNeighboringEdges(Segment const & from, RoadPoint const & rp, bool isOutgoing,

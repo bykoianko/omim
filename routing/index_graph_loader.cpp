@@ -25,6 +25,7 @@ public:
   // IndexGraphLoader overrides:
   virtual IndexGraph & GetIndexGraph(NumMwmId numMwmId) override;
   virtual void Clear() override;
+  virtual void PrintSize() override;
 
 private:
   IndexGraph & Load(NumMwmId mwmId);
@@ -89,6 +90,13 @@ IndexGraph & IndexGraphLoaderImpl::Load(NumMwmId numMwmId)
 
 void IndexGraphLoaderImpl::Clear() { m_graphs.clear(); }
 
+void IndexGraphLoaderImpl::PrintSize()
+{
+  m_numMwmIds->PrintSize();
+  for (auto const & kv : m_graphs)
+    kv.second->PrintSize();
+}
+
 bool ReadRoadAccessFromMwm(MwmValue const & mwmValue, VehicleType vehicleType,
                            RoadAccess & roadAccess)
 {
@@ -113,6 +121,10 @@ bool ReadRoadAccessFromMwm(MwmValue const & mwmValue, VehicleType vehicleType,
 
 namespace routing
 {
+IndexGraphLoader::~IndexGraphLoader()
+{
+  return;
+}
 // static
 unique_ptr<IndexGraphLoader> IndexGraphLoader::Create(
     VehicleType vehicleType, bool loadAltitudes, shared_ptr<NumMwmIds> numMwmIds,

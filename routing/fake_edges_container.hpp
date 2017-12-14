@@ -32,6 +32,8 @@ public:
     return static_cast<uint32_t>(m_fake.GetSize());
   }
 
+  void PrintSize() const { m_fake.PrintSize(); }
+
 private:
   // Finish segment id.
   uint32_t m_finishId;

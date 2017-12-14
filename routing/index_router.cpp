@@ -427,6 +427,7 @@ IRouter::ResultCode IndexRouter::DoCalculateRoute(Checkpoints const & checkpoint
 
   TrafficStash::Guard guard(m_trafficStash);
   auto graph = MakeWorldGraph();
+//  graph->PrintSize();
 
   vector<Segment> segments;
 
@@ -443,6 +444,7 @@ IRouter::ResultCode IndexRouter::DoCalculateRoute(Checkpoints const & checkpoint
   PushPassedSubroutes(checkpoints, subroutes);
   unique_ptr<IndexGraphStarter> starter;
 
+//  graph->PrintSize();
   for (size_t i = checkpoints.GetPassedIdx(); i < checkpoints.GetNumSubroutes(); ++i)
   {
     bool const isFirstSubroute = i == checkpoints.GetPassedIdx();
@@ -490,6 +492,7 @@ IRouter::ResultCode IndexRouter::DoCalculateRoute(Checkpoints const & checkpoint
     else
       starter->Append(FakeEdgesContainer(move(subrouteStarter)));
   }
+//  graph->PrintSize();
 
   route.SetCurrentSubrouteIdx(checkpoints.GetPassedIdx());
   route.SetSubroteAttrs(move(subroutes));
@@ -497,6 +500,8 @@ IRouter::ResultCode IndexRouter::DoCalculateRoute(Checkpoints const & checkpoint
   IndexGraphStarter::CheckValidRoute(segments);
 
   auto redressResult = RedressRoute(segments, delegate, *starter, route);
+
+  graph->PrintSize();
   if (redressResult != IRouter::NoError)
     return redressResult;
 
@@ -506,6 +511,7 @@ IRouter::ResultCode IndexRouter::DoCalculateRoute(Checkpoints const & checkpoint
     m_lastRoute->AddStep(segment, starter->GetPoint(segment, true /* front */));
 
   m_lastFakeEdges = make_unique<FakeEdgesContainer>(move(*starter));
+  m_lastFakeEdges->PrintSize();
 
   return IRouter::NoError;
 }

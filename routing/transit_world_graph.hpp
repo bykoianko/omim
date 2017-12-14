@@ -54,6 +54,7 @@ public:
   RouteWeight CalcOffroadWeight(m2::PointD const & from, m2::PointD const & to) const override;
   bool LeapIsAllowed(NumMwmId mwmId) const override;
   std::unique_ptr<TransitInfo> GetTransitInfo(Segment const & segment) override;
+  virtual void PrintSize() override {};
 
 private:
   static double MaxPedestrianTimeSec(double startToFinishDistanceM)

@@ -4,6 +4,7 @@
 
 #include "base/assert.hpp"
 #include "base/checked_cast.hpp"
+#include "base/logging.hpp"
 
 #include <cstdint>
 #include <limits>
@@ -45,6 +46,11 @@ public:
     auto const it = m_fileToId.find(file);
     CHECK(it != m_fileToId.cend(), ("Can't find mwm id for", file));
     return it->second;
+  }
+
+  void PrintSize() const
+  {
+    LOG(LINFO, ("idToFile:", m_idToFile.size(), "fileToId:", m_fileToId.size()));
   }
 
   template <typename F>

@@ -37,6 +37,8 @@ public:
                 // segment belongs to.
   };
 
+  virtual ~WorldGraph();
+
   // |isEnding| == true iff |segment| is first or last segment of the route. Needed because first and
   // last segments may need special processing.
   virtual void GetEdgeList(Segment const & segment, bool isOutgoing, bool isLeap, bool isEnding,
@@ -70,6 +72,8 @@ public:
 
   // Returns transit-specific information for segment. For nontransit segments returns nullptr.
   virtual std::unique_ptr<TransitInfo> GetTransitInfo(Segment const & segment) = 0;
+
+  virtual void PrintSize() = 0;
 };
 
 std::string DebugPrint(WorldGraph::Mode mode);

@@ -102,6 +102,8 @@ public:
     return GetRoad(rp.GetFeatureId()).GetPoint(rp.GetPointId());
   }
 
+  size_t GetRoadNumber() const { return m_roads.size(); }
+
 private:
   // Feature id to RoadGeometry map.
   std::unordered_map<uint32_t, RoadGeometry> m_roads;

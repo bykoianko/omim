@@ -89,6 +89,7 @@ public:
 
   IndexGraph & GetIndexGraph(NumMwmId mwmId) override;
   void Clear() override;
+  void PrintSize() override {}
 
   void AddGraph(NumMwmId mwmId, unique_ptr<IndexGraph> graph);
 

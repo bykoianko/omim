@@ -120,6 +120,11 @@ bool SingleVehicleWorldGraph::LeapIsAllowed(NumMwmId mwmId) const
 
 unique_ptr<TransitInfo> SingleVehicleWorldGraph::GetTransitInfo(Segment const &) { return {}; }
 
+void SingleVehicleWorldGraph:: PrintSize()
+{
+  m_loader->PrintSize();
+}
+
 RoadGeometry const & SingleVehicleWorldGraph::GetRoadGeometry(NumMwmId mwmId, uint32_t featureId)
 {
   return m_loader->GetIndexGraph(mwmId).GetGeometry().GetRoad(featureId);

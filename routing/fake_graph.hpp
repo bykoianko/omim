@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/assert.hpp"
+#include "base/logging.hpp"
 #include "base/stl_helpers.hpp"
 #include "base/stl_iterator.hpp"
 
@@ -133,6 +134,14 @@ public:
   }
 
   std::map<SegmentType, RealType> const & GetFakeToReal() const { return m_fakeToReal; }
+
+  void PrintSize() const
+  {
+    LOG(LINFO,
+        ("FakeGraph. outgoing:", m_outgoing.size(), ", ingoing:", m_ingoing.size(),
+         "segmentToVertex:", m_segmentToVertex.size(), "vertexToSegment:", m_vertexToSegment.size(),
+         "fakeToReal:", m_fakeToReal.size(), "realToFake:", m_realToFake.size()));
+  }
 
 private:
   // Key is fake segment, value is set of outgoing fake segments.
