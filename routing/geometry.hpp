@@ -1,5 +1,7 @@
 #pragma once
 
+#include "routing/base/astar_weight.hpp"
+
 #include "routing/road_point.hpp"
 #include "routing/road_graph.hpp"
 
@@ -14,6 +16,7 @@
 #include "base/fifo_cache.hpp"
 
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -26,6 +29,10 @@ public:
 
   RoadGeometry() = default;
   RoadGeometry(bool oneWay, double speed, Points const & points);
+  ~RoadGeometry()
+  {
+    return;
+  }
 
   void Load(VehicleModelInterface const & vehicleModel, FeatureType const & feature,
             feature::TAltitudes const * altitudes);
@@ -62,6 +69,12 @@ public:
     m_isPassThroughAllowed = passThroughAllowed;
   }
 
+  size_t GetSize() const
+  {
+    size_t sz = m_junctions.GetSize();
+    return sz + sizeof(double) + 3 * sizeof(bool);
+  }
+
 private:
   buffer_vector<Junction, 32> m_junctions;
   double m_speed = 0.0;
@@ -76,6 +89,7 @@ public:
   virtual ~GeometryLoader() = default;
 
   virtual void Load(uint32_t featureId, RoadGeometry & road) = 0;
+  virtual size_t GetSize() const = 0;
 
   // handle should be alive: it is caller responsibility to check it.
   static std::unique_ptr<GeometryLoader> Create(Index const & index,
@@ -94,11 +108,40 @@ public:
 /// On the other hand methods GetRoad() and GetPoint() return geometry information by reference.
 /// The reference may be invalid after the next call of GetRoad() or GetPoint() because the cache
 /// item which is referred by returned reference may be evicted. It's done for performance reasons.
+
+class B
+{
+public:
+  ~B()
+  {
+    return;
+  }
+};
+
+class С
+{
+public:
+  ~С()
+  {
+    return;
+  }
+};
+
+class F
+{
+public:
+  ~F()
+  {
+    return;
+  }
+};
+
 class Geometry final
 {
 public:
-  Geometry() = default;
+  Geometry() {}
   explicit Geometry(std::unique_ptr<GeometryLoader> loader);
+  ~Geometry() {}
 
   /// \note The reference returned by the method is valid until the next call of GetRoad()
   /// of GetPoint() methods.
@@ -111,8 +154,22 @@ public:
     return GetRoad(rp.GetFeatureId()).GetPoint(rp.GetPointId());
   }
 
+  size_t GetSize() const
+  {
+    return m_loader->GetSize() + m_loader->GetSize();
+  }
+
 private:
+
   std::unique_ptr<GeometryLoader> m_loader;
   std::unique_ptr<FifoCache<uint32_t, RoadGeometry>> m_featureIdToRoad;
+//=======
+//  // Feature id to RoadGeometry map.
+//  B b;
+//  std::unique_ptr<GeometryLoader> m_loader;
+//  С с;
+//  std::map<uint32_t, RoadGeometry> * m_roads = nullptr;
+//  F f;
+//>>>>>>> 6d0a8af19c... Adding log for calculating size of routing components.
 };
 }  // namespace routing

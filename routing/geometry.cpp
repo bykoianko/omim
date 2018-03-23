@@ -19,18 +19,41 @@ namespace
 // Maximum road geometry cache size in items.
 size_t constexpr kRoadsCacheSize = 5000;
 
+class A
+{
+public:
+  A()
+  {
+    return;
+  }
+
+  ~A()
+  {
+    return;
+  }
+};
+
 // GeometryLoaderImpl ------------------------------------------------------------------------------
 class GeometryLoaderImpl final : public GeometryLoader
 {
 public:
   GeometryLoaderImpl(Index const & index, MwmSet::MwmHandle const & handle,
                      shared_ptr<VehicleModelInterface> vehicleModel, bool loadAltitudes);
+  ~GeometryLoaderImpl()
+  {
+    LOG(LINFO, ("GeometryLoaderImpl size:", routing::GetSizeMB(GetSize()), "MB."));
+  }
 
   // GeometryLoader overrides:
   void Load(uint32_t featureId, RoadGeometry & road) override;
+  size_t GetSize() const override
+  {
+    return m_guard.GetSize() + m_country.size() + m_altitudeLoader.GetSize() + sizeof(bool);
+  }
 
 private:
   shared_ptr<VehicleModelInterface> m_vehicleModel;
+  A a;
   Index::FeaturesLoaderGuard m_guard;
   string const m_country;
   feature::AltitudeLoader m_altitudeLoader;
@@ -74,6 +97,11 @@ public:
 
   // GeometryLoader overrides:
   void Load(uint32_t featureId, RoadGeometry & road) override;
+  size_t GetSize() const override
+  {
+    CHECK(false, ());
+    return 0;
+  }
 
 private:
   FeaturesVectorTest m_featuresVector;
@@ -156,6 +184,16 @@ RoadGeometry const & Geometry::GetRoad(uint32_t featureId)
   ASSERT(m_loader, ());
 
   return m_featureIdToRoad->GetValue(featureId);
+//=======
+//  auto const & it = m_roads->find(featureId);
+//  if (it != m_roads->cend())
+//    return it->second;
+//
+//  RoadGeometry & road = (*m_roads)[featureId];
+//  m_loader->Load(featureId, road);
+//
+//  return road;
+//>>>>>>> 6d0a8af19c... Adding log for calculating size of routing components.
 }
 
 // static

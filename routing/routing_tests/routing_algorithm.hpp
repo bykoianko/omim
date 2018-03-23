@@ -37,4 +37,25 @@ public:
                         Junction const & finalPos,
                         RoutingResult<IRoadGraph::Vertex, IRoadGraph::Weight> & path) override;
 };
+string DebugPrint(IRoutingAlgorithm::Result const & result);
+
+//// AStar routing algorithm implementation
+//class AStarRoutingAlgorithm : public IRoutingAlgorithm
+//{
+//public:
+//  // IRoutingAlgorithm overrides:
+//  Result CalculateRoute(IRoadGraph const & graph, Junction const & startPos,
+//                        Junction const & finalPos, RouterDelegate const & delegate,
+//                        RoutingResult<IRoadGraph::Vertex, IRoadGraph::Weight> & path) override;
+//};
+//
+//// AStar-bidirectional routing algorithm implementation
+//class AStarBidirectionalRoutingAlgorithm : public IRoutingAlgorithm
+//{
+//public:
+//  // IRoutingAlgorithm overrides:
+//  Result CalculateRoute(IRoadGraph const & graph, Junction const & startPos,
+//                        Junction const & finalPos, RouterDelegate const & delegate,
+//                        RoutingResult<IRoadGraph::Vertex, IRoadGraph::Weight> & path) override;
+//};
 }  // namespace routing

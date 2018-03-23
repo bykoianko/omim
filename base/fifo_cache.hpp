@@ -44,6 +44,12 @@ public:
     return v;
   }
 
+  size_t GetSize() const
+  {
+    return (sizeof(Key) + sizeof(Value)) * m_map.size() + sizeof(Key) * m_fifo.size() +
+           sizeof(size_t) + sizeof(m_loader);
+  }
+
 private:
   size_t Size() const { return m_map.size(); }
 
