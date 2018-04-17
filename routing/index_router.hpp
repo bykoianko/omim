@@ -75,6 +75,8 @@ public:
                             bool adjustToPrevRoute, RouterDelegate const & delegate,
                             Route & route) override;
 
+//  void TestMemory() override;
+
 private:
   IRouter::ResultCode DoCalculateRoute(Checkpoints const & checkpoints,
                                        m2::PointD const & startDirection,
@@ -138,7 +140,7 @@ private:
       return ConvertTransitResult(mwmIds,
                                   ConvertResult<Graph>(algorithm.FindPath(params, routingResult)));
     }
-    auto const result = algorithm.FindPathBidirectional(params, routingResult);
+    auto const result = algorithm.FindPath(params, routingResult);
     return ConvertTransitResult(mwmIds, ConvertResult<Graph>(result));
   }
 

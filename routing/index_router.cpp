@@ -366,6 +366,39 @@ IRouter::ResultCode IndexRouter::CalculateRoute(Checkpoints const & checkpoints,
   }
 }
 
+//void IndexRouter::TestMemory()
+//{
+//  string const mwmId = m_countryFileFn(MercatorBounds::FromLatLon(55.7395, 37.5869));
+//  NumMwmId const numMwmId = m_numMwmIds->GetId(platform::CountryFile(mwmId));
+//  Segment startSegment(numMwmId, 2274, 0, true);
+//  auto const bfs = [&]()
+//  {
+//    auto wg = MakeWorldGraph();
+//    LOG(LINFO, ("Graph size:", GetSizeMB(wg->GetSize()), "MB"));
+//    std::deque<Segment> edges;
+//    edges.push_back(startSegment);
+//    size_t steps = 0;
+//    size_t constexpr kMaxSteps = 5000000;
+//    size_t constexpr kPercentSteps = kMaxSteps / 100;
+//
+//    while (!edges.empty() && steps < kMaxSteps)
+//    {
+//      vector<SegmentEdge> segmentEdges;
+//      wg->GetOutgoingEdgesList(edges.front(), segmentEdges);
+//      edges.pop_front();
+//      for (auto const & e : segmentEdges)
+//        edges.push_back(e.GetTarget());
+//      ++steps;
+//      if (steps % kPercentSteps == 0)
+//        LOG(LINFO, ("Passed", steps/kPercentSteps, "%.", "Graph size:", GetSizeMB(wg->GetSize()), "MB. Size of edges:", edges.size()));
+//    }
+//    LOG(LINFO, ("Graph size:", GetSizeMB(wg->GetSize()), "MB"));
+//  };
+//  bfs();
+//  bfs();
+//  bfs();
+//}
+
 IRouter::ResultCode IndexRouter::DoCalculateRoute(Checkpoints const & checkpoints,
                                                   m2::PointD const & startDirection,
                                                   RouterDelegate const & delegate, Route & route)
@@ -537,8 +570,49 @@ IRouter::ResultCode IndexRouter::CalculateSubroute(Checkpoints const & checkpoin
       starter, starter.GetStartSegment(), starter.GetFinishSegment(), nullptr /* prevRoute */,
       delegate, onVisitJunction, checkLength);
 
+  ////
+//  LOG(LINFO, ("Graph size:", GetSizeMB(starter.GetSize()), "MB"));
+//  std::vector<SegmentEdge> initEdges;
+//  starter.GetOutgoingEdgesList(starter.GetStartSegment(), initEdges);
+//  std::deque<Segment> initEdgesD;
+//  for (auto const & e : initEdges)
+//    initEdgesD.push_back(e.GetTarget());
+//
+//  auto const bfs = [&]()
+//  {
+//    auto wg = MakeWorldGraph();
+//    LOG(LINFO, ("Graph size:", GetSizeMB(starter.GetSize()), "MB"));
+//    std::deque<Segment> edges(initEdgesD);
+//    size_t steps = 0;
+//    size_t constexpr kMaxSteps = 50000;
+//    size_t constexpr kPercentSteps = kMaxSteps / 100;
+//
+//    while (!edges.empty() && steps < kMaxSteps)
+//    {
+//      vector<SegmentEdge> segmentEdges;
+//      wg->GetOutgoingEdgesList(edges.front(), segmentEdges);
+//      edges.pop_front();
+//      for (auto const & e : segmentEdges)
+//        edges.push_back(e.GetTarget());
+//      ++steps;
+//      if (steps % kPercentSteps == 0)
+//        LOG(LINFO, ("Passed", steps/kPercentSteps, "%.", "Graph size:", GetSizeMB(starter.GetSize()), "MB"));
+//    }
+//    LOG(LINFO, ("Graph size:", GetSizeMB(starter.GetSize()), "MB"));
+////    starter.GetGraph().ClearCachedGraphs();
+//  };
+//  bfs();
+//  bfs();
+//  bfs();
+  ////
+  
+  LOG(LINFO, ("Graph size:", GetSizeMB(starter.GetSize()), "MB"));
   set<NumMwmId> const mwmIds = starter.GetMwms();
   IRouter::ResultCode const result = FindPath<IndexGraphStarter>(params, mwmIds, routingResult);
+  LOG(LINFO, ("Graph size:", GetSizeMB(starter.GetSize()), "MB"));
+  starter.GetGraph().ClearCachedGraphs();
+
+  LOG(LINFO, ("Graph size:", GetSizeMB(starter.GetSize()), "MB"));
   if (result != IRouter::NoError)
     return result;
 

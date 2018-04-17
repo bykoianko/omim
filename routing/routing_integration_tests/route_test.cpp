@@ -379,4 +379,11 @@ namespace
     IRouter::ResultCode const result = routeResult.second;
     TEST_EQUAL(result, IRouter::NoError, ());
   }
+
+UNIT_TEST(MemTest)
+{
+  auto & comp = integration::GetVehicleComponents<VehicleType::Car>();
+  auto & router = comp.GetRouter();
+//  router.TestMemory();
+}
 }  // namespace

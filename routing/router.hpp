@@ -87,6 +87,8 @@ public:
   virtual ResultCode CalculateRoute(Checkpoints const & checkpoints,
                                     m2::PointD const & startDirection, bool adjust,
                                     RouterDelegate const & delegate, Route & route) = 0;
+
+//  virtual void TestMemory() = 0;
 };
 
 }  // namespace routing

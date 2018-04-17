@@ -28,12 +28,14 @@ public:
   }
 
   // IndexGraphLoader overrides:
-  virtual IndexGraph & GetIndexGraph(NumMwmId numMwmId) override;
-  virtual void Clear() override;
-  virtual size_t GetSize() const override;
+  Geometry & GetGeometry(NumMwmId numMwmId) override;
+  IndexGraph & GetIndexGraph(NumMwmId numMwmId) override;
+  void Clear() override;
+  size_t GetSize() const override;
 
 private:
-  IndexGraph & Load(NumMwmId mwmId);
+  IndexGraph & Init(NumMwmId mwmId);
+  IndexGraph & Deserialize(NumMwmId numMwmId, IndexGraph & graph);
 
   VehicleType m_vehicleType;
   bool m_loadAltitudes;
@@ -60,16 +62,65 @@ IndexGraphLoaderImpl::IndexGraphLoaderImpl(
   CHECK(m_estimator, ());
 }
 
-IndexGraph & IndexGraphLoaderImpl::GetIndexGraph(NumMwmId numMwmId)
+//IndexGraph & IndexGraphLoaderImpl::GetIndexGraph(NumMwmId numMwmId)
+//{
+//  auto it = m_graphs.find(numMwmId);
+//  if (it != m_graphs.end())
+//    return *it->second;
+//
+//  return Init(numMwmId);
+//}
+//
+//Geometry & IndexGraphLoaderImpl::GetGeometry(NumMwmId numMwmId)
+//{
+//  return GetIndexGraph(numMwmId).GetGeometry();
+//}
+//
+//IndexGraph & IndexGraphLoaderImpl::Init(NumMwmId numMwmId)
+//{
+//  platform::CountryFile const & file = m_numMwmIds->GetFile(numMwmId);
+//  MwmSet::MwmHandle handle = m_index.GetMwmHandleByCountryFile(file);
+//  if (!handle.IsAlive())
+//    MYTHROW(RoutingException, ("Can't get mwm handle for", file));
+//
+//  shared_ptr<VehicleModelInterface> vehicleModel =
+//      m_vehicleModelFactory->GetVehicleModelForCountry(file.GetName());
+//
+//  auto graphPtr = make_unique<IndexGraph>(
+//      GeometryLoader::Create(m_index, handle, vehicleModel, m_loadAltitudes),
+//      m_estimator);
+//  IndexGraph & graph = *graphPtr;
+//
+//  my::Timer timer;
+//  MwmValue const & mwmValue = *handle.GetValue<MwmValue>();
+//  DeserializeIndexGraph(mwmValue, m_vehicleType, graph);
+//  m_graphs[numMwmId] = move(graphPtr);
+//  LOG(LINFO, (ROUTING_FILE_TAG, "section for", file.GetName(), "loaded in", timer.ElapsedSeconds(),
+//      "seconds"));
+//  return graph;
+//}
+
+Geometry & IndexGraphLoaderImpl::GetGeometry(NumMwmId numMwmId)
 {
   auto it = m_graphs.find(numMwmId);
   if (it != m_graphs.end())
-    return *it->second;
+    return it->second->GetGeometry();
 
-  return Load(numMwmId);
+  return Init(numMwmId).GetGeometry();
 }
 
-IndexGraph & IndexGraphLoaderImpl::Load(NumMwmId numMwmId)
+IndexGraph & IndexGraphLoaderImpl::GetIndexGraph(NumMwmId numMwmId)
+{
+  auto it = m_graphs.find(numMwmId);
+  // @TODO graph is found but it'll find one more time in Deserialize(numMwmId).
+  // @TODO Build and Deserialize means the same.
+  if (it != m_graphs.end())
+    return it->second->IsBuilt() ? *it->second : Deserialize(numMwmId, *it->second);
+
+  return Deserialize(numMwmId, Init(numMwmId));
+}
+
+IndexGraph & IndexGraphLoaderImpl::Init(NumMwmId numMwmId)
 {
   platform::CountryFile const & file = m_numMwmIds->GetFile(numMwmId);
   MwmSet::MwmHandle handle = m_index.GetMwmHandleByCountryFile(file);
@@ -79,17 +130,24 @@ IndexGraph & IndexGraphLoaderImpl::Load(NumMwmId numMwmId)
   shared_ptr<VehicleModelInterface> vehicleModel =
       m_vehicleModelFactory->GetVehicleModelForCountry(file.GetName());
 
-  auto graphPtr = make_unique<IndexGraph>(
-      GeometryLoader::Create(m_index, handle, vehicleModel, m_loadAltitudes),
-      m_estimator);
-  IndexGraph & graph = *graphPtr;
+  return *(
+      m_graphs[numMwmId] = make_unique<IndexGraph>(
+          GeometryLoader::Create(m_index, handle, vehicleModel, m_loadAltitudes), m_estimator));
+}
+
+IndexGraph & IndexGraphLoaderImpl::Deserialize(NumMwmId numMwmId, IndexGraph & graph)
+{
+  CHECK(!graph.IsBuilt(), ());
+  platform::CountryFile const & file = m_numMwmIds->GetFile(numMwmId);
+  MwmSet::MwmHandle handle = m_index.GetMwmHandleByCountryFile(file);
+  if (!handle.IsAlive())
+    MYTHROW(RoutingException, ("Can't get mwm handle for", file));
 
   my::Timer timer;
   MwmValue const & mwmValue = *handle.GetValue<MwmValue>();
   DeserializeIndexGraph(mwmValue, m_vehicleType, graph);
-  m_graphs[numMwmId] = move(graphPtr);
-  LOG(LINFO, (ROUTING_FILE_TAG, "section for", file.GetName(), "loaded in", timer.ElapsedSeconds(),
-              "seconds"));
+  LOG(LINFO, (ROUTING_FILE_TAG, "section for", file.GetName(), "loaded in", timer
+      .ElapsedSeconds(), "seconds"));
   return graph;
 }
 

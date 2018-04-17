@@ -36,7 +36,8 @@ public:
     for (auto const & kv : m_cache)
       cacheSz += (sizeof(uint32_t) + sizeof(feature::TAltitude) * kv.second.size());
 
-    return m_altitudeAvailabilityRegion->Size() + m_featureTableRegion->Size() + cacheSz +
+    return (m_altitudeAvailabilityRegion == nullptr ? 0 : m_altitudeAvailabilityRegion->Size()) +
+    (m_featureTableRegion == nullptr ? 0 : m_featureTableRegion->Size()) + cacheSz +
            sizeof(AltitudeHeader) + m_countryFileName.size();
   }
 

@@ -98,9 +98,10 @@ public:
   // IndexGraphLoader overrides:
   ~TestIndexGraphLoader() override = default;
 
+  Geometry & GetGeometry(NumMwmId mwmId) override ;
   IndexGraph & GetIndexGraph(NumMwmId mwmId) override;
   void Clear() override;
-  size_t GetSize() const override { CHECK(false, ("Not supported.")); return 0; };
+  size_t GetSize() const override { return 0; };
 
   void AddGraph(NumMwmId mwmId, unique_ptr<IndexGraph> graph);
 

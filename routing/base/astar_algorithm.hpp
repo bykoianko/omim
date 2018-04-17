@@ -331,12 +331,12 @@ void AStarAlgorithm<Graph>::PropagateWave(Graph & graph, Vertex const & startVer
   {
     ++steps;
 
-    if (steps % 10000 == 0)
-    {
-      LOG(LINFO, ("PropagateWave(...). Queue size:", GetSizeMB(queue.size()),
-          "MB. Context size:", GetSizeMB(context.GetSize()),
-          "MB. Graph size:", GetSizeMB(graph.GetSize()), "MB. Steps:", steps));
-    }
+//    if (steps % 10000 == 0)
+//    {
+//      LOG(LINFO, ("PropagateWave(...). Queue size:", GetSizeMB((sizeof(Vertex) + sizeof(Weight)) * queue.size()),
+//          "MB. Context size:", GetSizeMB(context.GetSize()),
+//          "MB. Graph size:", GetSizeMB(graph.GetSize()), "MB. Steps:", steps));
+//    }
 
     State const stateV = queue.top();
     queue.pop();
@@ -511,16 +511,16 @@ typename AStarAlgorithm<Graph>::Result AStarAlgorithm<Graph>::FindPathBidirectio
 
   while (!cur->queue.empty() && !nxt->queue.empty())
   {
-    if (steps % 10000 == 0)
-    {
-      LOG(LINFO, ("FindPathBidirectional(...). Queue size:",
-          GetSizeMB(cur->GetQueueSize() + nxt->GetQueueSize()), "MB. Context sizes:",
-          GetSizeMB(cur->GetSize() + nxt->GetSize()), "MB. Graph size:",
-          GetSizeMB(graph.GetSize()), "MB. Best dist sz:",
-          cur->bestDistance.size() + nxt->bestDistance.size(),
-          "Parent sz:", cur->parent.size() + nxt->parent.size(),
-          "Weight sz:", sizeof(Weight), "Vertex sz:", sizeof(Vertex), " Steps:", steps));
-    }
+//    if (steps % 10000 == 0)
+//    {
+//      LOG(LINFO, ("FindPathBidirectional(...). Queue size:",
+//          GetSizeMB(cur->GetQueueSize() + nxt->GetQueueSize()), "MB. Context sizes:",
+//          GetSizeMB(cur->GetSize() + nxt->GetSize()), "MB. Graph size:",
+//          GetSizeMB(graph.GetSize()), "MB. Best dist sz:",
+//          cur->bestDistance.size() + nxt->bestDistance.size(),
+//          "Parent sz:", cur->parent.size() + nxt->parent.size(),
+//          "Weight sz:", sizeof(Weight), "Vertex sz:", sizeof(Vertex), " Steps:", steps));
+//    }
     
     ++steps;
 

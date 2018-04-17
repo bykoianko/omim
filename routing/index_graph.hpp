@@ -92,6 +92,8 @@ public:
     return m_geometry.GetSize() + 8 + m_roadIndex.GetSizeBytes() + m_jointIndex.GetSize() + restSz + m_roadAccess.GetSize();
   }
 
+  bool IsBuilt() const { return m_isBuilt; }
+
 private:
   class D
   {
@@ -100,7 +102,6 @@ private:
     {
       return;
     }
-
   };
 
   RouteWeight CalcSegmentWeight(Segment const & segment);
@@ -121,5 +122,6 @@ private:
   JointIndex m_jointIndex;
   RestrictionVec m_restrictions;
   RoadAccess m_roadAccess;
+  bool m_isBuilt = false;
 };
 }  // namespace routing

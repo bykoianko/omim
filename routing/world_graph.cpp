@@ -19,12 +19,12 @@ void WorldGraph::GetTwins(Segment const & segment, bool isOutgoing, vector<Segme
     // while processing leaps.
     for (Segment const & twin : twins)
     {
-      m2::PointD const & from = GetPoint(segment, isOutgoing /* front */);
-      m2::PointD const & to = GetPoint(twin, isOutgoing /* front */);
+//      m2::PointD const & from = GetPoint(segment, isOutgoing /* front */);
+//      m2::PointD const & to = GetPoint(twin, isOutgoing /* front */);
       // Weight is usually zero because twins correspond the same feature
       // in different mwms. But if we have mwms with different versions and a feature
       // was moved in one of them the weight is greater than zero.
-      edges.emplace_back(twin, HeuristicCostEstimate(from, to));
+      edges.emplace_back(twin, /*HeuristicCostEstimate(from, to)*/ RouteWeight(10.0 /* seconds */));
     }
     return;
   }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "routing/edge_estimator.hpp"
+#include "routing/geometry.hpp"
 #include "routing/index_graph.hpp"
 #include "routing/vehicle_mask.hpp"
 
@@ -18,6 +19,7 @@ class IndexGraphLoader
 public:
   virtual ~IndexGraphLoader() = default;
 
+  virtual Geometry & GetGeometry(NumMwmId mwmId) = 0;
   virtual IndexGraph & GetIndexGraph(NumMwmId mwmId) = 0;
   virtual void Clear() = 0;
   virtual size_t GetSize() const = 0;

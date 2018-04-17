@@ -76,6 +76,10 @@ void ZeroGeometryLoader::Load(uint32_t /* featureId */, routing::RoadGeometry & 
 }
 
 // TestIndexGraphLoader ----------------------------------------------------------------------------
+Geometry & TestIndexGraphLoader::GetGeometry(NumMwmId mwmId)
+{
+  return GetIndexGraph(mwmId).GetGeometry();
+}
 IndexGraph & TestIndexGraphLoader::GetIndexGraph(NumMwmId mwmId)
 {
   return GetGraph(m_graphs, mwmId);
