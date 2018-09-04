@@ -39,3 +39,8 @@ UNIT_TEST(Endianness18Bytes)
   TEST_EQUAL(0xE2E4D7D5B1C3B8C6ULL,  ReverseByteOrder(0xC6B8C3B1D5D7E4E2ULL), ());
   TEST_EQUAL(0xFFFFFFFFFFFFFFFFULL,  ReverseByteOrder(0xFFFFFFFFFFFFFFFFULL), ());
 }
+
+UNIT_TEST(IsLittleEndian)
+{
+  TEST(IsLittleEndian(), ("Only little endian architectures are supported."));
+}

@@ -41,6 +41,7 @@
 
 #include "platform/platform.hpp"
 
+#include "coding/endianness.hpp"
 #include "coding/file_name_utils.hpp"
 
 #include "base/timer.hpp"
@@ -160,6 +161,8 @@ using namespace generator;
 
 int main(int argc, char ** argv)
 {
+  CHECK(IsLittleEndian(), ("Only little endian architecture is supported."));
+
   google::SetUsageMessage(
         "Takes OSM XML data from stdin and creates data and index files in several passes.");
 

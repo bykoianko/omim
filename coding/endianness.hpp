@@ -6,15 +6,19 @@
 
 #include <cstddef>
 
-// #define ENDIAN_IS_BIG
-
+// @TODO(bykoianko) This method returns false since 05.12.2010. That means only little endian
+// architecture is supported. Now two checks are added that only little endian architecture
+// supported. Consider remove all code that uses IsBigEndian() method except for checks.
 inline bool IsBigEndian()
 {
-#ifdef ENDIAN_IS_BIG
-  return true;
-#else
-  return false;
-#endif
+  uint16_t const word = 0x0001;
+  char const * const b = reinterpret_cast<char const * const>(&word);
+  return b[0] == 0x0;
+}
+
+inline bool IsLittleEndian()
+{
+  return !IsBigEndian();
 }
 
 template <typename T> T ReverseByteOrder(T t)
@@ -31,9 +35,8 @@ template <typename T> T ReverseByteOrder(T t)
 
 template <typename T> inline T SwapIfBigEndian(T t)
 {
-#ifdef ENDIAN_IS_BIG
-  return ReverseByteOrder(t);
-#else
+  if (IsBigEndian())
+    return ReverseByteOrder(t);
+
   return t;
-#endif
 }
