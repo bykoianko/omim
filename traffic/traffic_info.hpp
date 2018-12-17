@@ -20,15 +20,8 @@ namespace traffic
 {
 // This class is responsible for providing the real-time
 // information about road traffic for one mwm file.
-
 class TrafficInfo
 {
-private:
-  // If the name of the mwm (m_mwmId) contains one of strings in |kRemoveBlocks|,
-  // no temporary blocks will be applied for this mwm. The other traffic jam will applied.
-  using RemoveBlocks = std::array<std::string, 1>;
-  static RemoveBlocks const kRemoveBlocks;
-
 public:
   static uint8_t const kLatestKeysVersion;
   static uint8_t const kLatestValuesVersion;

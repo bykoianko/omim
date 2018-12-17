@@ -39,6 +39,10 @@ namespace traffic
 {
 namespace
 {
+// If the name of the mwm (m_mwmId) contains one of strings in |kRemoveBlocks|,
+// no temporary blocks will be applied for this mwm. The other traffic jam will applied.
+std::array<std::string, 1> const kRemoveBlocks = {"Russia_"};
+
 bool ReadRemoteFile(string const & url, vector<uint8_t> & contents, int & errorCode)
 {
   platform::HttpClient request(url);
@@ -92,7 +96,6 @@ TrafficInfo::RoadSegmentId::RoadSegmentId(uint32_t fid, uint16_t idx, uint8_t di
 // TrafficInfo --------------------------------------------------------------------------------
 
 // static
-TrafficInfo::RemoveBlocks const TrafficInfo::kRemoveBlocks = {"Russia_"};
 uint8_t const TrafficInfo::kLatestKeysVersion = 0;
 uint8_t const TrafficInfo::kLatestValuesVersion = 0;
 
