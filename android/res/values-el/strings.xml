@@ -1204,7 +1204,6 @@
 	<string name="contact">Επικοινωνία</string>
 	<string name="check_price_button">Έλεγχος τιμής</string>
 	<string name="download_button">Κατέβασμα</string>
-	<string name="speedcams_alert_title">Κάμερες Ταχύτητας</string>
 	<string name="speedcams_alert_subtitle">Ειδοποίηση για όρια ταχύτητας</string>
 	<string name="speedcam_option_auto">Αυτόματο</string>
 	<string name="speedcam_option_always">Πάντα</string>

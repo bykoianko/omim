@@ -1447,7 +1447,6 @@
 	<string name="contact">الاتصال</string>
 	<string name="check_price_button">سعر الاختيار</string>
 	<string name="download_button">تحميل</string>
-	<string name="speedcams_alert_title">كاميرات السرعة</string>
 	<string name="speedcams_alert_subtitle">التحذير من حدود السرعة</string>
 	<string name="speedcam_option_auto">السيارات</string>
 	<string name="speedcam_option_always">دائما</string>

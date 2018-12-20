@@ -1437,7 +1437,6 @@
 	<string name="contact">연락</string>
 	<string name="check_price_button">가격 확인</string>
 	<string name="download_button">다운로드</string>
-	<string name="speedcams_alert_title">속도 감시 카메라</string>
 	<string name="speedcams_alert_subtitle">속도 제한에 대한 경고</string>
 	<string name="speedcam_option_auto">자동</string>
 	<string name="speedcam_option_always">항상</string>

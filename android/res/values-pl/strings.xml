@@ -1446,7 +1446,6 @@
 	<string name="contact">Napisz</string>
 	<string name="check_price_button">Sprawdź cenę</string>
 	<string name="download_button">Pobierz</string>
-	<string name="speedcams_alert_title">Fotoradary</string>
 	<string name="speedcams_alert_subtitle">Ostrzegać o ograniczeniach prędkości</string>
 	<string name="speedcam_option_auto">Auto</string>
 	<string name="speedcam_option_always">Zawsze</string>

@@ -1442,7 +1442,6 @@
 	<string name="contact">Írás</string>
 	<string name="check_price_button">Az ár tudakolozása</string>
 	<string name="download_button">Letöltés</string>
-	<string name="speedcams_alert_title">Sebességmérő kamerák</string>
 	<string name="speedcams_alert_subtitle">Figyelmeztetés a sebessség korlátozására</string>
 	<string name="speedcam_option_auto">Autó</string>
 	<string name="speedcam_option_always">Mindig</string>

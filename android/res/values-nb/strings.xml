@@ -1339,7 +1339,6 @@
 	<string name="contact">Kontakt</string>
 	<string name="check_price_button">Sjekk pris</string>
 	<string name="download_button">Last ned</string>
-	<string name="speedcams_alert_title">Fartskamera</string>
 	<string name="speedcams_alert_subtitle">Advar om fartsgrenser</string>
 	<string name="speedcam_option_auto">Auto</string>
 	<string name="speedcam_option_always">Alltid</string>

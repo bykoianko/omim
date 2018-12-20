@@ -2600,8 +2600,6 @@
 
 "download_button" = "Download";
 
-"speedcams_alert_title" = "Speed cameras";
-
 "speedcams_alert_subtitle" = "Warn about speed limits";
 
 "speedcam_option_auto" = "Auto";

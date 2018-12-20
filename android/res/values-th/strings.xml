@@ -1447,7 +1447,6 @@
 	<string name="contact">ติดต่อ</string>
 	<string name="check_price_button">เช็คราคา</string>
 	<string name="download_button">ดาวน์โหลด</string>
-	<string name="speedcams_alert_title">กล้องตรวจจับความเร็ว</string>
 	<string name="speedcams_alert_subtitle">เตือนเรื่องการจำกัดความเร็ว</string>
 	<string name="speedcam_option_auto">อัตโนมัติ</string>
 	<string name="speedcam_option_always">ทุกครั้ง</string>

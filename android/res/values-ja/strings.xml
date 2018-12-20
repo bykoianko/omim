@@ -1440,7 +1440,6 @@
 	<string name="contact">連絡</string>
 	<string name="check_price_button">価格チェック</string>
 	<string name="download_button">ダウンロード</string>
-	<string name="speedcams_alert_title">自動速度違反取締装置</string>
 	<string name="speedcams_alert_subtitle">速度制限警告</string>
 	<string name="speedcam_option_auto">自動</string>
 	<string name="speedcam_option_always">常時</string>

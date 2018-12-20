@@ -1450,7 +1450,6 @@
 	<string name="contact">寫</string>
 	<string name="check_price_button">了解價格</string>
 	<string name="download_button">下載</string>
-	<string name="speedcams_alert_title">高速相機</string>
 	<string name="speedcams_alert_subtitle">警告速度限制</string>
 	<string name="speedcam_option_auto">自動</string>
 	<string name="speedcam_option_always">總是</string>

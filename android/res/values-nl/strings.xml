@@ -1442,7 +1442,6 @@
 	<string name="contact">Contact</string>
 	<string name="check_price_button">Controleer prijs</string>
 	<string name="download_button">Downloaden</string>
-	<string name="speedcams_alert_title">Snelheidscamera\'s</string>
 	<string name="speedcams_alert_subtitle">Waarschuw voor snelheidsbeperkingen</string>
 	<string name="speedcam_option_auto">Auto</string>
 	<string name="speedcam_option_always">Altijd</string>

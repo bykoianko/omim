@@ -1391,7 +1391,6 @@
 	<string name="contact">تماس</string>
 	<string name="check_price_button">بررسی قیمت</string>
 	<string name="download_button">دانلود</string>
-	<string name="speedcams_alert_title">دوربین های سرعت</string>
 	<string name="speedcams_alert_subtitle">هشدار درباره محدودیت سرعت</string>
 	<string name="speedcam_option_auto">خودکار</string>
 	<string name="speedcam_option_always">همیشه</string>

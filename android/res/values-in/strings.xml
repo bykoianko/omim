@@ -1441,7 +1441,6 @@
 	<string name="contact">Kontak</string>
 	<string name="check_price_button">Cek harga</string>
 	<string name="download_button">Unduh</string>
-	<string name="speedcams_alert_title">Kamera cepat</string>
 	<string name="speedcams_alert_subtitle">Peringatan tentang batas kecepatan</string>
 	<string name="speedcam_option_auto">Auto</string>
 	<string name="speedcam_option_always">Selalu</string>

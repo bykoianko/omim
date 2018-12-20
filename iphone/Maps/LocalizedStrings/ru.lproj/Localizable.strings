@@ -2600,8 +2600,6 @@
 
 "download_button" = "Скачать";
 
-"speedcams_alert_title" = "Камеры скорости";
-
 "speedcams_alert_subtitle" = "Предупреждать об ограничениях скорости";
 
 "speedcam_option_auto" = "Авто";

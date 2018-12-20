@@ -2600,8 +2600,6 @@
 
 "download_button" = "다운로드";
 
-"speedcams_alert_title" = "속도 감시 카메라";
-
 "speedcams_alert_subtitle" = "속도 제한에 대한 경고";
 
 "speedcam_option_auto" = "자동";

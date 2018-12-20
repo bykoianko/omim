@@ -1493,7 +1493,6 @@
 	<string name="contact">Написать</string>
 	<string name="check_price_button">Узнать цену</string>
 	<string name="download_button">Скачать</string>
-	<string name="speedcams_alert_title">Камеры скорости</string>
 	<string name="speedcams_alert_subtitle">Предупреждать об ограничениях скорости</string>
 	<string name="speedcam_option_auto">Авто</string>
 	<string name="speedcam_option_always">Всегда</string>

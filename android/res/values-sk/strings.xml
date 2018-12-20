@@ -1446,7 +1446,6 @@
 	<string name="contact">Kontakt</string>
 	<string name="check_price_button">Skontrolovať cenu</string>
 	<string name="download_button">Stiahnuť</string>
-	<string name="speedcams_alert_title">Rýchlostné kamery</string>
 	<string name="speedcams_alert_subtitle">Upozornenie na rýchlostné obmedzenia</string>
 	<string name="speedcam_option_auto">Automaticky</string>
 	<string name="speedcam_option_always">Vždy</string>

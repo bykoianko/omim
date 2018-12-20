@@ -1447,7 +1447,6 @@
 	<string name="contact">Написати</string>
 	<string name="check_price_button">Дізнатися ціну</string>
 	<string name="download_button">Завантажити</string>
-	<string name="speedcams_alert_title">Камери швидкості</string>
 	<string name="speedcams_alert_subtitle">Попереджати про обмеження швидкості</string>
 	<string name="speedcam_option_auto">Авто</string>
 	<string name="speedcam_option_always">Завжди</string>

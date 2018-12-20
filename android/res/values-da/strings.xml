@@ -1446,7 +1446,6 @@
 	<string name="contact">Kontakt</string>
 	<string name="check_price_button">Tjek pris</string>
 	<string name="download_button">Download</string>
-	<string name="speedcams_alert_title">Fartkameraer</string>
 	<string name="speedcams_alert_subtitle">Advar om hastighedsgrænser</string>
 	<string name="speedcam_option_auto">Auto</string>
 	<string name="speedcam_option_always">Altid</string>

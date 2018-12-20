@@ -1442,7 +1442,6 @@
 	<string name="contact">Kirjoita</string>
 	<string name="check_price_button">Saada hinta</string>
 	<string name="download_button">Ladata</string>
-	<string name="speedcams_alert_title">Nopeuskamerat</string>
 	<string name="speedcams_alert_subtitle">Varoita nopeusrajoituksista</string>
 	<string name="speedcam_option_auto">Auto</string>
 	<string name="speedcam_option_always">Aina</string>

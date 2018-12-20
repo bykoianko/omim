@@ -1456,7 +1456,6 @@
 	<string name="contact">Schreiben</string>
 	<string name="check_price_button">Preis erfahren</string>
 	<string name="download_button">Downloaden</string>
-	<string name="speedcams_alert_title">Geschwindigkeitskameras</string>
 	<string name="speedcams_alert_subtitle">Über Geschwindigkeitsbegrenzungen warnen</string>
 	<string name="speedcam_option_auto">Auto</string>
 	<string name="speedcam_option_always">Immer</string>

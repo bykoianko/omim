@@ -1505,7 +1505,6 @@
 	<string name="contact">Contact</string>
 	<string name="check_price_button">Check price</string>
 	<string name="download_button">Download</string>
-	<string name="speedcams_alert_title">Speed cameras</string>
 	<string name="speedcams_alert_subtitle">Warn about speed limits</string>
 	<string name="speedcam_option_auto">Auto</string>
 	<string name="speedcam_option_always">Always</string>

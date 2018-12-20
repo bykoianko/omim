@@ -1450,7 +1450,6 @@
 	<string name="contact">Napsat</string>
 	<string name="check_price_button">Dozvědět se cenu</string>
 	<string name="download_button">Stáhnout</string>
-	<string name="speedcams_alert_title">Detektory rychlosti</string>
 	<string name="speedcams_alert_subtitle">Upozorňovat o omezeních rychlosti</string>
 	<string name="speedcam_option_auto">Automaticky</string>
 	<string name="speedcam_option_always">Vždy</string>

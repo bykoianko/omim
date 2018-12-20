@@ -1447,7 +1447,6 @@
 	<string name="contact">İletişim</string>
 	<string name="check_price_button">Fiyatı kontrol et</string>
 	<string name="download_button">İndir</string>
-	<string name="speedcams_alert_title">Hız kameraları</string>
 	<string name="speedcams_alert_subtitle">Hız limitleri hakkında uyar</string>
 	<string name="speedcam_option_auto">Otomatik</string>
 	<string name="speedcam_option_always">Her zaman</string>

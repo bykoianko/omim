@@ -1438,7 +1438,6 @@
 	<string name="contact">Liên hệ</string>
 	<string name="check_price_button">Kiểm tra giá</string>
 	<string name="download_button">Tải</string>
-	<string name="speedcams_alert_title">Tăn tốc độ máy ảnh</string>
 	<string name="speedcams_alert_subtitle">Cảnh báo về giới hạn tốc độ</string>
 	<string name="speedcam_option_auto">Tự động</string>
 	<string name="speedcam_option_always">Luôn luôn</string>

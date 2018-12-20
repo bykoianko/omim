@@ -1446,7 +1446,6 @@
 	<string name="contact">Kontakta</string>
 	<string name="check_price_button">Ta reda på priset</string>
 	<string name="download_button">Nedladdning</string>
-	<string name="speedcams_alert_title">Hastighetskameror</string>
 	<string name="speedcams_alert_subtitle">Varna om hastighetsbegränsningar</string>
 	<string name="speedcam_option_auto">Auto</string>
 	<string name="speedcam_option_always">Alltid</string>
