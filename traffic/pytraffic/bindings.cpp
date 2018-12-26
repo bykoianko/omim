@@ -124,6 +124,9 @@ vector<uint8_t> GenerateTrafficValues(vector<traffic::TrafficInfo::RoadSegmentId
   for (auto const & kv : coloring)
   {
     ASSERT_EQUAL(kv.first, keys[i], ());
+    if (kv.second == traffic::SpeedGroup::TempBlock)
+      continue;
+
     values[i] = kv.second;
     ++i;
   }
