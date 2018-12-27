@@ -105,6 +105,8 @@ vector<uint8_t> GenerateTrafficValues(vector<traffic::TrafficInfo::RoadSegmentId
                                       boost::python::dict const & segmentMappingDict,
                                       bool useTempBlock)
 {
+  LOG(LINFO, ("GenerateTrafficValues(..., ", useTempBlock, ")"));
+
   SegmentMapping segmentMapping;
   boost::python::list mappingKeys = segmentMappingDict.keys();
   for (size_t i = 0; i < len(mappingKeys); ++i)
@@ -142,6 +144,8 @@ vector<uint8_t> GenerateTrafficValuesFromList(boost::python::list const & keys,
                                               boost::python::dict const & segmentMappingDict,
                                               bool useTempBlock)
 {
+  LOG(LINFO, ("GenerateTrafficValuesFromList(..., ", useTempBlock, ")"));
+
   vector<traffic::TrafficInfo::RoadSegmentId> keysVec =
       python_list_to_std_vector<traffic::TrafficInfo::RoadSegmentId>(keys);
 
@@ -152,6 +156,8 @@ vector<uint8_t> GenerateTrafficValuesFromBinary(vector<uint8_t> const & keysBlob
                                                 boost::python::dict const & segmentMappingDict,
                                                 bool useTempBlock)
 {
+  LOG(LINFO, ("GenerateTrafficValuesFromBinary(..., ", useTempBlock, ")"));
+
   vector<traffic::TrafficInfo::RoadSegmentId> keys;
   traffic::TrafficInfo::DeserializeTrafficKeys(keysBlob, keys);
 
