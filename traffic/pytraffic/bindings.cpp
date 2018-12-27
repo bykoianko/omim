@@ -102,7 +102,8 @@ boost::python::list GenerateTrafficKeys(string const & mwmPath)
 }
 
 vector<uint8_t> GenerateTrafficValues(vector<traffic::TrafficInfo::RoadSegmentId> const & keys,
-                                      boost::python::dict const & segmentMappingDict)
+                                      boost::python::dict const & segmentMappingDict,
+                                      bool useTempBlock)
 {
   SegmentMapping segmentMapping;
   boost::python::list mappingKeys = segmentMappingDict.keys();
@@ -124,7 +125,7 @@ vector<uint8_t> GenerateTrafficValues(vector<traffic::TrafficInfo::RoadSegmentId
   for (auto const & kv : coloring)
   {
     ASSERT_EQUAL(kv.first, keys[i], ());
-    if (kv.second == traffic::SpeedGroup::TempBlock)
+    if (!useTempBlock && kv.second == traffic::SpeedGroup::TempBlock)
       continue;
 
     values[i] = kv.second;
@@ -138,21 +139,23 @@ vector<uint8_t> GenerateTrafficValues(vector<traffic::TrafficInfo::RoadSegmentId
 }
 
 vector<uint8_t> GenerateTrafficValuesFromList(boost::python::list const & keys,
-                                              boost::python::dict const & segmentMappingDict)
+                                              boost::python::dict const & segmentMappingDict,
+                                              bool useTempBlock)
 {
   vector<traffic::TrafficInfo::RoadSegmentId> keysVec =
       python_list_to_std_vector<traffic::TrafficInfo::RoadSegmentId>(keys);
 
-  return GenerateTrafficValues(keysVec, segmentMappingDict);
+  return GenerateTrafficValues(keysVec, segmentMappingDict, useTempBlock);
 }
 
 vector<uint8_t> GenerateTrafficValuesFromBinary(vector<uint8_t> const & keysBlob,
-                                                boost::python::dict const & segmentMappingDict)
+                                                boost::python::dict const & segmentMappingDict,
+                                                bool useTempBlock)
 {
   vector<traffic::TrafficInfo::RoadSegmentId> keys;
   traffic::TrafficInfo::DeserializeTrafficKeys(keysBlob, keys);
 
-  return GenerateTrafficValues(keys, segmentMappingDict);
+  return GenerateTrafficValues(keys, segmentMappingDict, useTempBlock);
 }
 
 void LoadClassificator(string const & classifPath)
