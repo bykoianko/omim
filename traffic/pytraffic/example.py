@@ -41,7 +41,7 @@ mapping = {
   RoadSegmentId(1, 0, 1): SegmentSpeeds(4.0, 5.0, 6.0),
 }
 
-buf1 = generate_traffic_values_from_list(keys, mapping)
+buf1 = generate_traffic_values_from_list(keys, mapping, 1)
 
 with open(options.path_to_keys, "rb") as bin_data:
-  buf2 = generate_traffic_values_from_binary(bin_data.read(), {})
+  buf2 = generate_traffic_values_from_binary(bin_data.read(), {}, 1)

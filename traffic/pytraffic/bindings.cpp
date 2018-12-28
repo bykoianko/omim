@@ -103,7 +103,7 @@ boost::python::list GenerateTrafficKeys(string const & mwmPath)
 
 vector<uint8_t> GenerateTrafficValues(vector<traffic::TrafficInfo::RoadSegmentId> const & keys,
                                       boost::python::dict const & segmentMappingDict,
-                                      bool useTempBlock)
+                                      uint8_t useTempBlock)
 {
   LOG(LINFO, ("GenerateTrafficValues(..., ", useTempBlock, ")"));
 
@@ -142,7 +142,7 @@ vector<uint8_t> GenerateTrafficValues(vector<traffic::TrafficInfo::RoadSegmentId
 
 vector<uint8_t> GenerateTrafficValuesFromList(boost::python::list const & keys,
                                               boost::python::dict const & segmentMappingDict,
-                                              bool useTempBlock)
+                                              uint8_t useTempBlock)
 {
   LOG(LINFO, ("GenerateTrafficValuesFromList(..., ", useTempBlock, ")"));
 
@@ -154,7 +154,7 @@ vector<uint8_t> GenerateTrafficValuesFromList(boost::python::list const & keys,
 
 vector<uint8_t> GenerateTrafficValuesFromBinary(vector<uint8_t> const & keysBlob,
                                                 boost::python::dict const & segmentMappingDict,
-                                                bool useTempBlock)
+                                                uint8_t useTempBlock)
 {
   LOG(LINFO, ("GenerateTrafficValuesFromBinary(..., ", useTempBlock, ")"));
 
