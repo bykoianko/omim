@@ -228,8 +228,6 @@ void CandidatePathsGetter::GetAllSuitablePaths(Graph::EdgeVector const & startLi
       if (!PassesRestriction(e, functionalRoadClass, formOfWay, 2 /* kFRCThreshold */, m_infoGetter))
         continue;
 
-      // TODO(mgsergio): Should we check form of way as well?
-
       if (u->IsJunctionInPath(e.GetEndJunction()))
         continue;
 

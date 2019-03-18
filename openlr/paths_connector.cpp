@@ -197,7 +197,7 @@ bool PathsConnector::FindShortestPath(Graph::Edge const & from, Graph::Edge cons
     m_graph.GetOutgoingEdges(u.GetEndJunction(), edges);
     for (auto const & e : edges)
     {
-      if (!ConformLfrcnp(e, lowestFrcToNextPoint, 2 /* frcThreshold */, m_infoGetter))
+      if (!ConformLfrcnp(e, lowestFrcToNextPoint, m_infoGetter))
         continue;
       // TODO(mgsergio): Use frc to filter edges.
 

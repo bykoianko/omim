@@ -24,7 +24,6 @@ namespace openlr
 {
 namespace
 {
-int const kFRCThreshold = 2;
 size_t const kMaxRoadCandidates = 20;
 double const kDistanceAccuracyM = 1000;
 double const kEps = 1e-9;
@@ -471,7 +470,7 @@ void Router::ForEachEdge(Vertex const & u, bool outgoing, FunctionalRoadClass re
     GetIngoingEdges(u.m_junction, edges);
   for (auto const & edge : edges)
   {
-    if (!ConformLfrcnp(edge, restriction, kFRCThreshold, m_roadInfoGetter))
+    if (!ConformLfrcnp(edge, restriction, m_roadInfoGetter))
       continue;
     fn(edge);
   }
@@ -531,7 +530,7 @@ void Router::ForEachNonFakeClosestEdge(Vertex const & u, FunctionalRoadClass con
     auto const & edge = p.first;
     if (edge.IsFake())
       continue;
-    if (!ConformLfrcnp(edge, restriction, kFRCThreshold, m_roadInfoGetter))
+    if (!ConformLfrcnp(edge, restriction, m_roadInfoGetter))
       continue;
     fn(edge);
   }

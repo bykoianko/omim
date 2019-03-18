@@ -17,7 +17,7 @@ void CandidatePointsGetter::GetJunctionPointCandidates(m2::PointD const & p,
 {
   // TODO(mgsergio): Get optimal value using experiments on a sample.
   // Or start with small radius and scale it up when there are too few points.
-  size_t const kRectSideMeters = 110;
+  size_t const kRectSideMeters = 70;
 
   auto const rect = MercatorBounds::RectByCenterXYAndSizeInMeters(p, kRectSideMeters);
   auto const selectCandidates = [&rect, &candidates](FeatureType & ft) {

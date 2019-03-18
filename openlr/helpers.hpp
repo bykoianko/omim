@@ -35,5 +35,5 @@ bool PassesRestriction(Graph::Edge const & e, FunctionalRoadClass restriction, F
 /// \note frc means Functional Road Class. Please see openlr documentation for details:
 /// http://www.openlr.org/data/docs/whitepaper/1_0/OpenLR-Whitepaper_v1.0.pdf
 bool ConformLfrcnp(Graph::Edge const & e, FunctionalRoadClass lowestFrcToNextPoint,
-                   int frcThreshold, RoadInfoGetter & infoGetter);
+                   RoadInfoGetter & infoGetter);
 }  // namespace openlr

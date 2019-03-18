@@ -12,18 +12,43 @@
 
 namespace
 {
-openlr::FunctionalRoadClass HighwayClassToFunctionalRoadClass(ftypes::HighwayClass const & hwClass)
+using namespace openlr;
+
+bool ConformFrc(Graph::Edge const & e, FunctionalRoadClass lfrcnp, RoadInfoGetter & infoGetter)
 {
-  switch (hwClass)
+  if (e.IsFake() || lfrcnp == FunctionalRoadClass::NotAValue)
+    return true;
+
+  auto const hwClass = infoGetter.Get(e.GetFeatureId()).m_hwClass;
+
+  switch (lfrcnp)
   {
-  case ftypes::HighwayClass::Trunk: return openlr::FunctionalRoadClass::FRC0;
-  case ftypes::HighwayClass::Primary: return openlr::FunctionalRoadClass::FRC1;
-  case ftypes::HighwayClass::Secondary: return openlr::FunctionalRoadClass::FRC2;
-  case ftypes::HighwayClass::Tertiary: return openlr::FunctionalRoadClass::FRC3;
-  case ftypes::HighwayClass::LivingStreet: return openlr::FunctionalRoadClass::FRC4;
-  case ftypes::HighwayClass::Service: return openlr::FunctionalRoadClass::FRC5;
-  default: return openlr::FunctionalRoadClass::FRC7;
+  case FunctionalRoadClass::FRC0:
+    return hwClass == ftypes::HighwayClass::Trunk;
+  case FunctionalRoadClass::FRC1:
+    return hwClass == ftypes::HighwayClass::Trunk || hwClass == ftypes::HighwayClass::Primary;
+  case FunctionalRoadClass::FRC2:
+    return hwClass == ftypes::HighwayClass::Primary || hwClass == ftypes::HighwayClass::Secondary ||
+        hwClass == ftypes::HighwayClass::Tertiary ||
+        hwClass == ftypes::HighwayClass::LivingStreet;
+  case FunctionalRoadClass::FRC3:
+    return hwClass == ftypes::HighwayClass::Primary ||
+        hwClass == ftypes::HighwayClass::Secondary ||
+        hwClass == ftypes::HighwayClass::Tertiary ||
+        hwClass == ftypes::HighwayClass::LivingStreet;
+  case FunctionalRoadClass::FRC4:
+    return hwClass == ftypes::HighwayClass::Tertiary ||
+        hwClass == ftypes::HighwayClass::LivingStreet ||
+        hwClass == ftypes::HighwayClass::Service;
+  case FunctionalRoadClass::FRC5:
+  case FunctionalRoadClass::FRC6:
+  case FunctionalRoadClass::FRC7:
+    return hwClass == ftypes::HighwayClass::LivingStreet ||
+        hwClass == ftypes::HighwayClass::Service;
+  case FunctionalRoadClass::NotAValue:
+    UNREACHABLE();
   }
+  UNREACHABLE();
 }
 }  // namespace
 
@@ -74,20 +99,12 @@ std::string LogAs2GisPath(Graph::Edge const & e) { return LogAs2GisPath(Graph::E
 bool PassesRestriction(Graph::Edge const & e, FunctionalRoadClass restriction, FormOfWay fow,
                        int frcThreshold, RoadInfoGetter & infoGetter)
 {
-  if (e.IsFake() || restriction == FunctionalRoadClass::NotAValue)
-    return true;
-
-  auto const frc = HighwayClassToFunctionalRoadClass(infoGetter.Get(e.GetFeatureId()).m_hwClass);
-  return static_cast<int>(frc) <= static_cast<int>(restriction) + frcThreshold;
+  return ConformFrc(e, restriction, infoGetter);
 }
 
 bool ConformLfrcnp(Graph::Edge const & e, FunctionalRoadClass lowestFrcToNextPoint,
-                   int frcThreshold, RoadInfoGetter & infoGetter)
+                   RoadInfoGetter & infoGetter)
 {
-  if (e.IsFake() || lowestFrcToNextPoint == FunctionalRoadClass::NotAValue)
-    return true;
-
-  auto const frc = HighwayClassToFunctionalRoadClass(infoGetter.Get(e.GetFeatureId()).m_hwClass);
-  return static_cast<int>(frc) <= static_cast<int>(lowestFrcToNextPoint) + frcThreshold;
+  return ConformFrc(e, lowestFrcToNextPoint, infoGetter);
 }
 }  // namespace openlr
