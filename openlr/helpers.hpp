@@ -29,7 +29,7 @@ std::common_type_t<T, U> AbsDifference(T const a, U const b)
 }
 
 bool PassesRestriction(Graph::Edge const & e, FunctionalRoadClass restriction, FormOfWay fow,
-                       int frcThreshold, RoadInfoGetter & infoGetter);
+                       RoadInfoGetter & infoGetter, Score2 & score);
 
 /// \returns true if edge |e| conforms Lowest Functional Road Class to Next Point.
 /// \note frc means Functional Road Class. Please see openlr documentation for details:

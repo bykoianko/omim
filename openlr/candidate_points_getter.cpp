@@ -6,30 +6,45 @@
 
 #include "storage/country_info_getter.hpp"
 
+#include "geometry/mercator.hpp"
+
+#include "base/assert.hpp"
 #include "base/stl_helpers.hpp"
 
+#include <set>
+#include <utility>
+
 using namespace routing;
+
+namespace
+{
+} //  namespace
 
 namespace openlr
 {
 void CandidatePointsGetter::GetJunctionPointCandidates(m2::PointD const & p,
-                                                       vector<m2::PointD> & candidates)
+                                                       ScorePointVec & candidates)
 {
   // TODO(mgsergio): Get optimal value using experiments on a sample.
   // Or start with small radius and scale it up when there are too few points.
-  size_t const kRectSideMeters = 70;
+  double const kRadius = 60.0;
 
-  auto const rect = MercatorBounds::RectByCenterXYAndSizeInMeters(p, kRectSideMeters);
-  auto const selectCandidates = [&rect, &candidates](FeatureType & ft) {
+//  auto const rect = MercatorBounds::RectByCenterXYAndSizeInMeters(p, kRectSideMeters);
+  auto const selectCandidates = [&](FeatureType & ft) {
     ft.ParseGeometry(FeatureType::BEST_GEOMETRY);
     ft.ForEachPoint(
-        [&rect, &candidates](m2::PointD const & candidate) {
-          if (rect.IsPointInside(candidate))
-            candidates.emplace_back(candidate);
+        [&](m2::PointD const & candidate) {
+//          if (rect.IsPointInside(candidate))
+          if (MercatorBounds::DistanceOnEarth(p, candidate) < kRadius)
+          {
+//            LOG(LINFO, ("IsJunction(", MercatorBounds::ToLatLon(candidate), "):", IsJunction(candidate)));
+            candidates.emplace_back(GetScoreByDistance(p, candidate), candidate);
+          }
         },
         scales::GetUpperScale());
   };
 
+  auto const rect = MercatorBounds::RectByCenterXYAndSizeInMeters(p, kRadius);
   m_dataSource.ForEachInRect(selectCandidates, rect, scales::GetUpperScale());
 
   // TODO: Move this to a separate stage.
@@ -39,17 +54,18 @@ void CandidatePointsGetter::GetJunctionPointCandidates(m2::PointD const & p,
   // after enriching with projections.
 
   base::SortUnique(candidates,
-                   [&p](m2::PointD const & a, m2::PointD const & b) {
-                     return MercatorBounds::DistanceOnEarth(a, p) <
-                            MercatorBounds::DistanceOnEarth(b, p);
+                   [&](ScorePoint const & a, ScorePoint const & b) {
+//                     return MercatorBounds::DistanceOnEarth(a.m_point, p) <
+//                            MercatorBounds::DistanceOnEarth(b.m_point, p);
+                     return a.m_score > b.m_score;
                    },
-                   [](m2::PointD const & a, m2::PointD const & b) { return a == b; });
+                   [](ScorePoint const & a, ScorePoint const & b) { return a.m_point == b.m_point; });
 
   candidates.resize(min(m_maxJunctionCandidates, candidates.size()));
 }
 
 void CandidatePointsGetter::EnrichWithProjectionPoints(m2::PointD const & p,
-                                                       vector<m2::PointD> & candidates)
+                                                       ScorePointVec & candidates)
 {
   m_graph.ResetFakes();
 
@@ -75,7 +91,44 @@ void CandidatePointsGetter::EnrichWithProjectionPoints(m2::PointD const & p,
     m_graph.AddIngoingFakeEdge(firstHalf);
     m_graph.AddOutgoingFakeEdge(secondHalf);
     m_graph.AddIngoingFakeEdge(secondHalf);
-    candidates.push_back(junction.GetPoint());
+    candidates.emplace_back(GetScoreByDistance(p, junction.GetPoint()), junction.GetPoint());
   }
+}
+
+bool CandidatePointsGetter::IsJunction(m2::PointD const & p)
+{
+  Graph::EdgeVector outgoing;
+  m_graph.GetRegularOutgoingEdges(routing::Junction(p, 0 /* altitude */), outgoing);
+
+  Graph::EdgeVector ingoing;
+  m_graph.GetRegularIngoingEdges(routing::Junction(p, 0 /* altitude */), ingoing);
+
+  // @TODO segment may be in different mwms
+  std::set<std::pair<uint32_t, uint32_t>> ids;
+  for (auto const & e : outgoing)
+    ids.insert(std::make_pair(e.GetFeatureId().m_index, e.GetSegId()));
+
+  for (auto const & e : ingoing)
+    ids.insert(std::make_pair(e.GetFeatureId().m_index, e.GetSegId()));
+
+  return ids.size() >= 3;
+}
+
+openlr::Score2 CandidatePointsGetter::GetScoreByDistance(m2::PointD const & point,
+                                                         m2::PointD const & candidate)
+{
+  // @TODO Add comment for this numbers
+  openlr::Score2 constexpr kMaxScoreForDist = 100;
+  double constexpr kMaxScoreDistM = 5.0;
+  double const junctionFactor = IsJunction(candidate) ? 1.1 : 1.0;
+
+  double const distM = MercatorBounds::DistanceOnEarth(point, candidate);
+  openlr::Score2 const score =
+      (distM <= kMaxScoreDistM
+           ? kMaxScoreForDist
+           : static_cast<openlr::Score2>(static_cast<double>(kMaxScoreForDist) * junctionFactor /
+                                         (1 + distM - kMaxScoreDistM)));
+  CHECK_LESS_OR_EQUAL(score, static_cast<double>(kMaxScoreForDist) * junctionFactor, ());
+  return score;
 }
 }  // namespace openlr

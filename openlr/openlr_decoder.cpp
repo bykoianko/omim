@@ -298,7 +298,7 @@ public:
 
     auto const & points = segment.GetLRPs();
     CHECK_GREATER(points.size(), 1, ("A segment cannot consist of less than two points"));
-    vector<vector<Graph::EdgeVector>> lineCandidates;
+    vector<ScorePathVec> lineCandidates;
     lineCandidates.reserve(points.size());
     LOG(LDEBUG, ("Decoding segment:", segment.m_segmentId, "with", points.size(), "points"));
 
@@ -313,6 +313,8 @@ public:
     PathsConnector connector(kPathLengthTolerance, m_graph, m_infoGetter, stat);
     if (!connector.ConnectCandidates(points, lineCandidates, resultPath))
       return false;
+
+    // @TODO Add function which found the best score or returns false if score too low.
 
     Graph::EdgeVector route;
     for (auto const & part : resultPath)

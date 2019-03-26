@@ -25,15 +25,17 @@ public:
   {
   }
 
-  void GetCandidatePoints(m2::PointD const & p, std::vector<m2::PointD> & candidates)
+  void GetCandidatePoints(m2::PointD const & p, ScorePointVec & candidates)
   {
     GetJunctionPointCandidates(p, candidates);
     EnrichWithProjectionPoints(p, candidates);
   }
 
 private:
-  void GetJunctionPointCandidates(m2::PointD const & p, std::vector<m2::PointD> & candidates);
-  void EnrichWithProjectionPoints(m2::PointD const & p, std::vector<m2::PointD> & candidates);
+  void GetJunctionPointCandidates(m2::PointD const & p, ScorePointVec & candidates);
+  void EnrichWithProjectionPoints(m2::PointD const & p, ScorePointVec & candidates);
+  bool IsJunction(m2::PointD const & p);
+  openlr::Score2 GetScoreByDistance(m2::PointD const & point, m2::PointD const & candidate);
 
   size_t const m_maxJunctionCandidates;
   size_t const m_maxProjectionCandidates;

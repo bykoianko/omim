@@ -27,22 +27,26 @@ public:
   }
 
   bool GetLineCandidatesForPoints(std::vector<LocationReferencePoint> const & points,
-                                  std::vector<std::vector<Graph::EdgeVector>> & lineCandidates);
+                                  std::vector<ScorePathVec> & lineCandidates);
 
 private:
   struct Link;
   using LinkPtr = std::shared_ptr<Link>;
 
+  // @TODO Increece candidates number.
   size_t static constexpr kMaxCandidates = 5;
   size_t static constexpr kMaxFakeCandidates = 2;
 
   // TODO(mgsergio): Rename to Vertex.
   struct Link
   {
-    Link(LinkPtr const & parent, Graph::Edge const & edge, double const distanceM)
+    Link(LinkPtr const & parent, Graph::Edge const & edge, double const distanceM,
+         Score2 pointScore, Score2 rfcScore)
       : m_parent(parent)
       , m_edge(edge)
       , m_distanceM(distanceM)
+      , m_pointScore(pointScore)
+      , m_rfcScore(rfcScore)
       , m_hasFake((parent && parent->m_hasFake) || edge.IsFake())
     {
     }
@@ -55,40 +59,46 @@ private:
     LinkPtr const m_parent;
     Graph::Edge const m_edge;
     double const m_distanceM;
+    Score2 m_pointScore;
+    Score2 m_rfcScore;
     bool const m_hasFake;
   };
 
   struct CandidatePath
   {
-    double static constexpr kBearingDiffFactor = 5;
-    double static constexpr kPathDistanceFactor = 1;
-    double static constexpr kPointDistanceFactor = 2;
-
     CandidatePath() = default;
 
-    CandidatePath(LinkPtr const path, uint32_t const bearingDiff, double const pathDistanceDiff,
-                  double const startPointDistance)
+    CandidatePath(LinkPtr const path, Score2 pointScore, Score2 rfcScore, Score2 bearingScore)
       : m_path(path)
-      , m_bearingDiff(bearingDiff)
-      , m_pathDistanceDiff(pathDistanceDiff)
-      , m_startPointDistance(startPointDistance)
+//      , m_bearingDiff(bearingDiff)
+//      , m_pathDistanceDiff(pathDistanceDiff)
+//      , m_startPointDistance(startPointDistance)
+      , m_pointScore(pointScore)
+      , m_rfcScore(rfcScore)
+      , m_bearingScore(bearingScore)
     {
     }
 
-    bool operator<(CandidatePath const & o) const { return GetPenalty() < o.GetPenalty(); }
+//    bool operator<(CandidatePath const & o) const { return GetPenalty() < o.GetPenalty(); }
+    bool operator>(CandidatePath const & o) const { return GetScore() > o.GetScore(); }
 
-    double GetPenalty() const
-    {
-      return kBearingDiffFactor * m_bearingDiff + kPathDistanceFactor * m_pathDistanceDiff +
-             kPointDistanceFactor * m_startPointDistance;
-    }
+    Score2 GetScore() const { return m_pointScore + m_rfcScore + m_bearingScore; }
+
+//    double GetPenalty() const
+//    {
+//      return kBearingDiffFactor * m_bearingDiff + kPathDistanceFactor * m_pathDistanceDiff +
+//             kPointDistanceFactor * m_startPointDistance;
+//    }
 
     bool HasFakeEndings() const { return m_path && m_path->m_hasFake; }
 
     LinkPtr m_path = nullptr;
-    uint32_t m_bearingDiff = std::numeric_limits<uint32_t>::max();     // Domain is roughly [0, 30]
-    double m_pathDistanceDiff = std::numeric_limits<double>::max();    // Domain is roughly [0, 25]
-    double m_startPointDistance = std::numeric_limits<double>::max();  // Domain is roughly [0, 50]
+//    uint32_t m_bearingDiff = std::numeric_limits<uint32_t>::max();     // Domain is roughly [0, 30]
+//    double m_pathDistanceDiff = std::numeric_limits<double>::max();    // Domain is roughly [0, 25]
+//    double m_startPointDistance = std::numeric_limits<double>::max();  // Domain is roughly [0, 50]
+    Score2 m_pointScore = 0;
+    Score2 m_rfcScore = 0;
+    Score2 m_bearingScore = 0;
   };
 
   // Note: In all methods below if |isLastPoint| is true than algorithm should
@@ -103,22 +113,22 @@ private:
   // distance-to-next point is taken from point 3. You can learn more in
   // TomTom OpenLR spec.
 
-  void GetStartLines(std::vector<m2::PointD> const & points, bool const isLastPoint,
-                     Graph::EdgeVector & edges);
+  void GetStartLines(ScorePointVec const & points, bool const isLastPoint,
+                     ScoreEdgeVec & edges);
 
-  void GetAllSuitablePaths(Graph::EdgeVector const & startLines, bool isLastPoint,
+  void GetAllSuitablePaths(ScoreEdgeVec const & startLines, bool isLastPoint,
                            double bearDistM, FunctionalRoadClass  functionalRoadClass,
                            FormOfWay formOfWay, std::vector<LinkPtr> & allPaths);
 
   void GetBestCandidatePaths(std::vector<LinkPtr> const & allPaths, bool const isLastPoint,
                              uint32_t const requiredBearing, double const bearDistM,
                              m2::PointD const & startPoint,
-                             std::vector<Graph::EdgeVector> & candidates);
+                             ScorePathVec & candidates);
 
   void GetLineCandidates(openlr::LocationReferencePoint const & p, bool const isLastPoint,
                          double const distanceToNextPointM,
-                         std::vector<m2::PointD> const & pointCandidates,
-                         std::vector<Graph::EdgeVector> & candidates);
+                         ScorePointVec const & pointCandidates,
+                         ScorePathVec & candidates);
 
   CandidatePointsGetter & m_pointsGetter;
   Graph & m_graph;

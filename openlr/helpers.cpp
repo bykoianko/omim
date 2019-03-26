@@ -14,35 +14,46 @@ namespace
 {
 using namespace openlr;
 
-bool ConformFrc(Graph::Edge const & e, FunctionalRoadClass lfrcnp, RoadInfoGetter & infoGetter)
+/// \returns true if |e| conforms |functionalRoadClass| and false otherwise.
+/// \param score If returns true |score| fills with an appropriate score.
+bool ConformFrc(Graph::Edge const & e, FunctionalRoadClass functionalRoadClass,
+                RoadInfoGetter & infoGetter, Score2 & score)
 {
-  if (e.IsFake() || lfrcnp == FunctionalRoadClass::NotAValue)
+  Score2 constexpr kMaxScoreForFrc = 25;
+
+  if (e.IsFake() || functionalRoadClass == FunctionalRoadClass::NotAValue)
     return true;
 
   auto const hwClass = infoGetter.Get(e.GetFeatureId()).m_hwClass;
 
-  switch (lfrcnp)
+  switch (functionalRoadClass)
   {
   case FunctionalRoadClass::FRC0:
+    score = kMaxScoreForFrc;
     return hwClass == ftypes::HighwayClass::Trunk;
   case FunctionalRoadClass::FRC1:
+    score = kMaxScoreForFrc;
     return hwClass == ftypes::HighwayClass::Trunk || hwClass == ftypes::HighwayClass::Primary;
   case FunctionalRoadClass::FRC2:
-    return hwClass == ftypes::HighwayClass::Primary || hwClass == ftypes::HighwayClass::Secondary ||
-        hwClass == ftypes::HighwayClass::Tertiary ||
-        hwClass == ftypes::HighwayClass::LivingStreet;
   case FunctionalRoadClass::FRC3:
-    return hwClass == ftypes::HighwayClass::Primary ||
-        hwClass == ftypes::HighwayClass::Secondary ||
-        hwClass == ftypes::HighwayClass::Tertiary ||
-        hwClass == ftypes::HighwayClass::LivingStreet;
+    if (hwClass == ftypes::HighwayClass::Secondary || hwClass == ftypes::HighwayClass::Tertiary)
+      score = kMaxScoreForFrc;
+
+    return hwClass == ftypes::HighwayClass::Primary || hwClass == ftypes::HighwayClass::Secondary ||
+           hwClass == ftypes::HighwayClass::Tertiary ||
+           hwClass == ftypes::HighwayClass::LivingStreet;
+
   case FunctionalRoadClass::FRC4:
+    if (hwClass == ftypes::HighwayClass::LivingStreet || hwClass == ftypes::HighwayClass::Service)
+      score = kMaxScoreForFrc;
+
     return hwClass == ftypes::HighwayClass::Tertiary ||
-        hwClass == ftypes::HighwayClass::LivingStreet ||
-        hwClass == ftypes::HighwayClass::Service;
+           hwClass == ftypes::HighwayClass::LivingStreet ||
+           hwClass == ftypes::HighwayClass::Service;
   case FunctionalRoadClass::FRC5:
   case FunctionalRoadClass::FRC6:
   case FunctionalRoadClass::FRC7:
+    score = kMaxScoreForFrc;
     return hwClass == ftypes::HighwayClass::LivingStreet ||
         hwClass == ftypes::HighwayClass::Service;
   case FunctionalRoadClass::NotAValue:
@@ -96,15 +107,32 @@ std::string LogAs2GisPath(Graph::EdgeVector const & path)
 
 std::string LogAs2GisPath(Graph::Edge const & e) { return LogAs2GisPath(Graph::EdgeVector({e})); }
 
+// @TODO Use fow
 bool PassesRestriction(Graph::Edge const & e, FunctionalRoadClass restriction, FormOfWay fow,
-                       int frcThreshold, RoadInfoGetter & infoGetter)
+                       RoadInfoGetter & infoGetter, Score2 & score)
 {
-  return ConformFrc(e, restriction, infoGetter);
+  bool const conform = ConformFrc(e, restriction, infoGetter, score);
+  if (!conform)
+    return false;
+
+  Score2 constexpr kScoreForFow = 25;
+  if (fow == FormOfWay::Roundabout && infoGetter.Get(e.GetFeatureId()).m_isRoundabout)
+    score += kScoreForFow;
+
+//  if (fow == FormOfWay::MultipleCarriageway && infoGetter.Get(e.GetFeatureId()).m_oneWay)
+//    score += 15;
+
+//  if (fow == FormOfWay::Sliproad && infoGetter.Get(e.GetFeatureId()).m_link)
+//    score += kScoreForFow;
+
+
+  return true;
 }
 
 bool ConformLfrcnp(Graph::Edge const & e, FunctionalRoadClass lowestFrcToNextPoint,
                    RoadInfoGetter & infoGetter)
 {
-  return ConformFrc(e, lowestFrcToNextPoint, infoGetter);
+  Score2 score;
+  return ConformFrc(e, lowestFrcToNextPoint, infoGetter, score);
 }
 }  // namespace openlr

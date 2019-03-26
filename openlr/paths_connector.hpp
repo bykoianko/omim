@@ -18,7 +18,7 @@ public:
                  v2::Stats & stat);
 
   bool ConnectCandidates(std::vector<LocationReferencePoint> const & points,
-                         std::vector<std::vector<Graph::EdgeVector>> const & lineCandidates,
+                         std::vector<std::vector<ScorePath>> const & lineCandidates,
                          std::vector<Graph::EdgeVector> & resultPath);
 
 private:
