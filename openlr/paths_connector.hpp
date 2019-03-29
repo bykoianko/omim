@@ -14,8 +14,7 @@ namespace openlr
 class PathsConnector
 {
 public:
-  PathsConnector(double pathLengthTolerance, Graph & graph, RoadInfoGetter & infoGetter,
-                 v2::Stats & stat);
+  PathsConnector(Graph & graph, RoadInfoGetter & infoGetter, v2::Stats & stat);
 
   bool ConnectCandidates(std::vector<LocationReferencePoint> const & points,
                          std::vector<std::vector<ScorePath>> const & lineCandidates,
@@ -30,7 +29,8 @@ private:
                                      FunctionalRoadClass lowestFrcToNextPoint,
                                      double distanceToNextPoint, Graph::EdgeVector & resultPath);
 
-  double m_pathLengthTolerance;
+  // @TODO Remove it
+//  double m_pathLengthTolerance;
   Graph & m_graph;
   RoadInfoGetter & m_infoGetter;
   v2::Stats & m_stat;

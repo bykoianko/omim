@@ -45,9 +45,9 @@ int32_t PathOverlappingLen(Graph::EdgeVector const & a, Graph::EdgeVector const 
 
 // @TODO Rename this method.
 Score2 ValidatePath(Graph::EdgeVector const & path,
-                  double const distanceToNextPoint,
-                  double const pathLengthTolerance)
+                  double distanceToNextPoint)
 {
+  Score2 const kMoxScoreForRouteLen = 100;
 
   double pathLen = 0.0;
   for (auto const & e : path)
@@ -60,27 +60,25 @@ Score2 ValidatePath(Graph::EdgeVector const & path,
 //  LOG(LDEBUG, ("Validating path:", LogAs2GisPath(path)));
 
   double const pathDiffRatio =
-      AbsDifference(distanceToNextPoint, pathLen) / max(distanceToNextPoint, pathLen);
+      1.0 - AbsDifference(distanceToNextPoint, pathLen) / max(distanceToNextPoint, pathLen);
+  double constexpr kBarrier = 0.5;
+//  LOG(LINFO, ("max(kBarrier, ratio) - kBarrier:", max(kBarrier, pathDiffRatio) - kBarrier));
+  return static_cast<Score2>(static_cast<double>(kMoxScoreForRouteLen) *
+                             (max(kBarrier, pathDiffRatio) - kBarrier) / (1.0 - kBarrier));
 
-  return 100.0 * (1.0 - pathDiffRatio);
-
-//  if (pathDiffPercent > pathLengthTolerance)
-//  {
-//    LOG(LDEBUG,
-//        ("Shortest path doest not meet required length constraints, error:", pathDiffPercent));
-//    return false;
-//  }
-//
-//  return true;
+  //  if (pathDiffPercent > pathLengthTolerance)
+  //  {
+  //    LOG(LDEBUG,
+  //        ("Shortest path doest not meet required length constraints, error:", pathDiffPercent));
+  //    return false;
+  //  }
+  //
+  //  return true;
 }
 }  // namespace
 
-PathsConnector::PathsConnector(double pathLengthTolerance, Graph & graph,
-                               RoadInfoGetter & infoGetter, v2::Stats & stat)
-  : m_pathLengthTolerance(pathLengthTolerance)
-  , m_graph(graph)
-  , m_infoGetter(infoGetter)
-  , m_stat(stat)
+PathsConnector::PathsConnector(Graph & graph, RoadInfoGetter & infoGetter, v2::Stats & stat)
+  : m_graph(graph), m_infoGetter(infoGetter), m_stat(stat)
 {
 }
 
@@ -110,6 +108,7 @@ bool PathsConnector::ConnectCandidates(vector<LocationReferencePoint> const & po
     auto & resultPathPart = resultPath[i - 1];
 
 //    Graph::EdgeVector fakePath;
+    LOG(LINFO, ("Next path len score:"));
     vector<ScorePath> result;
     for (size_t fromInd = 0; fromInd < fromCandidates.size(); ++fromInd)
     {
@@ -131,7 +130,10 @@ bool PathsConnector::ConnectCandidates(vector<LocationReferencePoint> const & po
         // @TODO Continue if found
         // @TODO fromCandidates should be only if there's successful route to toCandidates of
         //  preview route.
-        Score2 score = ValidatePath(path, distanceToNextPoint, m_pathLengthTolerance);
+        Score2 const pathLenScore = ValidatePath(path, distanceToNextPoint);
+//        LOG(LINFO, ("Path len score:", pathLenScore));
+        if (pathLenScore == 0)
+          continue;
 
         // Checking for uniformity
 //        ftypes::HighwayClass hwClass = ftypes::HighwayClass::Undefined;
@@ -146,8 +148,9 @@ bool PathsConnector::ConnectCandidates(vector<LocationReferencePoint> const & po
         bool linkIsTheSame = true;
         for (auto const & p : path)
         {
-          if (p.IsFake())
-            continue;
+          CHECK(!p.IsFake(), ());
+//          if (p.IsFake())
+//            continue;
 
           feature::TypesHolder types;
           m_graph.GetFeatureTypes(p.GetFeatureId(), types);
@@ -177,20 +180,28 @@ bool PathsConnector::ConnectCandidates(vector<LocationReferencePoint> const & po
               linkIsTheSame = false;
           }
         }
+        CHECK_NOT_EQUAL(minHwClass, ftypes::HighwayClass::Undefined, ());
 
         uint8_t const hwClassDiff = static_cast<uint8_t>(maxHwClass) - static_cast<uint8_t>(minHwClass);
 
         // @TODO Use the diff better:
         // score = static_cast<Score2>(score * (hwClassDiff == 0 ? 1.1 : hwClassDiff == 1 ? 1.0 : 0.9));
-        score = static_cast<Score2>(score * (hwClassDiff == 0 ? 1.1 : hwClassDiff == 1 ? 1.05 : 1.0));
+        Score2 constexpr kTheSameHwClassScore = 40;
+        Score2 constexpr kNeighboringHwClassesScore = 15;
+        Score2 const hwClassScore = hwClassDiff == 0
+                                        ? kTheSameHwClassScore
+                                        : hwClassDiff == 1 ? kNeighboringHwClassesScore : 0;
 
-        if (minHwClass != ftypes::HighwayClass::Undefined && oneWayIsTheSame && roundaboutIsTheSame && linkIsTheSame)
-          score = static_cast<Score2>(score * 1.15);
+        Score2 constexpr kTheSameTypeScore = 50;
+        Score2 const theSameTypeScore =
+            (oneWayIsTheSame && roundaboutIsTheSame && linkIsTheSame) ? kTheSameTypeScore : 0;
 
-        if (path.front().IsFake() || path.back().IsFake())
-          score = 0;
-        result.emplace_back(score + fromCandidates[fromInd].m_score + toCandidates[toInd].m_score, move(path));
-//        LOG(LINFO, ("score:", result.back().m_score));
+//        if (path.front().IsFake() || path.back().IsFake())
+//          score = 0;
+        result.emplace_back(pathLenScore + hwClassScore + theSameTypeScore +
+                                fromCandidates[fromInd].m_score + toCandidates[toInd].m_score,
+                            move(path));
+        //        LOG(LINFO, ("score:", result.back().m_score));
       }
     }
 
@@ -200,20 +211,33 @@ bool PathsConnector::ConnectCandidates(vector<LocationReferencePoint> const & po
 //      resultPathPart = fakePath;
 //    }
 
+    result.erase(remove_if(result.begin(), result.end(),
+                           [](ScorePath const & o) { return o.m_path.empty(); }),
+                 result.end());
+
     if (result.empty())
     {
-      LOG(LDEBUG, ("No shortest path found"));
+      LOG(LINFO, ("No shortest path found"));
       ++m_stat.m_noShortestPathFound;
       resultPathPart.clear();
       return false;
     }
 
+    LOG(LINFO, ("Good path candidates number:", result.size()));
+
     auto const it = std::max_element(result.cbegin(), result.cend(),
                                      [](ScorePath const & o1, ScorePath const & o2) {
                                        return o1.m_score < o2.m_score;
                                      });
+
+    if (it->m_score < 240)
+    {
+      LOG(LINFO, ("The shortest path found but it is no good."));
+      return false;
+    }
+
     resultPathPart = it->m_path;
-    LOG(LINFO, ("best score:", it->m_score));
+    LOG(LINFO, ("Best score:", it->m_score, "resultPathPart.size():", resultPathPart.size()));
   }
 
   ASSERT_EQUAL(resultPath.size(), points.size() - 1, ());
@@ -226,7 +250,10 @@ bool PathsConnector::FindShortestPath(Graph::Edge const & from, Graph::Edge cons
                                       Graph::EdgeVector & path)
 {
   // TODO(mgsergio): Turn Dijkstra to A*.
-  uint32_t const kLengthToleranceM = 10;
+  double constexpr kLengthToleranceFactor = 1.1;
+  uint32_t constexpr kMinLengthTolerance = 20;
+  uint32_t const kLengthToleranceM =
+      std::max(static_cast<uint32_t>(kLengthToleranceFactor * maxPathLength), kMinLengthTolerance);
 
   struct State
   {
@@ -284,8 +311,10 @@ bool PathsConnector::FindShortestPath(Graph::Edge const & from, Graph::Edge cons
 
       // Only start and/or end of the route can be fake.
       // Routes made only of fake edges are no used to us.
-      if (u.IsFake() && e.IsFake())
-        continue;
+//      if (u.IsFake() && e.IsFake())
+//        continue;
+      CHECK(!u.IsFake(), ());
+      CHECK(!e.IsFake(), ());
 
       auto const it = scores.find(e);
       auto const eScore = us + EdgeLength(e);
@@ -333,6 +362,6 @@ bool PathsConnector::ConnectAdjacentCandidateLines(Graph::EdgeVector const & fro
   // Skip the first edge from |to| because it already took its place at prev(end(shortestPath)).
   copy(next(begin(to)), end(to), back_inserter(resultPath));
 
-  return found;
+  return found && !resultPath.empty();
 }
 }  // namespace openlr

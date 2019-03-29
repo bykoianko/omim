@@ -25,15 +25,17 @@ public:
   {
   }
 
-  void GetCandidatePoints(m2::PointD const & p, ScorePointVec & candidates)
+  // @TODO Remove ScorePointVec & candidates
+  void GetCandidatePointsEdges(m2::PointD const & p, bool isLastPoint, ScorePointVec & candidates, ScoreEdgeVec & edges)
   {
-    GetJunctionPointCandidates(p, candidates);
-    EnrichWithProjectionPoints(p, candidates);
+    GetJunctionPointCandidates(p, isLastPoint, candidates, edges);
+    EnrichWithProjectionPoints(p, candidates, edges);
   }
 
 private:
-  void GetJunctionPointCandidates(m2::PointD const & p, ScorePointVec & candidates);
-  void EnrichWithProjectionPoints(m2::PointD const & p, ScorePointVec & candidates);
+  void GetJunctionPointCandidates(m2::PointD const & p, bool isLastPoint,
+                                  ScorePointVec & candidates, ScoreEdgeVec & candidateEdges);
+  void EnrichWithProjectionPoints(m2::PointD const & p, ScorePointVec & candidates, ScoreEdgeVec & candidateEdges);
   bool IsJunction(m2::PointD const & p);
   openlr::Score2 GetScoreByDistance(m2::PointD const & point, m2::PointD const & candidate);
 

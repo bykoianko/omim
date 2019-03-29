@@ -149,9 +149,11 @@ bool CandidatePathsGetter::GetLineCandidatesForPoints(
         (isLastPoint ? points[i - 1] : points[i]).m_distanceToNextPoint;
 
     ScorePointVec pointCandidates;
-    m_pointsGetter.GetCandidatePoints(MercatorBounds::FromLatLon(points[i].m_latLon),
-                                      pointCandidates);
-    GetLineCandidates(points[i], isLastPoint, distanceToNextPointM, pointCandidates,
+    ScoreEdgeVec edgesCandidates;
+    m_pointsGetter.GetCandidatePointsEdges(MercatorBounds::FromLatLon(points[i].m_latLon), isLastPoint,
+                                           pointCandidates, edgesCandidates);
+//    LOG(LINFO, ("edgesCandidates size:", edgesCandidates.size()));
+    GetLineCandidates(points[i], isLastPoint, distanceToNextPointM, edgesCandidates,
                       lineCandidates.back());
 
     if (lineCandidates.back().empty())
@@ -167,6 +169,7 @@ bool CandidatePathsGetter::GetLineCandidatesForPoints(
   return true;
 }
 
+// @TODO Remove this method
 void CandidatePathsGetter::GetStartLines(ScorePointVec const & points, bool const isLastPoint,
                                          ScoreEdgeVec & scoreEdges)
 {
@@ -266,7 +269,7 @@ void CandidatePathsGetter::GetBestCandidatePaths(
 
 // @TODO Use multiset
   set<CandidatePath, std::greater<CandidatePath>> candidatePaths;
-  set<CandidatePath, std::greater<CandidatePath>> fakeEndingsCandidatePaths;
+//  set<CandidatePath, std::greater<CandidatePath>> fakeEndingsCandidatePaths;
 
   BearingPointsSelector pointsSelector(bearDistM, isLastPoint);
   for (auto const & l : allPaths)
@@ -303,38 +306,44 @@ void CandidatePathsGetter::GetBestCandidatePaths(
 //      double const bearingScore =
 //          kBearingDiffFactor * bearingDiff + kPathDistanceFactor * pathDistDiff +
 //          kPointDistanceFactor * startPointDistance;
-      auto const bearingScore = static_cast<Score2>(50.0 * 1.0 / (1.0 + bearingDiff / 5.0));
+      auto const bearingScore = static_cast<Score2>(50.0 * 1.0 / (1.0 + bearingDiff / 4.0));
+      CHECK(!part->m_hasFake, ());
 
-      if (part->m_hasFake)
-      {
+      // @TODO Remove fake edges.
+//      if (part->m_hasFake)
+//      {
 //        fakeEndingsCandidatePaths.emplace(part, bearingDiff, pathDistDiff, startPointsDistance,
 //                                          part->m_pointScore, part->m_rfcScore, bearingScore);
-        fakeEndingsCandidatePaths.emplace(part, part->m_pointScore / 3.0, part->m_rfcScore, bearingScore);
-      }
-      else
-      {
+//        fakeEndingsCandidatePaths.emplace(part, part->m_pointScore / 3.0, part->m_rfcScore, bearingScore);
+//      }
+//      else
+//      {
 //        candidatePaths.emplace(part, bearingDiff, pathDistDiff, startPointsDistance,
 //                               part->m_pointScore, part->m_rfcScore, bearingScore);
         candidatePaths.emplace(part, part->m_pointScore, part->m_rfcScore, bearingScore);
-      }
+//      }
     }
   }
 
-  ASSERT(
+  CHECK(
       none_of(begin(candidatePaths), end(candidatePaths), mem_fn(&CandidatePath::HasFakeEndings)),
       ());
-  ASSERT(fakeEndingsCandidatePaths.empty() ||
-             any_of(begin(fakeEndingsCandidatePaths), end(fakeEndingsCandidatePaths),
-                    mem_fn(&CandidatePath::HasFakeEndings)),
-         ());
+//  ASSERT(fakeEndingsCandidatePaths.empty() ||
+//             any_of(begin(fakeEndingsCandidatePaths), end(fakeEndingsCandidatePaths),
+//                    mem_fn(&CandidatePath::HasFakeEndings)),
+//         ());
+
+//  LOG(LINFO, ("===Score==="));
+//  for (auto const & p : candidatePaths)
+//    LOG(LINFO, ("Point score:", p.m_pointScore, ", rfc score:", p.m_rfcScore, "bearing score:", p.m_bearingScore));
 
   vector<CandidatePath> paths;
   copy_n(begin(candidatePaths), min(static_cast<size_t>(kMaxCandidates), candidatePaths.size()),
          back_inserter(paths));
 
-  copy_n(begin(fakeEndingsCandidatePaths),
-         min(static_cast<size_t>(kMaxFakeCandidates), fakeEndingsCandidatePaths.size()),
-         back_inserter(paths));
+//  copy_n(begin(fakeEndingsCandidatePaths),
+//         min(static_cast<size_t>(kMaxFakeCandidates), fakeEndingsCandidatePaths.size()),
+//         back_inserter(paths));
 
 //  LOG(LINFO, ("List candidate paths..."));
   for (auto const & path : paths)
@@ -356,7 +365,7 @@ void CandidatePathsGetter::GetBestCandidatePaths(
 void CandidatePathsGetter::GetLineCandidates(openlr::LocationReferencePoint const & p,
                                              bool const isLastPoint,
                                              double const distanceToNextPointM,
-                                             ScorePointVec const & pointCandidates,
+                                             ScoreEdgeVec const & edgeCandidates,
                                              ScorePathVec & candidates)
 {
   double const kDefaultBearDistM = 25.0;
@@ -364,8 +373,8 @@ void CandidatePathsGetter::GetLineCandidates(openlr::LocationReferencePoint cons
 
   LOG(LINFO, ("BearDist is", bearDistM));
 
-  ScoreEdgeVec startLines;
-  GetStartLines(pointCandidates, isLastPoint, startLines);
+  ScoreEdgeVec const & startLines = edgeCandidates;
+//  GetStartLines(pointCandidates, isLastPoint, startLines);
 
   LOG(LINFO, (startLines.size(), "start line candidates found for point (LatLon)", p.m_latLon));
   LOG(LDEBUG, ("Listing start lines:"));

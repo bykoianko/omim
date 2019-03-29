@@ -97,6 +97,7 @@ private:
 //    double m_pathDistanceDiff = std::numeric_limits<double>::max();    // Domain is roughly [0, 25]
 //    double m_startPointDistance = std::numeric_limits<double>::max();  // Domain is roughly [0, 50]
     Score2 m_pointScore = 0;
+    // @TODO Rename rfc
     Score2 m_rfcScore = 0;
     Score2 m_bearingScore = 0;
   };
@@ -127,7 +128,7 @@ private:
 
   void GetLineCandidates(openlr::LocationReferencePoint const & p, bool const isLastPoint,
                          double const distanceToNextPointM,
-                         ScorePointVec const & pointCandidates,
+                         ScoreEdgeVec const & edgeCandidates,
                          ScorePathVec & candidates);
 
   CandidatePointsGetter & m_pointsGetter;

@@ -22,8 +22,8 @@ namespace
 
 namespace openlr
 {
-void CandidatePointsGetter::GetJunctionPointCandidates(m2::PointD const & p,
-                                                       ScorePointVec & candidates)
+void CandidatePointsGetter::GetJunctionPointCandidates(m2::PointD const & p, bool isLastPoint,
+                                                       ScorePointVec & candidates, ScoreEdgeVec & candidateEdges)
 {
   // TODO(mgsergio): Get optimal value using experiments on a sample.
   // Or start with small radius and scale it up when there are too few points.
@@ -62,10 +62,22 @@ void CandidatePointsGetter::GetJunctionPointCandidates(m2::PointD const & p,
                    [](ScorePoint const & a, ScorePoint const & b) { return a.m_point == b.m_point; });
 
   candidates.resize(min(m_maxJunctionCandidates, candidates.size()));
+
+  for (auto const & pc : candidates)
+  {
+    Graph::EdgeVector edges;
+    if (!isLastPoint)
+      m_graph.GetOutgoingEdges(Junction(pc.m_point, 0 /* altitude */), edges);
+    else
+      m_graph.GetIngoingEdges(Junction(pc.m_point, 0 /* altitude */), edges);
+
+    for (auto const & e : edges)
+      candidateEdges.emplace_back(pc.m_score, e);
+  }
 }
 
 void CandidatePointsGetter::EnrichWithProjectionPoints(m2::PointD const & p,
-                                                       ScorePointVec & candidates)
+                                                       ScorePointVec & candidates, ScoreEdgeVec & candidateEdges)
 {
   m_graph.ResetFakes();
 
@@ -74,24 +86,27 @@ void CandidatePointsGetter::EnrichWithProjectionPoints(m2::PointD const & p,
   for (auto const & v : vicinities)
   {
     auto const & edge = v.first;
-    auto const & junction = v.second;
+    auto const & proj = v.second;
 
-    ASSERT(edge.HasRealPart() && !edge.IsFake(), ());
-
-    if (PointsAreClose(edge.GetStartPoint(), junction.GetPoint()) ||
-        PointsAreClose(edge.GetEndPoint(), junction.GetPoint()))
-    {
-      continue;
-    }
-
-    auto const firstHalf = Edge::MakeFake(edge.GetStartJunction(), junction, edge);
-    auto const secondHalf = Edge::MakeFake(junction, edge.GetEndJunction(), edge);
-
-    m_graph.AddOutgoingFakeEdge(firstHalf);
-    m_graph.AddIngoingFakeEdge(firstHalf);
-    m_graph.AddOutgoingFakeEdge(secondHalf);
-    m_graph.AddIngoingFakeEdge(secondHalf);
-    candidates.emplace_back(GetScoreByDistance(p, junction.GetPoint()), junction.GetPoint());
+    CHECK(edge.HasRealPart(), ());
+    CHECK(!edge.IsFake(), ());
+//
+//    if (PointsAreClose(edge.GetStartPoint(), proj.GetPoint()) ||
+//        PointsAreClose(edge.GetEndPoint(), proj.GetPoint()))
+//    {
+//      continue;
+//    }
+//
+//    auto const firstHalf = Edge::MakeFake(edge.GetStartJunction(), proj, edge);
+//    auto const secondHalf = Edge::MakeFake(proj, edge.GetEndJunction(), edge);
+//
+//    m_graph.AddOutgoingFakeEdge(firstHalf);
+//    m_graph.AddIngoingFakeEdge(firstHalf);
+//    m_graph.AddOutgoingFakeEdge(secondHalf);
+//    m_graph.AddIngoingFakeEdge(secondHalf);
+    auto const scoreByDist = GetScoreByDistance(p, proj.GetPoint());
+    candidates.emplace_back(scoreByDist, proj.GetPoint());
+    candidateEdges.emplace_back(scoreByDist, edge);
   }
 }
 
@@ -118,17 +133,16 @@ openlr::Score2 CandidatePointsGetter::GetScoreByDistance(m2::PointD const & poin
                                                          m2::PointD const & candidate)
 {
   // @TODO Add comment for this numbers
-  openlr::Score2 constexpr kMaxScoreForDist = 100;
+  openlr::Score2 constexpr kMaxScoreForDist = 70;
   double constexpr kMaxScoreDistM = 5.0;
   double const junctionFactor = IsJunction(candidate) ? 1.1 : 1.0;
 
   double const distM = MercatorBounds::DistanceOnEarth(point, candidate);
-  openlr::Score2 const score =
+  double const score =
       (distM <= kMaxScoreDistM
-           ? kMaxScoreForDist
-           : static_cast<openlr::Score2>(static_cast<double>(kMaxScoreForDist) * junctionFactor /
-                                         (1 + distM - kMaxScoreDistM)));
+           ? kMaxScoreForDist * junctionFactor
+           : static_cast<double>(kMaxScoreForDist) * junctionFactor / (1 + distM - kMaxScoreDistM));
   CHECK_LESS_OR_EQUAL(score, static_cast<double>(kMaxScoreForDist) * junctionFactor, ());
-  return score;
+  return static_cast<openlr::Score2>(score);
 }
 }  // namespace openlr

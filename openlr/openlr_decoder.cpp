@@ -81,85 +81,85 @@ struct alignas(kCacheLineSize) Stats
   uint32_t m_routesHandled = 0;
 };
 
-bool IsRealVertex(m2::PointD const & p, FeatureID const & fid, DataSource const & dataSource)
-{
-  FeaturesLoaderGuard g(dataSource, fid.m_mwmId);
-  auto const ft = g.GetOriginalFeatureByIndex(fid.m_index);
-  bool matched = false;
-  ft->ForEachPoint(
-      [&p, &matched](m2::PointD const & fp) {
-        if (p == fp)
-          matched = true;
-      },
-      FeatureType::BEST_GEOMETRY);
-  return matched;
-};
+//bool IsRealVertex(m2::PointD const & p, FeatureID const & fid, DataSource const & dataSource)
+//{
+//  FeaturesLoaderGuard g(dataSource, fid.m_mwmId);
+//  auto const ft = g.GetOriginalFeatureByIndex(fid.m_index);
+//  bool matched = false;
+//  ft->ForEachPoint(
+//      [&p, &matched](m2::PointD const & fp) {
+//        if (p == fp)
+//          matched = true;
+//      },
+//      FeatureType::BEST_GEOMETRY);
+//  return matched;
+//};
 
-void ExpandFake(Graph::EdgeVector & path, Graph::EdgeVector::iterator edgeIt, DataSource const & dataSource,
-                Graph & g)
-{
-  if (!edgeIt->IsFake())
-    return;
+//void ExpandFake(Graph::EdgeVector & path, Graph::EdgeVector::iterator edgeIt, DataSource const & dataSource,
+//                Graph & g)
+//{
+//  if (!edgeIt->IsFake())
+//    return;
+//
+//  Graph::EdgeVector edges;
+//  bool startIsFake = true;
+//  if (IsRealVertex(edgeIt->GetStartPoint(), edgeIt->GetFeatureId(), dataSource))
+//  {
+//    g.GetRegularOutgoingEdges(edgeIt->GetStartJunction(), edges);
+//    startIsFake = false;
+//  }
+//  else
+//  {
+//    ASSERT(IsRealVertex(edgeIt->GetEndPoint(), edgeIt->GetFeatureId(), dataSource), ());
+//    g.GetRegularIngoingEdges(edgeIt->GetEndJunction(), edges);
+//  }
+//
+//  CHECK(!edges.empty(), ());
+//
+//  auto it = find_if(begin(edges), end(edges), [&edgeIt](Graph::Edge const & real) {
+//      if (real.GetFeatureId() == edgeIt->GetFeatureId() && real.GetSegId() == edgeIt->GetSegId())
+//        return true;
+//      return false;
+//    });
+//
+//  // For features which cross mwm border FeatureIds may not match. Check geometry.
+//  if (it == end(edges))
+//  {
+//    it = find_if(begin(edges), end(edges), [&edgeIt, &startIsFake](Graph::Edge const & real) {
+//      // Features from the same mwm should be already matched.
+//      if (real.GetFeatureId().m_mwmId == edgeIt->GetFeatureId().m_mwmId)
+//        return false;
+//
+//      auto const fakePoint = startIsFake ? edgeIt->GetStartPoint() : edgeIt->GetEndPoint();
+//      m2::ParametrizedSegment<m2::PointD> const realGeometry(real.GetStartPoint(), real.GetEndPoint());
+//      auto const projectedPoint = realGeometry.ClosestPointTo(fakePoint);
+//
+//      auto constexpr kCrossMwmMatchDistanceM = 1.0;
+//      if (MercatorBounds::DistanceOnEarth(fakePoint, projectedPoint) < kCrossMwmMatchDistanceM)
+//        return true;
+//      return false;
+//    });
+//  }
+//
+//  CHECK(it != end(edges), ());
+//
+//  // If a fake edge is larger than a half of the corresponding real one, substitute
+//  // the fake one with real one. Drop the fake one otherwize.
+//  if (2 * EdgeLength(*edgeIt) >= EdgeLength(*it))
+//    *edgeIt = *it;
+//  else
+//    path.erase(edgeIt);
+//};
 
-  Graph::EdgeVector edges;
-  bool startIsFake = true;
-  if (IsRealVertex(edgeIt->GetStartPoint(), edgeIt->GetFeatureId(), dataSource))
-  {
-    g.GetRegularOutgoingEdges(edgeIt->GetStartJunction(), edges);
-    startIsFake = false;
-  }
-  else
-  {
-    ASSERT(IsRealVertex(edgeIt->GetEndPoint(), edgeIt->GetFeatureId(), dataSource), ());
-    g.GetRegularIngoingEdges(edgeIt->GetEndJunction(), edges);
-  }
-
-  CHECK(!edges.empty(), ());
-
-  auto it = find_if(begin(edges), end(edges), [&edgeIt](Graph::Edge const & real) {
-      if (real.GetFeatureId() == edgeIt->GetFeatureId() && real.GetSegId() == edgeIt->GetSegId())
-        return true;
-      return false;
-    });
-
-  // For features which cross mwm border FeatureIds may not match. Check geometry.
-  if (it == end(edges))
-  {
-    it = find_if(begin(edges), end(edges), [&edgeIt, &startIsFake](Graph::Edge const & real) {
-      // Features from the same mwm should be already matched.
-      if (real.GetFeatureId().m_mwmId == edgeIt->GetFeatureId().m_mwmId)
-        return false;
-
-      auto const fakePoint = startIsFake ? edgeIt->GetStartPoint() : edgeIt->GetEndPoint();
-      m2::ParametrizedSegment<m2::PointD> const realGeometry(real.GetStartPoint(), real.GetEndPoint());
-      auto const projectedPoint = realGeometry.ClosestPointTo(fakePoint);
-
-      auto constexpr kCrossMwmMatchDistanceM = 1.0;
-      if (MercatorBounds::DistanceOnEarth(fakePoint, projectedPoint) < kCrossMwmMatchDistanceM)
-        return true;
-      return false;
-    });
-  }
-
-  CHECK(it != end(edges), ());
-
-  // If a fake edge is larger than a half of the corresponding real one, substitute
-  // the fake one with real one. Drop the fake one otherwize.
-  if (2 * EdgeLength(*edgeIt) >= EdgeLength(*it))
-    *edgeIt = *it;
-  else
-    path.erase(edgeIt);
-};
-
-void ExpandFakes(DataSource const & dataSource, Graph & g, Graph::EdgeVector & path)
-{
-  ASSERT(!path.empty(), ());
-
-  ExpandFake(path, begin(path), dataSource, g);
-  if (path.empty())
-    return;
-  ExpandFake(path, --end(path), dataSource, g);
-}
+//void ExpandFakes(DataSource const & dataSource, Graph & g, Graph::EdgeVector & path)
+//{
+//  ASSERT(!path.empty(), ());
+//
+//  ExpandFake(path, begin(path), dataSource, g);
+//  if (path.empty())
+//    return;
+//  ExpandFake(path, --end(path), dataSource, g);
+//}
 
 // Returns an iterator pointing to the first edge that should not be cut off.
 // Offsets denote a distance in meters one should travel from the start/end of the path
@@ -176,9 +176,9 @@ InputIterator CutOffset(InputIterator start, InputIterator const stop, double co
     auto const edgeLen = EdgeLength(*start);
     if (distance <= offset && offset < distance + edgeLen)
     {
-      // Throw out this edge if (offest - distance) is greater than edgeLength / 2.
-      if (2 * (offset - distance) >= edgeLen)
-        ++start;
+      // Throw out this edge if (offset - distance) is greater than edgeLength / 2.
+//      if (2 * (offset - distance) >= edgeLen)
+//        ++start;
       break;
     }
     distance += edgeLen;
@@ -203,7 +203,9 @@ void CopyWithoutOffsets(InputIterator const start, InputIterator const stop, Out
              .base();
   }
 
-  if (from >= to)
+  CHECK(from <= to, ());
+
+  if (from == to)
     return;
 
   copy(from, to, out);
@@ -288,7 +290,11 @@ public:
 
   bool DecodeSegment(LinearSegment const & segment, DecodedPath & path, v2::Stats & stat)
   {
-    double const kPathLengthTolerance = 0.30;
+    LOG(LINFO, ("DecodeSegment(...) seg id:", segment.m_segmentId, ", point num:", segment.GetLRPs().size()));
+//    if (segment.m_segmentId == 308581789)
+//      LOG(LINFO, ("For sig id 308581789"));
+
+//    double const kPathLengthTolerance = 0.30;
     uint32_t const kMaxJunctionCandidates = 10;
     uint32_t const kMaxProjectionCandidates = 5;
 
@@ -310,12 +316,14 @@ public:
       return false;
 
     vector<Graph::EdgeVector> resultPath;
-    PathsConnector connector(kPathLengthTolerance, m_graph, m_infoGetter, stat);
+    PathsConnector connector(m_graph, m_infoGetter, stat);
     if (!connector.ConnectCandidates(points, lineCandidates, resultPath))
+    {
+      LOG(LINFO, ("Connections not found:", segment.m_segmentId));
       return false;
+    }
 
     // @TODO Add function which found the best score or returns false if score too low.
-
     Graph::EdgeVector route;
     for (auto const & part : resultPath)
       route.insert(end(route), begin(part), end(part));
@@ -331,24 +339,31 @@ public:
     for (auto const & e : route)
       actualRouteDistanceM += EdgeLength(e);
 
+//    LOG(LINFO, ("requiredRouteDistanceM:", requiredRouteDistanceM, "actualRouteDistanceM:", actualRouteDistanceM, "segment.m_segmentId ==", segment.m_segmentId));
+
     auto const scale = actualRouteDistanceM / requiredRouteDistanceM;
     LOG(LDEBUG, ("actualRouteDistance:", actualRouteDistanceM,
                  "requiredRouteDistance:", requiredRouteDistanceM, "scale:", scale));
 
-    auto const positiveOffsetM = segment.m_locationReference.m_positiveOffsetMeters * scale;
-    auto const negativeOffsetM = segment.m_locationReference.m_negativeOffsetMeters * scale;
-
-    if (positiveOffsetM + negativeOffsetM >= requiredRouteDistanceM)
+    if (segment.m_locationReference.m_positiveOffsetMeters +
+            segment.m_locationReference.m_negativeOffsetMeters >=
+        requiredRouteDistanceM)
     {
       ++stat.m_wrongOffsets;
       LOG(LINFO, ("Wrong offsets for segment:", segment.m_segmentId));
       return false;
     }
 
-    ExpandFakes(m_dataSource, m_graph, route);
-    ASSERT(none_of(begin(route), end(route), mem_fn(&Graph::Edge::IsFake)), (segment.m_segmentId));
+    auto const positiveOffsetM = segment.m_locationReference.m_positiveOffsetMeters * scale;
+    auto const negativeOffsetM = segment.m_locationReference.m_negativeOffsetMeters * scale;
+
+//    ExpandFakes(m_dataSource, m_graph, route);
+    CHECK(none_of(begin(route), end(route), mem_fn(&Graph::Edge::IsFake)), (segment.m_segmentId));
     CopyWithoutOffsets(begin(route), end(route), back_inserter(path.m_path), positiveOffsetM,
                        negativeOffsetM);
+//    path.m_path = route;
+
+//    LOG(LINFO, ("path.m_path size():", path.m_path.size(), "segment.m_segmentId ==", segment.m_segmentId));
 
     if (path.m_path.empty())
     {
