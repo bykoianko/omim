@@ -295,7 +295,7 @@ public:
 //      LOG(LINFO, ("For sig id 308581789"));
 
 //    double const kPathLengthTolerance = 0.30;
-    uint32_t const kMaxJunctionCandidates = 10;
+    uint32_t const kMaxJunctionCandidates = 20;
     uint32_t const kMaxProjectionCandidates = 5;
 
     m_graph.ResetFakes();
