@@ -47,11 +47,18 @@ int32_t PathOverlappingLen(Graph::EdgeVector const & a, Graph::EdgeVector const 
 Score2 ValidatePath(Graph::EdgeVector const & path,
                   double distanceToNextPoint)
 {
-  Score2 const kMoxScoreForRouteLen = 100;
+  CHECK(!path.empty(), ());
+  Score2 const kMaxScoreForRouteLen = 110;
+
+//  if (path.size() <= 3 || distanceToNextPoint <= 50 /* meters */)
+//    return static_cast<Score2>(kMaxScoreForRouteLen / 2.0);
 
   double pathLen = 0.0;
   for (auto const & e : path)
     pathLen += EdgeLength(e);
+
+//  double const averageEndSegLen = (EdgeLength(path.front()) + EdgeLength(path.back()));
+//  double const maxPointsDist = distanceToNextPoint + averageEndSegLen;
 
   // @TODO Rename this value.
 //  double pathDiffPercent = AbsDifference(static_cast<double>(distanceToNextPoint), pathLen) /
@@ -59,12 +66,21 @@ Score2 ValidatePath(Graph::EdgeVector const & path,
 //
 //  LOG(LDEBUG, ("Validating path:", LogAs2GisPath(path)));
 
+//  auto const diff = AbsDifference(distanceToNextPoint, pathLen);
+//  if (distanceToNextPoint >= pathLen && distanceToNextPoint + averageEndSegLen <= pathLen)
+//    return kMaxScoreForRouteLen;
+
   double const pathDiffRatio =
       1.0 - AbsDifference(distanceToNextPoint, pathLen) / max(distanceToNextPoint, pathLen);
   double constexpr kBarrier = 0.5;
 //  LOG(LINFO, ("max(kBarrier, ratio) - kBarrier:", max(kBarrier, pathDiffRatio) - kBarrier));
-  return static_cast<Score2>(static_cast<double>(kMoxScoreForRouteLen) *
-                             (max(kBarrier, pathDiffRatio) - kBarrier) / (1.0 - kBarrier));
+  auto const score =
+      static_cast<Score2>(static_cast<double>(kMaxScoreForRouteLen) *
+                          (max(kBarrier, pathDiffRatio) - kBarrier) / (1.0 - kBarrier));
+//  LOG(LINFO, ("distanceToNextPoint:", distanceToNextPoint, "pathLen", pathLen,
+//              "diff:", AbsDifference(distanceToNextPoint, pathLen), "seg num", path.size(),
+//              "score:", score));
+  return pathLen < 25.0 /* meters */ ? max(score, static_cast<Score2>(1)) : score;
 
   //  if (pathDiffPercent > pathLengthTolerance)
   //  {
@@ -132,7 +148,7 @@ bool PathsConnector::ConnectCandidates(vector<LocationReferencePoint> const & po
         //  preview route.
         Score2 const pathLenScore = ValidatePath(path, distanceToNextPoint);
 //        LOG(LINFO, ("Path len score:", pathLenScore));
-        if (pathLenScore == 0)
+        if (pathLenScore == 0 && path.size() > 2)
           continue;
 
         // Checking for uniformity
@@ -252,7 +268,7 @@ bool PathsConnector::FindShortestPath(Graph::Edge const & from, Graph::Edge cons
   // TODO(mgsergio): Turn Dijkstra to A*.
   double constexpr kLengthToleranceFactor = 1.1;
   uint32_t constexpr kMinLengthTolerance = 20;
-  uint32_t const kLengthToleranceM =
+  uint32_t const lengthToleranceM =
       std::max(static_cast<uint32_t>(kLengthToleranceFactor * maxPathLength), kMinLengthTolerance);
 
   struct State
@@ -286,7 +302,7 @@ bool PathsConnector::FindShortestPath(Graph::Edge const & from, Graph::Edge cons
     // TODO(mgsergio): Unify names: use either score or distance.
     auto const us = state.m_score;
 
-    if (us > maxPathLength + kLengthToleranceM)
+    if (us > maxPathLength + lengthToleranceM)
       continue;
 
     if (us > scores[u])

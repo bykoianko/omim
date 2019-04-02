@@ -291,11 +291,11 @@ public:
   bool DecodeSegment(LinearSegment const & segment, DecodedPath & path, v2::Stats & stat)
   {
     LOG(LINFO, ("DecodeSegment(...) seg id:", segment.m_segmentId, ", point num:", segment.GetLRPs().size()));
-//    if (segment.m_segmentId == 308581789)
-//      LOG(LINFO, ("For sig id 308581789"));
+    if (segment.m_segmentId == 206664753)
+      LOG(LINFO, ("For sig id 206664753"));
 
 //    double const kPathLengthTolerance = 0.30;
-    uint32_t const kMaxJunctionCandidates = 20;
+    uint32_t const kMaxJunctionCandidates = 10;
     uint32_t const kMaxProjectionCandidates = 5;
 
     m_graph.ResetFakes();
