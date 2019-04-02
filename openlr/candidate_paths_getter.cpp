@@ -236,8 +236,9 @@ void CandidatePathsGetter::GetAllSuitablePaths(ScoreEdgeVec const & startLines,
     for (auto const & e : edges)
     {
       // Fake edges are allowed only at the start/end of the path.
-      if (e.IsFake())
-        continue;
+      CHECK(!e.IsFake(), ());
+//      if (e.IsFake())
+//        continue;
 
       if (EdgesAreAlmostEqual(e.GetReverseEdge(), currentEdge))
         continue;
@@ -302,6 +303,10 @@ void CandidatePathsGetter::GetBestCandidatePaths(
 
       auto const bearing = Bearing(bearStartPoint, bearEndPoint);
       auto const bearingDiff = AbsDifference(bearing, requiredBearing);
+
+//      if (bearingDiff > 45.0)
+//        continue;
+
 //      auto const pathDistDiff = AbsDifference(part->m_distanceM, bearDistM);
 //      double const bearingScore =
 //          kBearingDiffFactor * bearingDiff + kPathDistanceFactor * pathDistDiff +

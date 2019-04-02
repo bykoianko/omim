@@ -72,7 +72,7 @@ Score2 ValidatePath(Graph::EdgeVector const & path,
 
   double const pathDiffRatio =
       1.0 - AbsDifference(distanceToNextPoint, pathLen) / max(distanceToNextPoint, pathLen);
-  double constexpr kBarrier = 0.5;
+  double constexpr kBarrier = 0.6;
 //  LOG(LINFO, ("max(kBarrier, ratio) - kBarrier:", max(kBarrier, pathDiffRatio) - kBarrier));
   auto const score =
       static_cast<Score2>(static_cast<double>(kMaxScoreForRouteLen) *

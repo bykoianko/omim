@@ -2,6 +2,7 @@
 
 #include "openlr/helpers.hpp"
 
+#include "routing/routing_helpers.hpp"
 #include "routing/road_graph.hpp"
 
 #include "storage/country_info_getter.hpp"
@@ -18,6 +19,9 @@ using namespace routing;
 
 namespace
 {
+// TODO(mgsergio): Get optimal value using experiments on a sample.
+// Or start with small radius and scale it up when there are too few points.
+double const kRadius = 30.0;
 } //  namespace
 
 namespace openlr
@@ -25,12 +29,11 @@ namespace openlr
 void CandidatePointsGetter::GetJunctionPointCandidates(m2::PointD const & p, bool isLastPoint,
                                                        ScorePointVec & candidates, ScoreEdgeVec & candidateEdges)
 {
-  // TODO(mgsergio): Get optimal value using experiments on a sample.
-  // Or start with small radius and scale it up when there are too few points.
-  double const kRadius = 60.0;
-
 //  auto const rect = MercatorBounds::RectByCenterXYAndSizeInMeters(p, kRectSideMeters);
   auto const selectCandidates = [&](FeatureType & ft) {
+//    if (!routing::IsCarRoad(feature::TypesHolder(ft)))
+//      return;
+
     ft.ParseGeometry(FeatureType::BEST_GEOMETRY);
     ft.ForEachPoint(
         [&](m2::PointD const & candidate) {
@@ -104,6 +107,9 @@ void CandidatePointsGetter::EnrichWithProjectionPoints(m2::PointD const & p,
 //    m_graph.AddIngoingFakeEdge(firstHalf);
 //    m_graph.AddOutgoingFakeEdge(secondHalf);
 //    m_graph.AddIngoingFakeEdge(secondHalf);
+    if (MercatorBounds::DistanceOnEarth(p, proj.GetPoint()) >= kRadius)
+      continue;
+
     auto const scoreByDist = GetScoreByDistance(p, proj.GetPoint());
     candidates.emplace_back(scoreByDist, proj.GetPoint());
     candidateEdges.emplace_back(scoreByDist, edge);
