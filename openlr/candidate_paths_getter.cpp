@@ -40,12 +40,28 @@ m2::PointD PointAtSegmentM(m2::PointD const & p1, m2::PointD const & p2, double 
   return PointAtSegment(p1, p2, delta);
 }
 
-uint32_t Bearing(m2::PointD const & a, m2::PointD const & b)
+double ToAngleInDeg(uint32_t angleInBuckets)
+{
+  CHECK_GREATER_OR_EQUAL(angleInBuckets, 0, ());
+  CHECK_LESS_OR_EQUAL(angleInBuckets, 255, ());
+  return base::clamp(kAnglesInBucket * static_cast<double>(angleInBuckets), 0.0, 360.0);
+}
+
+uint32_t BearingInDeg(m2::PointD const & a, m2::PointD const & b)
 {
   auto const angle = location::AngleToBearing(base::RadToDeg(ang::AngleTo(a, b)));
-  CHECK_LESS_OR_EQUAL(angle, 360, ("Angle should be less than or equal to 360."));
-  CHECK_GREATER_OR_EQUAL(angle, 0, ("Angle should be greater than or equal to 0"));
-  return base::clamp(angle / kAnglesInBucket, 0.0, 255.0);
+  CHECK_LESS_OR_EQUAL(angle, 360.0, ("Angle should be less than or equal to 360."));
+  CHECK_GREATER_OR_EQUAL(angle, 0.0, ("Angle should be greater than or equal to 0."));
+//  return base::clamp(angle / kAnglesInBucket, 0.0, 255.0);
+  return angle;
+}
+
+double DifferenceInDeg(double a1, double a2)
+{
+  auto const diff = 180.0 - abs(abs(a1 - a2) - 180.0);
+  CHECK_LESS_OR_EQUAL(diff, 180.0, ("Difference should be less than or equal to 360."));
+  CHECK_GREATER_OR_EQUAL(diff, 0.0, ("Difference should be greater than or equal to 0."));
+  return diff;
 }
 
 // This class is used to get correct points for further bearing calculations.
@@ -264,6 +280,9 @@ void CandidatePathsGetter::GetBestCandidatePaths(
     vector<LinkPtr> const & allPaths, bool const isLastPoint, uint32_t const requiredBearing,
     double const bearDistM, m2::PointD const & startPoint, ScorePathVec & candidates)
 {
+  CHECK_GREATER_OR_EQUAL(requiredBearing, 0, ());
+  CHECK_LESS_OR_EQUAL(requiredBearing, 255, ());
+//  LOG(LINFO, ("requiredBearing:", requiredBearing));
 //  double constexpr kBearingDiffFactor = 5;
 //  double constexpr kPathDistanceFactor = 1;
 //  double constexpr kPointDistanceFactor = 2;
@@ -293,6 +312,8 @@ void CandidatePathsGetter::GetBestCandidatePaths(
     uint32_t traceBackIterationsLeft = 3;
     for (auto part = l; part; part = part->m_parent)
     {
+      CHECK(!part->m_hasFake, ());
+
       if (traceBackIterationsLeft == 0)
         break;
 
@@ -301,18 +322,22 @@ void CandidatePathsGetter::GetBestCandidatePaths(
       auto const bearEndPoint =
           pointsSelector.GetBearingEndPoint(part->m_edge, part->m_distanceM);
 
-      auto const bearing = Bearing(bearStartPoint, bearEndPoint);
-      auto const bearingDiff = AbsDifference(bearing, requiredBearing);
+      auto const bearingDeg = BearingInDeg(bearStartPoint, bearEndPoint);
+      double const requiredBearingDeg = ToAngleInDeg(requiredBearing);
+      // @TODO Do it using some base code
+      double const diff = DifferenceInDeg(bearingDeg, requiredBearingDeg);
 
-//      if (bearingDiff > 45.0)
-//        continue;
+//      auto const bearingDiff = AbsDifference(bearing, requiredBearing);
+
+      if (diff > 50.0)
+        continue;
 
 //      auto const pathDistDiff = AbsDifference(part->m_distanceM, bearDistM);
 //      double const bearingScore =
 //          kBearingDiffFactor * bearingDiff + kPathDistanceFactor * pathDistDiff +
 //          kPointDistanceFactor * startPointDistance;
-      auto const bearingScore = static_cast<Score2>(50.0 * 1.0 / (1.0 + bearingDiff / 4.0));
-      CHECK(!part->m_hasFake, ());
+      auto const bearingScore = static_cast<Score2>(60.0 * 1.0 / (1.0 + diff / 4.0));
+
 
       // @TODO Remove fake edges.
 //      if (part->m_hasFake)

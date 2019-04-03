@@ -32,7 +32,7 @@ double const kBearingDist = 25;
 int const kNumBuckets = 256;
 double const kAnglesInBucket = 360.0 / kNumBuckets;
 
-uint32_t Bearing(m2::PointD const & a, m2::PointD const & b)
+uint32_t BearingInDeg(m2::PointD const & a, m2::PointD const & b)
 {
   auto const angle = location::AngleToBearing(base::RadToDeg(ang::AngleTo(a, b)));
   CHECK_LESS_OR_EQUAL(angle, 360, ("Angle should be less than or equal to 360."));
@@ -316,7 +316,7 @@ bool Router::FindPath(std::vector<routing::Edge> & path)
       if (u.m_junction != u.m_stageStart)
       {
         int const expected = m_points[stage].m_bearing;
-        int const actual = Bearing(u.m_stageStart.GetPoint(), u.m_junction.GetPoint());
+        int const actual = BearingInDeg(u.m_stageStart.GetPoint(), u.m_junction.GetPoint());
         sv.AddBearingPenalty(expected, actual);
       }
       v.m_bearingChecked = true;
@@ -366,7 +366,7 @@ bool Router::FindPath(std::vector<routing::Edge> & path)
         if (v.m_stageStart.GetPoint() != p)
         {
           int const expected = m_points[stage].m_bearing;
-          int const actual = Bearing(v.m_stageStart.GetPoint(), p);
+          int const actual = BearingInDeg(v.m_stageStart.GetPoint(), p);
           sv.AddBearingPenalty(expected, actual);
         }
         v.m_bearingChecked = true;
@@ -457,7 +457,7 @@ uint32_t Router::GetReverseBearing(Vertex const & u, Links const & links) const
   }
   if (!found)
     b = curr.m_junction.GetPoint();
-  return Bearing(a, b);
+  return BearingInDeg(a, b);
 }
 
 template <typename Fn>
