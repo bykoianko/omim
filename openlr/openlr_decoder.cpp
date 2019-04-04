@@ -10,6 +10,7 @@
 #include "openlr/paths_connector.hpp"
 #include "openlr/road_info_getter.hpp"
 #include "openlr/router.hpp"
+#include "openlr/score_types.hpp"
 #include "openlr/way_point.hpp"
 
 #include "routing/features_road_graph.hpp"

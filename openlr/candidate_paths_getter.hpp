@@ -3,6 +3,7 @@
 #include "openlr/graph.hpp"
 #include "openlr/openlr_model.hpp"
 #include "openlr/road_info_getter.hpp"
+#include "openlr/score_types.hpp"
 #include "openlr/stats.hpp"
 
 #include "geometry/point2d.hpp"

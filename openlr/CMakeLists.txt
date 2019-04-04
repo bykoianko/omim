@@ -29,6 +29,7 @@ set(
   road_info_getter.hpp
   router.cpp
   router.hpp
+  score_types.hpp
   stats.hpp
   way_point.hpp
 )

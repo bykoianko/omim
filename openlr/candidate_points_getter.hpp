@@ -1,6 +1,7 @@
 #pragma once
 
 #include "openlr/graph.hpp"
+#include "openlr/score_types.hpp"
 #include "openlr/stats.hpp"
 
 #include "indexer/data_source.hpp"

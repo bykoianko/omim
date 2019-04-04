@@ -2,6 +2,7 @@
 
 #include "openlr/graph.hpp"
 #include "openlr/openlr_model.hpp"
+#include "openlr/score_types.hpp"
 
 #include "geometry/point2d.hpp"
 
