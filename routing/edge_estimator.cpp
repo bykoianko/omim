@@ -81,7 +81,7 @@ double CalcClimbSegment(EdgeEstimator::Purpose purpose, Segment const & segment,
 
   double const distance = MercatorBounds::DistanceOnEarth(from.GetPoint(), to.GetPoint());
   double const speedMpS = KMPH2MPS(purpose == EdgeEstimator::Purpose::Weight ? speed.m_weight : speed.m_eta);
-  CHECK_GREATER(speedMpS, 0.0, ());
+  CHECK_GREATER(speedMpS, 0.0, ("from:", from, "to:", to, "speed:", speed));
   double const timeSec = distance / speedMpS;
 
   if (base::AlmostEqualAbs(distance, 0.0, 0.1))
