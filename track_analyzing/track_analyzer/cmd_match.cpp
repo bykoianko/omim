@@ -21,7 +21,9 @@
 #include "base/timer.hpp"
 
 #include <algorithm>
+#include <functional>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <thread>
 
@@ -33,6 +35,33 @@ using namespace track_analyzing;
 namespace
 {
 using Iter = typename vector<string>::iterator;
+
+struct Stat
+{
+  uint32_t m_totalUserNum = 0;
+  uint32_t m_russianUserNum = 0;
+  uint32_t m_totalDataPointNum = 0;
+  uint32_t m_russianDataPointNum = 0;
+
+  Stat & operator+=(Stat const & stat)
+  {
+    m_totalUserNum += stat.m_totalUserNum;
+    m_russianUserNum += stat.m_russianUserNum;
+    m_totalDataPointNum += stat.m_totalDataPointNum;
+    m_russianDataPointNum += stat.m_russianDataPointNum;
+    return *this;
+  }
+};
+
+string DebugPrint(Stat const & s)
+{
+  ostringstream ss;
+  ss << "Stat [ m_totalUserNum == " << s.m_totalUserNum
+      << ", m_russianUserNum == " << s.m_russianUserNum
+      << ", m_totalDataPointNum == " << s.m_totalDataPointNum
+      << ", m_russianDataPointNum == " << s.m_russianDataPointNum  << " ]" << endl;
+  return ss.str();
+}
 
 void MatchTracks(MwmToTracks const & mwmToTracks, storage::Storage const & storage,
                  NumMwmIds const & numMwmIds, MwmToMatchedTracks & mwmToMatchedTracks)
@@ -86,14 +115,32 @@ void MatchTracks(MwmToTracks const & mwmToTracks, storage::Storage const & stora
       ("Matching finished, elapsed:", timer.ElapsedSeconds(), "seconds, tracks:", tracksCount,
        ", points:", pointsCount, ", non matched points:", nonMatchedPointsCount));
 }
+
+void AddNumbers(UserToTrack const & userToTrack, uint32_t & userNum, uint32_t & dataPointNum)
+{
+  userNum += userToTrack.size();
+  for (auto const & kv : userToTrack)
+    dataPointNum += kv.second.size();
+}
 }  // namespace
 
 namespace track_analyzing
 {
-void CmdMatch(string const & logFile, string const & trackFile, shared_ptr<NumMwmIds> const & numMwmIds, Storage const & storage)
+void CmdMatch(string const & logFile, string const & trackFile, shared_ptr<NumMwmIds> const & numMwmIds, Storage const & storage, Stat & stat)
 {
   MwmToTracks mwmToTracks;
   ParseTracks(logFile, numMwmIds, mwmToTracks);
+
+  for (auto const & kv : mwmToTracks)
+  {
+    CountryId const countryId = storage.GetTopmostParentFor(numMwmIds->GetFile(kv.first).GetName());
+    if (countryId.empty())
+      continue; // Disputed territory.
+
+    AddNumbers(kv.second, stat.m_totalUserNum, stat.m_totalDataPointNum);
+    if (countryId == "Russian Federation")
+      AddNumbers(kv.second, stat.m_russianUserNum, stat.m_russianDataPointNum);
+  }
 
   MwmToMatchedTracks mwmToMatchedTracks;
   MatchTracks(mwmToTracks, storage, *numMwmIds, mwmToMatchedTracks);
@@ -110,10 +157,12 @@ void CmdMatch(string const & logFile, string const & trackFile)
   Storage storage;
   storage.RegisterAllLocalMaps(false /* enableDiffs */);
   shared_ptr<NumMwmIds> numMwmIds = CreateNumMwmIds(storage);
-  CmdMatch(logFile, trackFile, numMwmIds, storage);
+  Stat stat;
+  CmdMatch(logFile, trackFile, numMwmIds, storage, stat);
+  LOG(LINFO, ("CmdMatch stat.", stat));
 }
 
-void UnzipAndMatch(Iter begin, Iter end, string const & trackExt)
+void UnzipAndMatch(Iter begin, Iter end, string const & trackExt, Stat & stat)
 {
   Storage storage;
   storage.RegisterAllLocalMaps(false /* enableDiffs */);
@@ -149,7 +198,7 @@ void UnzipAndMatch(Iter begin, Iter end, string const & trackExt)
       continue;
     }
 
-    CmdMatch(file, file + trackExt, numMwmIds, storage);
+    CmdMatch(file, file + trackExt, numMwmIds, storage, stat);
     FileWriter::DeleteFileX(file);
   }
 }
@@ -192,16 +241,22 @@ void CmdMatchDir(string const & logDir, string const & trackExt)
   auto const threadsCount = min(size, hardwareConcurrency);
   auto const blockSize = size / threadsCount;
   vector<thread> threads(threadsCount - 1);
+  vector<Stat> stats(threadsCount);
   auto begin = filesList.begin();
   for (size_t i = 0; i < threadsCount - 1; ++i)
   {
     auto end = begin + blockSize;
-    threads[i] = thread(UnzipAndMatch, begin, end, trackExt);
+    threads[i] = thread(UnzipAndMatch, begin, end, trackExt, ref(stats[i]));
     begin = end;
   }
 
-  UnzipAndMatch(begin, filesList.end(), trackExt);
+  UnzipAndMatch(begin, filesList.end(), trackExt, ref(stats[threadsCount - 1]));
   for (auto & t : threads)
     t.join();
+
+  Stat statSum;
+  for (auto const & s : stats)
+    statSum += s;
+  LOG(LINFO, ("CmdMatchDir stat.", statSum));
 }
 }  // namespace track_analyzing
