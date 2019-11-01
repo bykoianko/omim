@@ -1,5 +1,7 @@
 #include "track_analyzing/track_analyzer/crossroad_checker.hpp"
 
+#include "track_analyzing/track_analyzer/utils.hpp"
+
 #include "track_analyzing/track.hpp"
 #include "track_analyzing/utils.hpp"
 
@@ -459,11 +461,15 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
     }
   };
 
+  Stat stat;
   auto processTrack = [&](string const & filename, MwmToMatchedTracks const & mwmToMatchedTracks) {
     LOG(LINFO, ("Processing", filename));
+    AddStat(mwmToMatchedTracks, *numMwmIds, storage, stat);
     ForTracksSortedByMwmName(mwmToMatchedTracks, *numMwmIds, processMwm);
   };
 
   ForEachTrackFile(filepath, trackExtension, numMwmIds, processTrack);
+
+  LOG(LINFO, ("CmdTagsTable stat.", stat));
 }
 }  // namespace track_analyzing
