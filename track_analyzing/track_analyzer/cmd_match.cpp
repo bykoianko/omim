@@ -100,7 +100,7 @@ void CmdMatch(string const & logFile, string const & trackFile, shared_ptr<NumMw
   MwmToMatchedTracks mwmToMatchedTracks;
   MatchTracks(mwmToTracks, storage, *numMwmIds, mwmToMatchedTracks);
 
-  AddStat(mwmToTracks, *numMwmIds, storage, matchedStat);
+  AddStat(mwmToMatchedTracks, *numMwmIds, storage, matchedStat);
 
   FileWriter writer(trackFile, FileWriter::OP_WRITE_TRUNCATE);
   MwmToMatchedTracksSerializer serializer(numMwmIds);
