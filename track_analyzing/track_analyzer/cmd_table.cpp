@@ -387,11 +387,24 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   FrozenDataSource dataSource;
   auto numMwmIds = CreateNumMwmIds(storage);
 
+  Stat statFromProcessMwm;
   auto processMwm = [&](string const & mwmName, UserToMatchedTracks const & userToMatchedTracks) {
     if (mwmFilter(mwmName))
       return;
 
     auto const countryName = storage.GetTopmostParentFor(mwmName);
+
+    if (!countryName.empty())
+    {
+      AddNumbers(userToMatchedTracks, statFromProcessMwm.m_totalUserNum, statFromProcessMwm
+          .m_totalDataPointNum);
+      if (countryName == "Russian Federation")
+      {
+        AddNumbers(userToMatchedTracks, statFromProcessMwm.m_russianUserNum, statFromProcessMwm
+            .m_russianDataPointNum);
+      }
+    }
+
     auto const carModelFactory = make_shared<CarModelFactory>(VehicleModelFactory::CountryParentNameGetterFn{});
     shared_ptr<VehicleModelInterface> vehicleModel =
         carModelFactory->GetVehicleModelForCountry(mwmName);
@@ -471,5 +484,6 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   ForEachTrackFile(filepath, trackExtension, numMwmIds, processTrack);
 
   LOG(LINFO, ("CmdTagsTable stat.", stat));
+  LOG(LINFO, ("CmdTagsTable stat from processMwm.", statFromProcessMwm));
 }
 }  // namespace track_analyzing
