@@ -388,6 +388,8 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   auto numMwmIds = CreateNumMwmIds(storage);
 
   Stat statFromProcessMwm;
+  Stat beforeFilters;
+  Stat statFromSummery;
   auto processMwm = [&](string const & mwmName, UserToMatchedTracks const & userToMatchedTracks) {
     if (mwmFilter(mwmName))
       return;
@@ -431,6 +433,10 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
 
     for (auto const & kv : userToMatchedTracks)
     {
+      beforeFilters.m_totalDataPointNum += kv.second.size();
+      if (countryName == "Russian Federation")
+        beforeFilters.m_russianDataPointNum += kv.second.size();
+
       string const & user = kv.first;
       if (userFilter(user))
         continue;
@@ -469,7 +475,13 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
 
         auto const summary = aggregator.GetSummary(user, countryName);
         if (!summary.empty())
+        {
+          ++statFromSummery.m_totalDataPointNum;
+          if (countryName == "Russian Federation")
+            ++statFromSummery.m_russianDataPointNum;
+
           cout << summary;
+        }
       }
     }
   };
@@ -485,5 +497,7 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
 
   LOG(LINFO, ("CmdTagsTable stat.", stat));
   LOG(LINFO, ("CmdTagsTable stat from processMwm.", statFromProcessMwm));
+  LOG(LINFO, ("CmdTagsTable stat beforeFilters.", beforeFilters));
+  LOG(LINFO, ("CmdTagsTable stat statFromSummery.", statFromSummery));
 }
 }  // namespace track_analyzing
