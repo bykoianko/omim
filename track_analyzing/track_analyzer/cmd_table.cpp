@@ -316,6 +316,17 @@ public:
     return out.str();
   }
 
+  size_t GetValidNumber() const
+  {
+    size_t result = 0;
+    for (auto const & it : m_moveInfos)
+    {
+      if (it.first.IsValid())
+        ++result;
+    }
+    return result;
+  }
+
 private:
   map<MoveType, SpeedInfo> m_moveInfos;
 };
@@ -392,6 +403,7 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   Stat afterFilters;
   Stat withoutOnePntTracks;
   Stat statSummeryMayBeEmpty;
+  Stat statValids;
   Stat statFromSummery;
   auto processMwm = [&](string const & mwmName, UserToMatchedTracks const & userToMatchedTracks) {
     if (mwmFilter(mwmName))
@@ -488,6 +500,10 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
         if (countryName == "Russian Federation")
           ++statSummeryMayBeEmpty.m_russianDataPointNum;
 
+        statValids.m_totalDataPointNum += aggregator.GetValidNumber();
+        if (countryName == "Russian Federation")
+          statValids.m_russianDataPointNum += aggregator.GetValidNumber();
+
         auto const summary = aggregator.GetSummary(user, countryName);
         if (!summary.empty())
         {
@@ -516,6 +532,7 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   LOG(LINFO, ("CmdTagsTable stat afterFilters.", afterFilters));
   LOG(LINFO, ("CmdTagsTable stat withoutOnePntTracks.", withoutOnePntTracks));
   LOG(LINFO, ("CmdTagsTable stat statSummeryMayBeEmpty.", statSummeryMayBeEmpty));
+  LOG(LINFO, ("CmdTagsTable stat statValids.", statValids));
   LOG(LINFO, ("CmdTagsTable stat statFromSummery.", statFromSummery));
 }
 }  // namespace track_analyzing
