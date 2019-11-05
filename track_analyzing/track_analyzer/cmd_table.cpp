@@ -391,6 +391,7 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   Stat beforeFilters;
   Stat afterFilters;
   Stat withoutOnePntTracks;
+  Stat statSummeryMayBeEmpty;
   Stat statFromSummery;
   auto processMwm = [&](string const & mwmName, UserToMatchedTracks const & userToMatchedTracks) {
     if (mwmFilter(mwmName))
@@ -483,6 +484,10 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
           info = move(crossroad);
         }
 
+        ++statSummeryMayBeEmpty.m_totalDataPointNum;
+        if (countryName == "Russian Federation")
+          ++statSummeryMayBeEmpty.m_russianDataPointNum;
+
         auto const summary = aggregator.GetSummary(user, countryName);
         if (!summary.empty())
         {
@@ -510,6 +515,7 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   LOG(LINFO, ("CmdTagsTable stat beforeFilters.", beforeFilters));
   LOG(LINFO, ("CmdTagsTable stat afterFilters.", afterFilters));
   LOG(LINFO, ("CmdTagsTable stat withoutOnePntTracks.", withoutOnePntTracks));
+  LOG(LINFO, ("CmdTagsTable stat statSummeryMayBeEmpty.", statSummeryMayBeEmpty));
   LOG(LINFO, ("CmdTagsTable stat statFromSummery.", statFromSummery));
 }
 }  // namespace track_analyzing
