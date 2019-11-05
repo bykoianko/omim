@@ -389,6 +389,8 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
 
   Stat statFromProcessMwm;
   Stat beforeFilters;
+  Stat afterFilters;
+  Stat withoutOnePntTracks;
   Stat statFromSummery;
   auto processMwm = [&](string const & mwmName, UserToMatchedTracks const & userToMatchedTracks) {
     if (mwmFilter(mwmName))
@@ -441,10 +443,18 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
       if (userFilter(user))
         continue;
 
+      afterFilters.m_totalDataPointNum += kv.second.size();
+      if (countryName == "Russian Federation")
+        afterFilters.m_russianDataPointNum += kv.second.size();
+
       for (auto const & track : kv.second)
       {
         if (track.size() <= 1)
           continue;
+
+        ++withoutOnePntTracks.m_totalDataPointNum;
+        if (countryName == "Russian Federation")
+          ++withoutOnePntTracks.m_russianDataPointNum;
 
         MoveTypeAggregator aggregator;
         IsCrossroadChecker::CrossroadInfo info{};
@@ -498,6 +508,8 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   LOG(LINFO, ("CmdTagsTable stat.", stat));
   LOG(LINFO, ("CmdTagsTable stat from processMwm.", statFromProcessMwm));
   LOG(LINFO, ("CmdTagsTable stat beforeFilters.", beforeFilters));
+  LOG(LINFO, ("CmdTagsTable stat afterFilters.", afterFilters));
+  LOG(LINFO, ("CmdTagsTable stat withoutOnePntTracks.", withoutOnePntTracks));
   LOG(LINFO, ("CmdTagsTable stat statFromSummery.", statFromSummery));
 }
 }  // namespace track_analyzing
