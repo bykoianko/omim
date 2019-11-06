@@ -302,6 +302,7 @@ public:
       return;
     }
 
+    ++m_AddingNumber;
     double const length = CalcSubtrackLength(begin, end, geometry);
     m_moveInfos[moveType].Add(length, time, crossroads);
   }
@@ -364,8 +365,11 @@ public:
     return result;
   }
 
+  size_t GetAddingNumber() const { return m_AddingNumber; }
+
 private:
   map<MoveType, SpeedInfo> m_moveInfos;
+  size_t m_AddingNumber = 0;
 };
 
 class MatchedTrackPointToMoveType final
@@ -444,6 +448,7 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   Stat statGoodSpeedGroup;
   Stat statGoodSurfaceType;
   Stat statGoodHwType;
+  Stat statAddingNum;
   Stat statFromSummery;
   auto processMwm = [&](string const & mwmName, UserToMatchedTracks const & userToMatchedTracks) {
     if (mwmFilter(mwmName))
@@ -556,6 +561,10 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
         if (countryName == "Russian Federation")
           statGoodHwType.m_russianDataPointNum += aggregator.GetValidHwTypeNumber();
 
+        statAddingNum.m_totalDataPointNum += aggregator.GetAddingNumber();
+        if (countryName == "Russian Federation")
+          statAddingNum.m_russianDataPointNum += aggregator.GetAddingNumber();
+
         auto const summary = aggregator.GetSummary(user, countryName);
         if (!summary.empty())
         {
@@ -588,6 +597,7 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   LOG(LINFO, ("CmdTagsTable stat statGoodSpeedGroup.", statGoodSpeedGroup));
   LOG(LINFO, ("CmdTagsTable stat statGoodSurfaceType.", statGoodSurfaceType));
   LOG(LINFO, ("CmdTagsTable stat statGoodHwType.", statGoodHwType));
+  LOG(LINFO, ("CmdTagsTable stat statAddingNum.", statAddingNum));
   LOG(LINFO, ("CmdTagsTable stat statFromSummery.", statFromSummery));
 }
 }  // namespace track_analyzing
