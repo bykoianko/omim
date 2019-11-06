@@ -227,6 +227,10 @@ public:
            m_speedGroup == kValidTrafficValue;
   }
 
+  bool HasValidHwType() const { return m_roadInfo.m_type.m_hwType != 0; }
+  bool HasValidSurfaceType() const { return m_roadInfo.m_type.m_surfaceType != 0; }
+  bool HasValidSpeedGroup() const { return m_speedGroup == kValidTrafficValue; }
+
   string GetSummary() const
   {
     ostringstream out;
@@ -327,6 +331,39 @@ public:
     return result;
   }
 
+  size_t GetValidHwTypeNumber() const
+  {
+    size_t result = 0;
+    for (auto const & it : m_moveInfos)
+    {
+      if (it.first.HasValidHwType())
+        ++result;
+    }
+    return result;
+  }
+
+  size_t GetValidSurfaceTypeNumber() const
+  {
+    size_t result = 0;
+    for (auto const & it : m_moveInfos)
+    {
+      if (it.first.HasValidSurfaceType())
+        ++result;
+    }
+    return result;
+  }
+
+  size_t GetValidSpeedGroupNumber() const
+  {
+    size_t result = 0;
+    for (auto const & it : m_moveInfos)
+    {
+      if (it.first.HasValidSpeedGroup())
+        ++result;
+    }
+    return result;
+  }
+
 private:
   map<MoveType, SpeedInfo> m_moveInfos;
 };
@@ -404,6 +441,9 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   Stat withoutOnePntTracks;
   Stat statSummeryMayBeEmpty;
   Stat statValids;
+  Stat statGoodSpeedGroup;
+  Stat statGoodSurfaceType;
+  Stat statGoodHwType;
   Stat statFromSummery;
   auto processMwm = [&](string const & mwmName, UserToMatchedTracks const & userToMatchedTracks) {
     if (mwmFilter(mwmName))
@@ -504,6 +544,18 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
         if (countryName == "Russian Federation")
           statValids.m_russianDataPointNum += aggregator.GetValidNumber();
 
+        statGoodSpeedGroup.m_totalDataPointNum += aggregator.GetValidSpeedGroupNumber();
+        if (countryName == "Russian Federation")
+          statGoodSpeedGroup.m_russianDataPointNum += aggregator.GetValidSpeedGroupNumber();
+
+        statGoodSurfaceType.m_totalDataPointNum += aggregator.GetValidSurfaceTypeNumber();
+        if (countryName == "Russian Federation")
+          statGoodSurfaceType.m_russianDataPointNum += aggregator.GetValidSurfaceTypeNumber();
+
+        statGoodHwType.m_totalDataPointNum += aggregator.GetValidHwTypeNumber();
+        if (countryName == "Russian Federation")
+          statGoodHwType.m_russianDataPointNum += aggregator.GetValidHwTypeNumber();
+
         auto const summary = aggregator.GetSummary(user, countryName);
         if (!summary.empty())
         {
@@ -533,6 +585,9 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   LOG(LINFO, ("CmdTagsTable stat withoutOnePntTracks.", withoutOnePntTracks));
   LOG(LINFO, ("CmdTagsTable stat statSummeryMayBeEmpty.", statSummeryMayBeEmpty));
   LOG(LINFO, ("CmdTagsTable stat statValids.", statValids));
+  LOG(LINFO, ("CmdTagsTable stat statGoodSpeedGroup.", statGoodSpeedGroup));
+  LOG(LINFO, ("CmdTagsTable stat statGoodSurfaceType.", statGoodSurfaceType));
+  LOG(LINFO, ("CmdTagsTable stat statGoodHwType.", statGoodHwType));
   LOG(LINFO, ("CmdTagsTable stat statFromSummery.", statFromSummery));
 }
 }  // namespace track_analyzing
