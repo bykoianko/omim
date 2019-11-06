@@ -303,6 +303,9 @@ public:
     }
 
     ++m_AddingNumber;
+    if (moveType.IsValid())
+      ++m_AddingValidNumber;
+
     double const length = CalcSubtrackLength(begin, end, geometry);
     m_moveInfos[moveType].Add(length, time, crossroads);
   }
@@ -366,10 +369,12 @@ public:
   }
 
   size_t GetAddingNumber() const { return m_AddingNumber; }
+  size_t GetAddingValidNumber() const { return m_AddingValidNumber; }
 
 private:
   map<MoveType, SpeedInfo> m_moveInfos;
   size_t m_AddingNumber = 0;
+  size_t m_AddingValidNumber = 0;
 };
 
 class MatchedTrackPointToMoveType final
@@ -449,6 +454,7 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   Stat statGoodSurfaceType;
   Stat statGoodHwType;
   Stat statAddingNum;
+  Stat statAddingValidNum;
   Stat statFromSummery;
   auto processMwm = [&](string const & mwmName, UserToMatchedTracks const & userToMatchedTracks) {
     if (mwmFilter(mwmName))
@@ -565,6 +571,10 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
         if (countryName == "Russian Federation")
           statAddingNum.m_russianDataPointNum += aggregator.GetAddingNumber();
 
+        statAddingValidNum.m_totalDataPointNum += aggregator.GetAddingValidNumber();
+        if (countryName == "Russian Federation")
+          statAddingValidNum.m_russianDataPointNum += aggregator.GetAddingValidNumber();
+
         auto const summary = aggregator.GetSummary(user, countryName);
         if (!summary.empty())
         {
@@ -598,6 +608,7 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   LOG(LINFO, ("CmdTagsTable stat statGoodSurfaceType.", statGoodSurfaceType));
   LOG(LINFO, ("CmdTagsTable stat statGoodHwType.", statGoodHwType));
   LOG(LINFO, ("CmdTagsTable stat statAddingNum.", statAddingNum));
+  LOG(LINFO, ("CmdTagsTable stat statAddingValidNum.", statAddingValidNum));
   LOG(LINFO, ("CmdTagsTable stat statFromSummery.", statFromSummery));
 }
 }  // namespace track_analyzing
