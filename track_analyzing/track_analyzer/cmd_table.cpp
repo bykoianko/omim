@@ -466,7 +466,7 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
     {
       AddNumbers(userToMatchedTracks, statFromProcessMwm.m_totalUserNum, statFromProcessMwm
           .m_totalDataPointNum);
-      if (countryName == "Russian Federation")
+      if (countryName == "Germany")
       {
         AddNumbers(userToMatchedTracks, statFromProcessMwm.m_russianUserNum, statFromProcessMwm
             .m_russianDataPointNum);
@@ -500,7 +500,7 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
     for (auto const & kv : userToMatchedTracks)
     {
       beforeFilters.m_totalDataPointNum += kv.second.size();
-      if (countryName == "Russian Federation")
+      if (countryName == "Germany")
         beforeFilters.m_russianDataPointNum += kv.second.size();
 
       string const & user = kv.first;
@@ -508,7 +508,7 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
         continue;
 
       afterFilters.m_totalDataPointNum += kv.second.size();
-      if (countryName == "Russian Federation")
+      if (countryName == "Germany")
         afterFilters.m_russianDataPointNum += kv.second.size();
 
       for (auto const & track : kv.second)
@@ -517,7 +517,7 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
           continue;
 
         ++withoutOnePntTracks.m_totalDataPointNum;
-        if (countryName == "Russian Federation")
+        if (countryName == "Germany")
           ++withoutOnePntTracks.m_russianDataPointNum;
 
         MoveTypeAggregator aggregator;
@@ -548,38 +548,38 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
         }
 
         ++statSummeryMayBeEmpty.m_totalDataPointNum;
-        if (countryName == "Russian Federation")
+        if (countryName == "Germany")
           ++statSummeryMayBeEmpty.m_russianDataPointNum;
 
         statValids.m_totalDataPointNum += aggregator.GetValidNumber();
-        if (countryName == "Russian Federation")
+        if (countryName == "Germany")
           statValids.m_russianDataPointNum += aggregator.GetValidNumber();
 
         statGoodSpeedGroup.m_totalDataPointNum += aggregator.GetValidSpeedGroupNumber();
-        if (countryName == "Russian Federation")
+        if (countryName == "Germany")
           statGoodSpeedGroup.m_russianDataPointNum += aggregator.GetValidSpeedGroupNumber();
 
         statGoodSurfaceType.m_totalDataPointNum += aggregator.GetValidSurfaceTypeNumber();
-        if (countryName == "Russian Federation")
+        if (countryName == "Germany")
           statGoodSurfaceType.m_russianDataPointNum += aggregator.GetValidSurfaceTypeNumber();
 
         statGoodHwType.m_totalDataPointNum += aggregator.GetValidHwTypeNumber();
-        if (countryName == "Russian Federation")
+        if (countryName == "Germany")
           statGoodHwType.m_russianDataPointNum += aggregator.GetValidHwTypeNumber();
 
         statAddingNum.m_totalDataPointNum += aggregator.GetAddingNumber();
-        if (countryName == "Russian Federation")
+        if (countryName == "Germany")
           statAddingNum.m_russianDataPointNum += aggregator.GetAddingNumber();
 
         statAddingValidNum.m_totalDataPointNum += aggregator.GetAddingValidNumber();
-        if (countryName == "Russian Federation")
+        if (countryName == "Germany")
           statAddingValidNum.m_russianDataPointNum += aggregator.GetAddingValidNumber();
 
         auto const summary = aggregator.GetSummary(user, countryName);
         if (!summary.empty())
         {
           ++statFromSummery.m_totalDataPointNum;
-          if (countryName == "Russian Federation")
+          if (countryName == "Germany")
             ++statFromSummery.m_russianDataPointNum;
 
           cout << summary;

@@ -53,7 +53,7 @@ void AddStat(Cont const & c, routing::NumMwmIds const & numMwmIds, storage::Stor
       continue; // Disputed territory.
 
     AddNumbers(kv.second, stat.m_totalUserNum, stat.m_totalDataPointNum);
-    if (countryId == "Russian Federation")
+    if (countryId == "Germany")
       AddNumbers(kv.second, stat.m_russianUserNum, stat.m_russianDataPointNum);
   }
 }
