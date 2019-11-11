@@ -25,13 +25,13 @@ void PrintMap(std::string const & name, std::map<std::string, uint32_t> const & 
   ss << name << '\n';
   if (allValues == 0)
   {
-    ss << "map is emplty." << std::endl;
+    ss << "map is empty." << std::endl;
     return;
   }
 
 
   for (auto const & kv : mapping)
-    ss << kv.first << ":" << kv.second << ", " << static_cast<double>(kv.second) / allValues << "%" << "\n";
+    ss << kv.first << ":" << kv.second << ", " << 100.0 * static_cast<double>(kv.second) / allValues << "%" << "\n";
   ss << "\n\n" << std::endl;
 }
 }
