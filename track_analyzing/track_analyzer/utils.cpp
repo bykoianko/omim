@@ -18,9 +18,20 @@ namespace
 void PrintMap(std::string const & name, std::map<std::string, uint32_t> const & mapping,
               std::ostringstream & ss)
 {
-  ss << name << '\n';
+  uint32_t allValues = 0;
   for (auto const & kv : mapping)
-    ss << kv.first << ":" << kv.second << "\n";
+    allValues += kv.second;
+
+  ss << name << '\n';
+  if (allValues == 0)
+  {
+    ss << "map is emplty." << std::endl;
+    return;
+  }
+
+
+  for (auto const & kv : mapping)
+    ss << kv.first << ":" << kv.second << ", " << static_cast<double>(kv.second) / allValues << "%" << "\n";
   ss << "\n\n" << std::endl;
 }
 }
