@@ -45,8 +45,8 @@ void MatchTracks(MwmToTracks const & mwmToTracks, storage::Storage const & stora
   uint64_t nonMatchedPointsCount = 0;
 
   auto processMwm = [&](string const & mwmName, UserToTrack const & userToTrack) {
-    if (storage.GetTopmostParentFor(mwmName) != "Germany")
-      return;
+//    if (storage.GetTopmostParentFor(mwmName) != "Germany")
+//      return;
 
     auto const countryFile = platform::CountryFile(mwmName);
     auto const mwmId = numMwmIds.GetId(countryFile);
