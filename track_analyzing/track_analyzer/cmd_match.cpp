@@ -216,14 +216,19 @@ void CmdMatchDir(string const & logDir, string const & trackExt)
   for (auto & t : threads)
     t.join();
 
+  LOG(LINFO, ("========================================="));
+  LOG(LINFO, ("CmdMatchDir:"));
   Stat statSum;
   for (auto const & s : stats)
     statSum += s;
-  LOG(LINFO, ("CmdMatchDir stat.", statSum));
+  LOG(LINFO, (statSum));
+  LOG(LINFO, ("========================================="));
 
+  LOG(LINFO, ("CmdMatchDir matched stat."));
   Stat matchedStatSum;
   for (auto const & s : matchedStats)
     matchedStatSum += s;
-  LOG(LINFO, ("CmdMatchDir matched stat.", matchedStatSum));
+  LOG(LINFO, (matchedStatSum));
+  LOG(LINFO, ("========================================="));
 }
 }  // namespace track_analyzing
