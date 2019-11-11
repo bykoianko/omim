@@ -38,8 +38,15 @@ inline void Add(std::map<C, uint32_t> const & mwmToNumber1,
 
   for (auto const & c : userKeys)
   {
-    CHECK(mwmToNumber1.count(c) == 0 && mwmToNumber1.at(c) == 0, ());
-    CHECK(mwmToNumber2.count(c) == 0 && mwmToNumber2.at(c) == 0, ());
+    if (mwmToNumber1.count(c) == 0)
+      continue;
+
+    if (mwmToNumber2.count(c) == 0)
+    {
+      mwmToNumber2[c] = mwmToNumber1.at(c);
+      continue;
+    }
+
     mwmToNumber2[c] += mwmToNumber1.at(c);
   }
 }
