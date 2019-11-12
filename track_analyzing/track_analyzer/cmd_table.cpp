@@ -456,11 +456,17 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   Stat statAddingNum;
   Stat statAddingValidNum;
   Stat statFromSummery;
+
   auto processMwm = [&](string const & mwmName, UserToMatchedTracks const & userToMatchedTracks) {
     if (mwmFilter(mwmName))
       return;
 
     auto const countryName = storage.GetTopmostParentFor(mwmName);
+
+    if (statFromSummery.m_mwmToTotalDataPoints.count(mwmName) == 0)
+      statFromSummery.m_mwmToTotalDataPoints[mwmName] = 0;
+    if (statFromSummery.m_countryToTotalDataPoints.count(countryName) == 0)
+      statFromSummery.m_countryToTotalDataPoints[countryName] = 0;
 
     if (!countryName.empty())
     {
@@ -581,6 +587,10 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
           ++statFromSummery.m_totalDataPointNum;
           if (countryName == "Germany")
             ++statFromSummery.m_russianDataPointNum;
+
+          statFromSummery.m_mwmToTotalDataPoints[mwmName] += 1;
+          statFromSummery.m_countryToTotalDataPoints[countryName] += 1;
+
 
           cout << summary;
         }

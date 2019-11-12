@@ -58,10 +58,10 @@ struct Stat
   uint32_t m_totalDataPointNum = 0;
   uint32_t m_russianDataPointNum = 0;
 
-  std::map<storage::CountryId, uint32_t> m_mwmToTotalUser;
-  std::map<storage::CountryId, uint32_t> m_mwmToTotalDataPointNum;
-  std::map<std::string, uint32_t> m_countryToTotalUser;
-  std::map<std::string, uint32_t> m_countryToTotalDataPointNum;
+  std::map<storage::CountryId, uint32_t> m_mwmToTotalUsers;
+  std::map<storage::CountryId, uint32_t> m_mwmToTotalDataPoints;
+  std::map<std::string, uint32_t> m_countryToTotalUsers;
+  std::map<std::string, uint32_t> m_countryToTotalDataPoints;
 
   Stat & operator+=(Stat const & stat)
   {
@@ -70,10 +70,10 @@ struct Stat
     m_totalDataPointNum += stat.m_totalDataPointNum;
     m_russianDataPointNum += stat.m_russianDataPointNum;
 
-    Add(stat.m_mwmToTotalUser, m_mwmToTotalUser);
-    Add(stat.m_mwmToTotalDataPointNum, m_mwmToTotalDataPointNum);
-    Add(stat.m_countryToTotalUser, m_countryToTotalUser);
-    Add(stat.m_countryToTotalDataPointNum, m_countryToTotalDataPointNum);
+    Add(stat.m_mwmToTotalUsers, m_mwmToTotalUsers);
+    Add(stat.m_mwmToTotalDataPoints, m_mwmToTotalDataPoints);
+    Add(stat.m_countryToTotalUsers, m_countryToTotalUsers);
+    Add(stat.m_countryToTotalDataPoints, m_countryToTotalDataPoints);
 
     return *this;
   }
@@ -99,10 +99,10 @@ void AddStat(Cont const & c, routing::NumMwmIds const & numMwmIds, storage::Stor
     uint32_t dataPointNum = 0;
     AddNumbers(kv.second, userNum, dataPointNum);
 
-    stat.m_mwmToTotalUser[mwmName] += userNum;
-    stat.m_mwmToTotalDataPointNum[mwmName] += dataPointNum;
-    stat.m_countryToTotalUser[countryName] += userNum;
-    stat.m_countryToTotalDataPointNum[countryName] += dataPointNum;
+    stat.m_mwmToTotalUsers[mwmName] += userNum;
+    stat.m_mwmToTotalDataPoints[mwmName] += dataPointNum;
+    stat.m_countryToTotalUsers[countryName] += userNum;
+    stat.m_countryToTotalDataPoints[countryName] += dataPointNum;
 
     if (countryName.empty())
       continue; // Disputed territory.

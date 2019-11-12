@@ -15,26 +15,39 @@
 
 namespace
 {
-void PrintMap(std::string const & name, std::map<std::string, uint32_t> const & mapping,
-              std::ostringstream & ss)
+struct KeyValue
 {
-  uint32_t allValues = 0;
-  for (auto const & kv : mapping)
-    allValues += kv.second;
+  std::string m_key;
+  uint32_t m_value = 0;
+};
 
-  ss << name << '\n';
+void PrintMap(std::string const & name, std::string const & descr,
+              std::map<std::string, uint32_t> const & mapping, std::ostringstream & ss)
+{
+  std::vector<KeyValue> keyValues(mapping.size());
+  for (auto const & kv : mapping)
+    keyValues.push_back({kv.first, kv.second});
+
+  std::sort(keyValues.begin(), keyValues.end(),
+            [](KeyValue const & a, KeyValue const & b) { return a.m_value < b.m_value; });
+
+  uint32_t allValues = 0;
+  for (auto const & kv : keyValues)
+    allValues += kv.m_value;
+
+  ss << descr << '\n';
   if (allValues == 0)
   {
     ss << "map is empty." << std::endl;
     return;
   }
 
-
-  for (auto const & kv : mapping)
-    ss << kv.first << ":" << kv.second << ", " << 100.0 * static_cast<double>(kv.second) / allValues << "%" << "\n";
-  ss << "\n\n" << std::endl;
+  ss << name << ",number,percent";
+  for (auto const & kv : keyValues)
+    ss << kv.m_key << "," << kv.m_value << "," << 100.0 * static_cast<double>(kv.m_value) / allValues << "\n";
+  ss << "\n" << std::endl;
 }
-}
+}  // namespace
 
 namespace track_analyzing
 {
@@ -64,10 +77,10 @@ string DebugPrint(Stat const & s)
      << ", m_totalDataPointNum == " << s.m_totalDataPointNum
      << ", m_russianDataPointNum == " << s.m_russianDataPointNum << " ]" << "\n\n";
 
-  PrintMap("Mwm to total users number:", s.m_mwmToTotalUser, ss);
-  PrintMap("Mwm to total data points number:", s.m_mwmToTotalDataPointNum, ss);
-  PrintMap("Country name to total users number:", s.m_countryToTotalUser, ss);
-  PrintMap("Country name to data points number:", s.m_countryToTotalDataPointNum, ss);
+  PrintMap("mwm", "Mwm to total users number:", s.m_mwmToTotalUsers, ss);
+  PrintMap("mwm", "Mwm to total data points number:", s.m_mwmToTotalDataPoints, ss);
+  PrintMap("country", "Country name to total users number:", s.m_countryToTotalUsers, ss);
+  PrintMap("country", "Country name to data points number:", s.m_countryToTotalDataPoints, ss);
 
   return ss.str();
 }
