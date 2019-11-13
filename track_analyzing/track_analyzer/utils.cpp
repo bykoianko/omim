@@ -30,7 +30,7 @@ void PrintMap(std::string const & name, std::string const & descr,
     keyValues.push_back({kv.first, kv.second});
 
   std::sort(keyValues.begin(), keyValues.end(),
-            [](KeyValue const & a, KeyValue const & b) { return a.m_value < b.m_value; });
+            [](KeyValue const & a, KeyValue const & b) { return a.m_value > b.m_value; });
 
   uint32_t allValues = 0;
   for (auto const & kv : keyValues)
