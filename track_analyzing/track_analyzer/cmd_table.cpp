@@ -444,17 +444,6 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   FrozenDataSource dataSource;
   auto numMwmIds = CreateNumMwmIds(storage);
 
-  Stat statFromProcessMwm;
-  Stat beforeFilters;
-  Stat afterFilters;
-  Stat withoutOnePntTracks;
-  Stat statSummeryMayBeEmpty;
-  Stat statValids;
-  Stat statGoodSpeedGroup;
-  Stat statGoodSurfaceType;
-  Stat statGoodHwType;
-  Stat statAddingNum;
-  Stat statAddingValidNum;
   Stat statFromSummery;
 
   auto processMwm = [&](string const & mwmName, UserToMatchedTracks const & userToMatchedTracks) {
@@ -467,17 +456,6 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
       statFromSummery.m_mwmToTotalDataPoints[mwmName] = 0;
     if (statFromSummery.m_countryToTotalDataPoints.count(countryName) == 0)
       statFromSummery.m_countryToTotalDataPoints[countryName] = 0;
-
-    if (!countryName.empty())
-    {
-      AddNumbers(userToMatchedTracks, statFromProcessMwm.m_totalUserNum, statFromProcessMwm
-          .m_totalDataPointNum);
-      if (countryName == "Germany")
-      {
-        AddNumbers(userToMatchedTracks, statFromProcessMwm.m_russianUserNum, statFromProcessMwm
-            .m_russianDataPointNum);
-      }
-    }
 
     auto const carModelFactory = make_shared<CarModelFactory>(VehicleModelFactory::CountryParentNameGetterFn{});
     shared_ptr<VehicleModelInterface> vehicleModel =
@@ -505,26 +483,14 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
 
     for (auto const & kv : userToMatchedTracks)
     {
-      beforeFilters.m_totalDataPointNum += kv.second.size();
-      if (countryName == "Germany")
-        beforeFilters.m_russianDataPointNum += kv.second.size();
-
       string const & user = kv.first;
       if (userFilter(user))
         continue;
-
-      afterFilters.m_totalDataPointNum += kv.second.size();
-      if (countryName == "Germany")
-        afterFilters.m_russianDataPointNum += kv.second.size();
 
       for (auto const & track : kv.second)
       {
         if (track.size() <= 1)
           continue;
-
-        ++withoutOnePntTracks.m_totalDataPointNum;
-        if (countryName == "Germany")
-          ++withoutOnePntTracks.m_russianDataPointNum;
 
         MoveTypeAggregator aggregator;
         IsCrossroadChecker::CrossroadInfo info{};
@@ -553,34 +519,6 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
           info = move(crossroad);
         }
 
-        ++statSummeryMayBeEmpty.m_totalDataPointNum;
-        if (countryName == "Germany")
-          ++statSummeryMayBeEmpty.m_russianDataPointNum;
-
-        statValids.m_totalDataPointNum += aggregator.GetValidNumber();
-        if (countryName == "Germany")
-          statValids.m_russianDataPointNum += aggregator.GetValidNumber();
-
-        statGoodSpeedGroup.m_totalDataPointNum += aggregator.GetValidSpeedGroupNumber();
-        if (countryName == "Germany")
-          statGoodSpeedGroup.m_russianDataPointNum += aggregator.GetValidSpeedGroupNumber();
-
-        statGoodSurfaceType.m_totalDataPointNum += aggregator.GetValidSurfaceTypeNumber();
-        if (countryName == "Germany")
-          statGoodSurfaceType.m_russianDataPointNum += aggregator.GetValidSurfaceTypeNumber();
-
-        statGoodHwType.m_totalDataPointNum += aggregator.GetValidHwTypeNumber();
-        if (countryName == "Germany")
-          statGoodHwType.m_russianDataPointNum += aggregator.GetValidHwTypeNumber();
-
-        statAddingNum.m_totalDataPointNum += aggregator.GetAddingNumber();
-        if (countryName == "Germany")
-          statAddingNum.m_russianDataPointNum += aggregator.GetAddingNumber();
-
-        statAddingValidNum.m_totalDataPointNum += aggregator.GetAddingValidNumber();
-        if (countryName == "Germany")
-          statAddingValidNum.m_russianDataPointNum += aggregator.GetAddingValidNumber();
-
         auto const summary = aggregator.GetSummary(user, countryName);
         if (!summary.empty())
         {
@@ -606,19 +544,6 @@ void CmdTagsTable(string const & filepath, string const & trackExtension, String
   };
 
   ForEachTrackFile(filepath, trackExtension, numMwmIds, processTrack);
-
-  LOG(LINFO, ("CmdTagsTable stat.", stat));
-  LOG(LINFO, ("CmdTagsTable stat from processMwm.", statFromProcessMwm));
-  LOG(LINFO, ("CmdTagsTable stat beforeFilters.", beforeFilters));
-  LOG(LINFO, ("CmdTagsTable stat afterFilters.", afterFilters));
-  LOG(LINFO, ("CmdTagsTable stat withoutOnePntTracks.", withoutOnePntTracks));
-  LOG(LINFO, ("CmdTagsTable stat statSummeryMayBeEmpty.", statSummeryMayBeEmpty));
-  LOG(LINFO, ("CmdTagsTable stat statValids.", statValids));
-  LOG(LINFO, ("CmdTagsTable stat statGoodSpeedGroup.", statGoodSpeedGroup));
-  LOG(LINFO, ("CmdTagsTable stat statGoodSurfaceType.", statGoodSurfaceType));
-  LOG(LINFO, ("CmdTagsTable stat statGoodHwType.", statGoodHwType));
-  LOG(LINFO, ("CmdTagsTable stat statAddingNum.", statAddingNum));
-  LOG(LINFO, ("CmdTagsTable stat statAddingValidNum.", statAddingValidNum));
   LOG(LINFO, ("CmdTagsTable stat statFromSummery.", statFromSummery));
 }
 }  // namespace track_analyzing

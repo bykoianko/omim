@@ -24,7 +24,8 @@ struct KeyValue
 void PrintMap(std::string const & name, std::string const & descr,
               std::map<std::string, uint32_t> const & mapping, std::ostringstream & ss)
 {
-  std::vector<KeyValue> keyValues(mapping.size());
+  std::vector<KeyValue> keyValues;
+  keyValues.reserve(mapping.size());
   for (auto const & kv : mapping)
     keyValues.push_back({kv.first, kv.second});
 
@@ -44,7 +45,13 @@ void PrintMap(std::string const & name, std::string const & descr,
 
   ss << name << ",number,percent";
   for (auto const & kv : keyValues)
-    ss << kv.m_key << "," << kv.m_value << "," << 100.0 * static_cast<double>(kv.m_value) / allValues << "\n";
+  {
+    if (kv.m_value == 0)
+      continue;
+
+    ss << kv.m_key << "," << kv.m_value << ","
+       << 100.0 * static_cast<double>(kv.m_value) / allValues << "\n";
+  }
   ss << "\n" << std::endl;
 }
 }  // namespace
