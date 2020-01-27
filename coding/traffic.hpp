@@ -196,7 +196,7 @@ private:
   template <typename Source, typename Collection>
   static void DeserializeDataPointsV1(Source & src, Collection & result)
   {
-    LOG(LINFO, ("DeserializeDataPointsV1(...) src.Size()", src.Size()));
+    LOG(LINFO, ("DeserializeDataPointsV1(...) src.Size():", src.Size()));
     bool first = true;
     uint64_t lastTimestamp = 0;
     double lastLat = 0.0;
@@ -208,22 +208,30 @@ private:
       if (first)
       {
         lastTimestamp = ReadVarUint<uint64_t>(src);
+        LOG(LINFO, ("DeserializeDataPointsV1(...) First lastTimestamp:", lastTimestamp));
         lastLat = Uint32ToDouble(ReadVarUint<uint32_t>(src), ms::LatLon::kMinLat,
                                  ms::LatLon::kMaxLat, kCoordBits);
+        LOG(LINFO, ("DeserializeDataPointsV1(...) First lastLat:", lastLat));
         lastLon = Uint32ToDouble(ReadVarUint<uint32_t>(src), ms::LatLon::kMinLon,
                                  ms::LatLon::kMaxLon, kCoordBits);
+        LOG(LINFO, ("DeserializeDataPointsV1(...) First lastLon:", lastLon));
         traffic = base::asserted_cast<uint8_t>(ReadVarUint<uint32_t>(src));
+        LOG(LINFO, ("DeserializeDataPointsV1(...) First traffic:", traffic));
         result.emplace_back(lastTimestamp, ms::LatLon(lastLat, lastLon), traffic);
         first = false;
       }
       else
       {
         lastTimestamp += ReadVarUint<uint64_t>(src);
+        LOG(LINFO, ("DeserializeDataPointsV1(...) lastTimestamp:", lastTimestamp));
         lastLat +=
             Uint32ToDouble(ReadVarUint<uint32_t>(src), kMinDeltaLat, kMaxDeltaLat, kCoordBits);
+        LOG(LINFO, ("DeserializeDataPointsV1(...) lastLat:", lastLat));
         lastLon +=
             Uint32ToDouble(ReadVarUint<uint32_t>(src), kMinDeltaLon, kMaxDeltaLon, kCoordBits);
+        LOG(LINFO, ("DeserializeDataPointsV1(...) lastLon:", lastLon));
         traffic = base::asserted_cast<uint8_t>(ReadVarUint<uint32_t>(src));
+        LOG(LINFO, ("DeserializeDataPointsV1(...) traffic:", traffic));
         result.emplace_back(lastTimestamp, ms::LatLon(lastLat, lastLon), traffic);
       }
     }
