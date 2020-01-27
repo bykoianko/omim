@@ -8,6 +8,7 @@
 #include "geometry/latlon.hpp"
 
 #include "base/checked_cast.hpp"
+#include "base/logging.hpp"
 
 #include <limits>
 #include <string>
@@ -161,6 +162,7 @@ private:
   template <typename Source, typename Collection>
   static void DeserializeDataPointsV0(Source & src, Collection & result)
   {
+    LOG(LINFO, ("DeserializeDataPointsV0(...) src.Size()", src.Size()));
     bool first = true;
     uint64_t lastTimestamp = 0;
     double lastLat = 0.0;
@@ -194,6 +196,7 @@ private:
   template <typename Source, typename Collection>
   static void DeserializeDataPointsV1(Source & src, Collection & result)
   {
+    LOG(LINFO, ("DeserializeDataPointsV1(...) src.Size()", src.Size()));
     bool first = true;
     uint64_t lastTimestamp = 0;
     double lastLat = 0.0;
