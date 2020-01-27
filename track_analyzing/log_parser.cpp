@@ -87,19 +87,23 @@ LogParser::LogParser(shared_ptr<routing::NumMwmIds> numMwmIds,
 
 void LogParser::Parse(string const & logFile, MwmToTracks & mwmToTracks) const
 {
+  LOG(LINFO, ("LogParser::Parse(", logFile, "...)"));
   UserToTrack userToTrack;
   ParseUserTracks(logFile, userToTrack);
   SplitIntoMwms(userToTrack, mwmToTracks);
+  LOG(LINFO, ("LogParser::Parse(...) end"));
 }
 
 void LogParser::ParseUserTracks(string const & logFile, UserToTrack & userToTrack) const
 {
+  LOG(LINFO, ("LogParser::ParseUserTracks(...)"));
   base::Timer timer;
 
   std::ifstream stream(logFile);
   if (!stream)
     MYTHROW(MessageException, ("Can't open file", logFile, "to parse tracks"));
 
+  LOG(LINFO, ("LogParser::ParseUserTracks(...) 1"));
   std::regex const base_regex(R"(.*(DataV0|CurrentData)\s+aloha_id\s*:\s*(\S+)\s+.*\|(\w+)\|)");
   std::unordered_set<string> usersWithOldVersion;
   uint64_t linesCount = 0;
