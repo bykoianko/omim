@@ -111,6 +111,7 @@ void LogParser::ParseUserTracks(string const & logFile, UserToTrack & userToTrac
 
   for (string line; getline(stream, line); ++linesCount)
   {
+    LOG(LINFO, (line));
     std::smatch base_match;
     if (!std::regex_match(line, base_match, base_regex))
       continue;
