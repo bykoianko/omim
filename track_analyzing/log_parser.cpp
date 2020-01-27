@@ -27,9 +27,10 @@ vector<DataPoint> ReadDataPoints(string const & data)
 {
   LOG(LINFO, ("ReadDataPoints(...)"));
   string const decoded = FromHex(data);
-  LOG(LINFO, ("ReadDataPoints(...) 1"));
+  LOG(LINFO, ("ReadDataPoints(...) 1, decoded.size()", decoded.size()));
   vector<DataPoint> points;
   MemReader memReader(decoded.data(), decoded.size());
+//  MemReaderWithExceptions memReader(decoded.data(), decoded.size());
   ReaderSource<MemReader> src(memReader);
   coding::TrafficGPSEncoder::DeserializeDataPoints(1 /* version */, src, points);
   LOG(LINFO, ("ReadDataPoints(...) end"));
