@@ -25,11 +25,13 @@ namespace
 {
 vector<DataPoint> ReadDataPoints(string const & data)
 {
+  LOG(LINFO, ("ReadDataPoints(...)"));
   string const decoded = FromHex(data);
   vector<DataPoint> points;
   MemReader memReader(decoded.data(), decoded.size());
   ReaderSource<MemReader> src(memReader);
   coding::TrafficGPSEncoder::DeserializeDataPoints(1 /* version */, src, points);
+  LOG(LINFO, ("ReadDataPoints(...) end"));
   return points;
 }
 
@@ -121,6 +123,7 @@ void LogParser::ParseUserTracks(string const & logFile, UserToTrack & userToTrac
     string const version = base_match[1].str();
     string const userId = base_match[2].str();
     string const data = base_match[3].str();
+    LOG(LINFO, (version, userId));
     if (version != "CurrentData")
     {
       CHECK_EQUAL(version, "DataV0", ());
