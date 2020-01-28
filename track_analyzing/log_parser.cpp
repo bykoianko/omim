@@ -30,9 +30,9 @@ vector<DataPoint> ReadDataPoints(string const & data)
   LOG(LINFO, ("ReadDataPoints(...) 1, decoded.size()", decoded.size()));
   LOG(LINFO, ("ReadDataPoints(...) decoded:", decoded));
   vector<DataPoint> points;
-  MemReader memReader(decoded.data(), decoded.size());
-//  MemReaderWithExceptions memReader(decoded.data(), decoded.size());
-  ReaderSource<MemReader> src(memReader);
+//  MemReader memReader(decoded.data(), decoded.size());
+  MemReaderWithExceptions memReader(decoded.data(), decoded.size());
+  ReaderSource<MemReaderWithExceptions> src(memReader);
   coding::TrafficGPSEncoder::DeserializeDataPoints(1 /* version */, src, points);
   LOG(LINFO, ("ReadDataPoints(...) end"));
   return points;
