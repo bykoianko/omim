@@ -7,6 +7,7 @@
 
 #include "geometry/latlon.hpp"
 
+#include "base/assert.hpp"
 #include "base/checked_cast.hpp"
 #include "base/logging.hpp"
 
@@ -224,13 +225,19 @@ private:
       {
         LOG(LINFO, ("DeserializeDataPointsV1(...): src.Size()", src.Size()));
         lastTimestamp += ReadVarUint<uint64_t>(src);
+        LOG(LINFO, ("DeserializeDataPointsV1(...) lastTimestamp:", lastTimestamp));
         lastLat +=
             Uint32ToDouble(ReadVarUint<uint32_t>(src), kMinDeltaLat, kMaxDeltaLat, kCoordBits);
+        LOG(LINFO, ("DeserializeDataPointsV1(...) lastLat:", lastLat));
         lastLon +=
             Uint32ToDouble(ReadVarUint<uint32_t>(src), kMinDeltaLon, kMaxDeltaLon, kCoordBits);
+        LOG(LINFO, ("DeserializeDataPointsV1(...) lastLon:", lastLon));
         traffic = base::asserted_cast<uint8_t>(ReadVarUint<uint32_t>(src));
+        LOG(LINFO, ("DeserializeDataPointsV1(...) traffic:", traffic));
         result.emplace_back(lastTimestamp, ms::LatLon(lastLat, lastLon), traffic);
       }
+
+      CHECK_LESS(src.Size(), std::numeric_limits<uint64_t>::max() - 10000, ());
     }
   }
 };

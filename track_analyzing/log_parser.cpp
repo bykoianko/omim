@@ -28,6 +28,7 @@ vector<DataPoint> ReadDataPoints(string const & data)
   LOG(LINFO, ("ReadDataPoints(...)"));
   string const decoded = FromHex(data);
   LOG(LINFO, ("ReadDataPoints(...) 1, decoded.size()", decoded.size()));
+  LOG(LINFO, ("ReadDataPoints(...) decoded:", decoded));
   vector<DataPoint> points;
   MemReader memReader(decoded.data(), decoded.size());
 //  MemReaderWithExceptions memReader(decoded.data(), decoded.size());

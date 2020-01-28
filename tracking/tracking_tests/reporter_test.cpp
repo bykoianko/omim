@@ -77,6 +77,21 @@ void TransferLocation(Reporter & reporter, TestSocket & testSocket, double times
 }
 }
 
+UNIT_TEST(DeserializeDataPointsReadableBuffer)
+{
+  string const bufStr =
+      "dbf1eeeb059097d2ff018cc9b4900107018080808002808080800207018080808002808080800207018080808002"
+      "80808080020702808080800280808080020701808080800280808080020701808080800280808080020701808080"
+      "800280808080020701808080800280808080020702808080800280808080020701c4f2ffff01f3fcffff0107";
+  vector<uint8_t> const buffer(bufStr.cbegin(), bufStr.cend());
+  vector<coding::TrafficGPSEncoder::DataPoint> points;
+  MemReader memReader(buffer.data(), buffer.size());
+  ReaderSource<MemReader> src(memReader);
+
+  coding::TrafficGPSEncoder::DeserializeDataPoints(coding::TrafficGPSEncoder::kLatestVersion, src,
+                                                   points);
+}
+
 UNIT_TEST(Reporter_Smoke)
 {
   {
