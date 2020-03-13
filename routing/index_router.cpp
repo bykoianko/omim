@@ -544,6 +544,11 @@ RouterResultCode IndexRouter::DoCalculateRoute(Checkpoints const & checkpoints,
   LOG(LINFO, ("Route length:", route.GetTotalDistanceMeters(), "meters. ETA:",
       route.GetTotalTimeSec(), "seconds."));
 
+  double weight = 0;
+  for (auto const & s : segments)
+    weight += starter->CalcSegmentWeight(s, EdgeEstimator::Purpose::Weight).GetWeight();
+  LOG(LINFO, ("Route weight:", weight, "seconds."));
+
   m_lastRoute = make_unique<SegmentedRoute>(checkpoints.GetStart(), checkpoints.GetFinish(),
                                             route.GetSubroutes());
   for (Segment const & segment : segments)
