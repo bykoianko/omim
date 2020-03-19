@@ -52,9 +52,12 @@
 #include <algorithm>
 #include <cstdlib>
 #include <deque>
+#include <fstream>
 #include <iterator>
 #include <limits>
 #include <map>
+
+#include <boost/format.hpp>
 
 #include "defines.hpp"
 
@@ -74,6 +77,78 @@ double constexpr kAlmostZeroContribution = 1e-7;
 double constexpr kAdjustRangeM = 5000.0;
 // Full rebuild if distance(meters) is less.
 double constexpr kMinDistanceToFinishM = 10000;
+
+using namespace std;
+
+char const * kKmlHead =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+    "<kml xmlns=\"http://earth.google.com/kml/2.2\">\n"
+    "<Document>\n"
+    "<name>%1%</name>\n"
+    "<description><![CDATA[MapDescription]]></description>\n"
+    "<visibility>1</visibility>\n"
+    "<Style id=\"placemark-blue\">\n"
+    "<IconStyle>\n"
+    "<Icon>\n"
+    "<href>http://www.mapswithme.com/placemarks/placemark-green.png</href>\n"
+    "</Icon>\n"
+    "</IconStyle>\n"
+    "</Style>\n";
+
+char const * kPlacemarkTemplate =
+    "<Placemark>\n"
+    "<name>%1%</name>\n"
+    "<description><![CDATA[%4%]]></description>\n"
+    "<styleUrl>#placemark-blue</styleUrl>\n"
+    "<Point>\n"
+    "<coordinates>%2%,%3%,0.000000</coordinates>\n"
+    "</Point>\n"
+    "</Placemark>\n";
+
+char const * kKmlFoot =
+    "</Document>\n"
+    "</kml>\n";
+
+void Encode(string & data)
+{
+  std::string buffer;
+  buffer.reserve(data.size());
+  for (size_t pos = 0; pos != data.size(); ++pos)
+  {
+    switch (data[pos])
+    {
+    case '&': buffer.append("&amp;"); break;
+    case '\"': buffer.append("&quot;"); break;
+    case '\'': buffer.append("&apos;"); break;
+    case '<': buffer.append("&lt;"); break;
+    case '>': buffer.append("&gt;"); break;
+    default: buffer.append(&data[pos], 1); break;
+    }
+  }
+  data.swap(buffer);
+}
+
+void SaveRoteInKml(std::vector<m2::PointD> const & points)
+{
+  LOG(LINFO, ("Saving the route to route.kml..."));
+  boost::format fmt = boost::format(kKmlHead) % "Roads";
+  std::string kml = fmt.str();
+
+  for (auto const & p : points)
+  {
+    auto const latLon = mercator::ToLatLon(p);
+    std::string name = " ";
+    Encode(name);
+    boost::format fmt = boost::format(kPlacemarkTemplate) % name % latLon.m_lon % latLon.m_lat % " ";
+    kml += fmt.str();
+  }
+  kml += kKmlFoot;
+
+  std::ofstream routeFile;
+  routeFile.open("route.kml");
+  routeFile << kml;
+  routeFile.close();
+}
 
 double CalcMaxSpeed(NumMwmIds const & numMwmIds,
                     VehicleModelFactoryInterface const & vehicleModelFactory,
@@ -543,6 +618,8 @@ RouterResultCode IndexRouter::DoCalculateRoute(Checkpoints const & checkpoints,
 
   LOG(LINFO, ("Route length:", route.GetTotalDistanceMeters(), "meters. ETA:",
       route.GetTotalTimeSec(), "seconds."));
+
+  SaveRoteInKml(route.GetPoly().GetPoints());
 
   double weight = 0;
   for (auto const & s : segments)
