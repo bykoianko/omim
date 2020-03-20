@@ -14,8 +14,15 @@ using namespace std;
 namespace
 {
 UNIT_TEST(RoutingQuality_NoLoop_MoscowToKazan)
-{
+{ // Leap weight: 41938.4
   TEST(!CheckCarRoute({55.63113, 37.63054} /* start */, {55.67914, 52.37389} /* finish */,
+                      {{{55.80643, 37.83981}}} /* reference point */),
+       ());
+}
+
+UNIT_TEST(RoutingQuality_NoLoop_MoscowToKazan2)
+{ // Leap weight: 41933
+  TEST(!CheckCarRoute({55.63332, 37.62824} /* start */, {55.67914, 52.37389} /* finish */,
                       {{{55.80643, 37.83981}}} /* reference point */),
        ());
 }
