@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <iostream>
 #include <limits>
+#include <string>
 
 namespace routing
 {
@@ -128,4 +129,6 @@ constexpr RouteWeight GetAStarWeightZero<RouteWeight>()
   return RouteWeight(0.0 /* weight */, 0 /* numPassThroughChanges */, 0 /* numAccessChanges */,
                      0 /* numAccessConditionalPenalties */, 0.0 /* transitTime */);
 }
+
+std::string DebugPrint(RouteWeight const & routeWeight);
 }  // namespace routing

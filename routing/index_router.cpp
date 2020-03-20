@@ -786,7 +786,7 @@ RouterResultCode IndexRouter::CalculateSubrouteLeapsOnlyMode(
   RouterResultCode const result =
       FindPath<Vertex, Edge, Weight>(params, {} /* mwmIds */, routingResult, WorldGraphMode::LeapsOnly);
 
-  LOG(LINFO, ("Saving leaps to route_leaps.txt..."));
+  LOG(LINFO, ("Saving leaps to route_leaps.txt... Leap weight:", routingResult.m_distance));
   SaveRouteToFile("route_leaps.txt", routingResult.m_path);
 
   progress->PushAndDropLastSubProgress();
@@ -802,14 +802,14 @@ RouterResultCode IndexRouter::CalculateSubrouteLeapsOnlyMode(
   if (leapsResult != RouterResultCode::NoError)
     return leapsResult;
 
-  LOG(LINFO, ("Saving route before post processing to route_before_post_processing.txt..."));
-  SaveRouteToFile("route_before_post_processing.txt", subrouteWithoutPostprocessing);
+//  LOG(LINFO, ("Saving route before post processing to route_before_post_processing.txt..."));
+//  SaveRouteToFile("route_before_post_processing.txt", subrouteWithoutPostprocessing);
 
   LeapsPostProcessor leapsPostProcessor(subrouteWithoutPostprocessing, starter);
   subroute = leapsPostProcessor.GetProcessedPath();
 
-  LOG(LINFO, ("Saving route before post processing to route.txt..."));
-  SaveRouteToFile("route.txt", subrouteWithoutPostprocessing);
+//  LOG(LINFO, ("Saving route before post processing to route.txt..."));
+//  SaveRouteToFile("route.txt", subrouteWithoutPostprocessing);
   return RouterResultCode::NoError;
 }
 

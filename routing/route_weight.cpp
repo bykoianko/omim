@@ -100,4 +100,11 @@ RouteWeight operator*(double lhs, RouteWeight const & rhs)
                      rhs.GetNumAccessChanges(), rhs.GetNumAccessConditionalPenalties(),
                      lhs * rhs.GetTransitTime());
 }
+
+std::string DebugPrint(RouteWeight const & routeWeight)
+{
+  std::stringstream str;
+  str << routeWeight << '\n';
+  return str.str();
+}
 }  // namespace routing
