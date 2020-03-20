@@ -300,6 +300,16 @@ bool IsDeadEndCached(Segment const & segment, bool isOutgoing, bool useRoutingOp
 
   return false;
 }
+
+template <class Vertex>
+void SaveRouteToFile(std::string const & fileName, std::vector<Vertex> const & m_path)
+{
+  std::ofstream leapsFile;
+  leapsFile.open(fileName);
+  for (auto const & v : m_path)
+    leapsFile << DebugPrint(v) << '\n';
+  leapsFile.close();
+}
 }  // namespace
 
 namespace routing
@@ -776,6 +786,9 @@ RouterResultCode IndexRouter::CalculateSubrouteLeapsOnlyMode(
   RouterResultCode const result =
       FindPath<Vertex, Edge, Weight>(params, {} /* mwmIds */, routingResult, WorldGraphMode::LeapsOnly);
 
+  LOG(LINFO, ("Saving leaps to route_leaps.txt..."));
+  SaveRouteToFile("route_leaps.txt", routingResult.m_path);
+
   progress->PushAndDropLastSubProgress();
 
   if (result != RouterResultCode::NoError)
@@ -789,9 +802,14 @@ RouterResultCode IndexRouter::CalculateSubrouteLeapsOnlyMode(
   if (leapsResult != RouterResultCode::NoError)
     return leapsResult;
 
+  LOG(LINFO, ("Saving route before post processing to route_before_post_processing.txt..."));
+  SaveRouteToFile("route_before_post_processing.txt", subrouteWithoutPostprocessing);
+
   LeapsPostProcessor leapsPostProcessor(subrouteWithoutPostprocessing, starter);
   subroute = leapsPostProcessor.GetProcessedPath();
 
+  LOG(LINFO, ("Saving route before post processing to route.txt..."));
+  SaveRouteToFile("route.txt", subrouteWithoutPostprocessing);
   return RouterResultCode::NoError;
 }
 
