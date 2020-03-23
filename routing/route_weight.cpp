@@ -104,7 +104,7 @@ RouteWeight operator*(double lhs, RouteWeight const & rhs)
 std::string DebugPrint(RouteWeight const & routeWeight)
 {
   std::stringstream str;
-  str << "RouteWeight" << routeWeight << '\n';
+  str << "RouteWeight" << routeWeight;
   return str.str();
 }
 }  // namespace routing

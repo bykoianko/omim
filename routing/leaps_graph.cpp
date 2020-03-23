@@ -22,7 +22,7 @@ LeapsGraph::~LeapsGraph()
   std::ofstream outgoingFile;
   outgoingFile.open("leap_outgoing.txt");
   for (auto const & s : m_outgoingSegments)
-    outgoingFile << DebugPrint(s.first) << " " << DebugPrint(s.second);
+    outgoingFile << DebugPrint(s.m_seg) << " " << DebugPrint(s.m_segWight) << " " << s.m_outgoingEdges.size() << '\n';
   outgoingFile.close();
 }
 
@@ -30,7 +30,7 @@ void LeapsGraph::GetOutgoingEdgesList(astar::VertexData<Vertex, Weight> const & 
                                       std::vector<SegmentEdge> & edges)
 {
   GetEdgesList(vertexData.m_vertex, true /* isOutgoing */, edges);
-  m_outgoingSegments.push_back(std::make_pair(vertexData.m_vertex, vertexData.m_realDistance));
+  m_outgoingSegments.push_back({vertexData.m_vertex, vertexData.m_realDistance, edges});
 }
 
 void LeapsGraph::GetIngoingEdgesList(astar::VertexData<Vertex, Weight> const & vertexData,

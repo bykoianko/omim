@@ -34,6 +34,13 @@ public:
   ms::LatLon const & GetPoint(Segment const & segment, bool front) const;
 
 private:
+  struct OutgoingSegs
+  {
+    Segment m_seg;
+    RouteWeight m_segWight;
+    std::vector<SegmentEdge> m_outgoingEdges;
+  };
+
   void GetEdgesList(Segment const & segment, bool isOutgoing, std::vector<SegmentEdge> & edges);
 
   void GetEdgesListFromStart(Segment const & segment, std::vector<SegmentEdge> & edges);
@@ -45,7 +52,7 @@ private:
   Segment m_startSegment;
   Segment m_finishSegment;
 
-  std::vector<std::pair<Segment, RouteWeight>> m_outgoingSegments;
+  std::vector<OutgoingSegs> m_outgoingSegments;
 
   IndexGraphStarter & m_starter;
 };
