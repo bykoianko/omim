@@ -16,10 +16,21 @@ LeapsGraph::LeapsGraph(IndexGraphStarter & starter) : m_starter(starter)
   m_finishSegment = m_starter.GetFinishSegment();
 }
 
+LeapsGraph::~LeapsGraph()
+{
+  LOG(LINFO, ("Saving leap outgoing segments to leap_outgoing.txt..."));
+  std::ofstream outgoingFile;
+  outgoingFile.open("leap_outgoing.txt");
+  for (auto const & s : m_outgoingSegments)
+    outgoingFile << DebugPrint(s.first) << " " << DebugPrint(s.second);
+  outgoingFile.close();
+}
+
 void LeapsGraph::GetOutgoingEdgesList(astar::VertexData<Vertex, Weight> const & vertexData,
                                       std::vector<SegmentEdge> & edges)
 {
   GetEdgesList(vertexData.m_vertex, true /* isOutgoing */, edges);
+  m_outgoingSegments.push_back(std::make_pair(vertexData.m_vertex, vertexData.m_realDistance));
 }
 
 void LeapsGraph::GetIngoingEdgesList(astar::VertexData<Vertex, Weight> const & vertexData,

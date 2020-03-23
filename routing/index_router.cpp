@@ -805,8 +805,8 @@ RouterResultCode IndexRouter::CalculateSubrouteLeapsOnlyMode(
 //  LOG(LINFO, ("Saving route before post processing to route_before_post_processing.txt..."));
 //  SaveRouteToFile("route_before_post_processing.txt", subrouteWithoutPostprocessing);
 
-  LeapsPostProcessor leapsPostProcessor(subrouteWithoutPostprocessing, starter);
-  subroute = leapsPostProcessor.GetProcessedPath();
+//  LeapsPostProcessor leapsPostProcessor(subrouteWithoutPostprocessing, starter);
+  subroute = subrouteWithoutPostprocessing; // leapsPostProcessor.GetProcessedPath();
 
 //  LOG(LINFO, ("Saving route before post processing to route.txt..."));
 //  SaveRouteToFile("route.txt", subrouteWithoutPostprocessing);

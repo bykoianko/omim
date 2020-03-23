@@ -17,6 +17,7 @@ class LeapsGraph : public AStarGraph<Segment, SegmentEdge, RouteWeight>
 {
 public:
   explicit LeapsGraph(IndexGraphStarter & starter);
+  ~LeapsGraph();
 
   // AStarGraph overrides:
   // @{
@@ -43,6 +44,8 @@ private:
 
   Segment m_startSegment;
   Segment m_finishSegment;
+
+  std::vector<std::pair<Segment, RouteWeight>> m_outgoingSegments;
 
   IndexGraphStarter & m_starter;
 };
