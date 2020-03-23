@@ -22,7 +22,12 @@ LeapsGraph::~LeapsGraph()
   std::ofstream outgoingFile;
   outgoingFile.open("leap_outgoing.txt");
   for (auto const & s : m_outgoingSegments)
-    outgoingFile << DebugPrint(s.m_seg) << " " << DebugPrint(s.m_segWight) << " " << s.m_outgoingEdges.size() << '\n';
+  {
+    outgoingFile << DebugPrint(s.m_seg) << " " << DebugPrint(s.m_segWight)
+                 << " Outgoing edges number:" << s.m_outgoingEdges.size() << " "
+                 << ::DebugPrint(s.m_outgoingEdges) << '\n';
+  }
+
   outgoingFile.close();
 }
 
