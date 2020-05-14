@@ -20,6 +20,13 @@ UNIT_TEST(RoutingQuality_NoLoop_MoscowToKazan)
        ());
 }
 
+UNIT_TEST(RoutingQuality_NoLoop_MoscowToKazan2)
+{
+  TEST(!CheckCarRoute({55.6609, 37.61609} /* start */, {55.67914, 52.37389} /* finish */,
+                      {{{55.80643, 37.83981}}} /* reference point */),
+       ());
+}
+
 UNIT_TEST(RoutingQuality_NoLoop_Canada)
 {
   TEST(!CheckCarRoute({53.53540, -113.50798} /* start */, {69.44402, -133.03189} /* finish */,
