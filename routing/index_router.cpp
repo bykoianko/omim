@@ -864,6 +864,20 @@ RouterResultCode IndexRouter::CalculateSubrouteLeapsOnlyMode(
   RouterResultCode const result =
       FindPath<Vertex, Edge, Weight>(params, {} /* mwmIds */, routingResult, WorldGraphMode::LeapsOnly);
 
+  LOG(LINFO, ("=========Leaps========="));
+  LOG(LINFO, ("result:", result));
+  LOG(LINFO, ("weight:", routingResult.m_distance.GetWeight()));
+  for (auto const & v : routingResult.m_path)
+  {
+    string mwmName = "fake";
+    if (v.GetMwmId() != kFakeNumMwmId)
+      mwmName = m_numMwmIds->GetFile(v.GetMwmId()).GetName();
+
+    LOG(LINFO, ( "road point:", v.GetRoadPoint(false /* front */), " mwm:", mwmName,
+                ", fid:", v.GetFeatureId(), ", seg idx:", v.GetSegmentIdx(), ", forward:",
+                v.IsForward()));
+  }
+
   progress->PushAndDropLastSubProgress();
 
   if (result != RouterResultCode::NoError)
