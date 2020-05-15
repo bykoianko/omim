@@ -867,15 +867,30 @@ RouterResultCode IndexRouter::CalculateSubrouteLeapsOnlyMode(
   LOG(LINFO, ("=========Leaps========="));
   LOG(LINFO, ("result:", result));
   LOG(LINFO, ("weight:", routingResult.m_distance.GetWeight()));
-  for (auto const & v : routingResult.m_path)
+  for (size_t i = 0; i < routingResult.m_path.size(); ++i)
   {
+    auto const & v = routingResult.m_path[i];
     string mwmName = "fake";
     if (v.GetMwmId() != kFakeNumMwmId)
       mwmName = m_numMwmIds->GetFile(v.GetMwmId()).GetName();
 
+    double weight = 0.0;
+    std::vector<SegmentEdge> edges;
+    astar::VertexData<Vertex, Weight> const vertexData(v, Weight());
+    leapsGraph.GetOutgoingEdgesList(vertexData, edges);
+    if (i + 1 != routingResult.m_path.size())
+    {
+      auto const & vNext = routingResult.m_path[i + 1];
+      for (auto const & e : edges)
+      {
+        if (e.GetTarget() == vNext)
+          weight = e.GetWeight().GetWeight();
+      }
+    }
+
     LOG(LINFO, ( "road point:", v.GetRoadPoint(false /* front */), " mwm:", mwmName,
                 ", fid:", v.GetFeatureId(), ", seg idx:", v.GetSegmentIdx(), ", forward:",
-                v.IsForward()));
+                v.IsForward(), "weight:", weight));
   }
 
   progress->PushAndDropLastSubProgress();
