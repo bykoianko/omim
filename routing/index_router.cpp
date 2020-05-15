@@ -875,11 +875,12 @@ RouterResultCode IndexRouter::CalculateSubrouteLeapsOnlyMode(
       mwmName = m_numMwmIds->GetFile(v.GetMwmId()).GetName();
 
     double weight = 0.0;
-    std::vector<SegmentEdge> edges;
-    astar::VertexData<Vertex, Weight> const vertexData(v, Weight());
-    leapsGraph.GetOutgoingEdgesList(vertexData, edges);
     if (i + 1 != routingResult.m_path.size())
     {
+      std::vector<SegmentEdge> edges;
+      astar::VertexData<Vertex, Weight> const vertexData(v, Weight());
+      leapsGraph.GetOutgoingEdgesList(vertexData, edges);
+
       auto const & vNext = routingResult.m_path[i + 1];
       for (auto const & e : edges)
       {
