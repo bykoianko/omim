@@ -866,7 +866,7 @@ RouterResultCode IndexRouter::CalculateSubrouteLeapsOnlyMode(
 
   LOG(LINFO, ("=========Leaps========="));
   LOG(LINFO, ("result:", result));
-  LOG(LINFO, ("weight:", routingResult.m_distance.GetWeight()));
+  double sumWeight = 0.0;
   for (size_t i = 0; i < routingResult.m_path.size(); ++i)
   {
     auto const & v = routingResult.m_path[i];
@@ -875,6 +875,7 @@ RouterResultCode IndexRouter::CalculateSubrouteLeapsOnlyMode(
       mwmName = m_numMwmIds->GetFile(v.GetMwmId()).GetName();
 
     double weight = 0.0;
+    bool edgeFound = false;
     if (i + 1 != routingResult.m_path.size())
     {
       std::vector<SegmentEdge> edges;
@@ -885,14 +886,24 @@ RouterResultCode IndexRouter::CalculateSubrouteLeapsOnlyMode(
       for (auto const & e : edges)
       {
         if (e.GetTarget() == vNext)
+        {
           weight = e.GetWeight().GetWeight();
+          edgeFound = true;
+        }
       }
     }
+    sumWeight += weight;
 
+    if (!edgeFound)
+      LOG(LINFO, ("Outgoing edge from the folling node not found. From the note found:", routingResult.m_path.size(), "edges."));
     LOG(LINFO, ( "road point:", v.GetRoadPoint(false /* front */), " mwm:", mwmName,
                 ", fid:", v.GetFeatureId(), ", seg idx:", v.GetSegmentIdx(), ", forward:",
                 v.IsForward(), "weight:", weight));
+    if (!edgeFound)
+      LOG(LINFO, ());
   }
+  LOG(LINFO, ("weight from result:", routingResult.m_distance.GetWeight()));
+  LOG(LINFO, ("sum weights:", sumWeight));
 
   progress->PushAndDropLastSubProgress();
 
