@@ -216,6 +216,7 @@ bool OpeningHoursSerDes::SerializeImpl(BitWriter<Writer> & writer,
   }
 
 //  for (auto const & rule : decomposedRules)
+  LOG(LINFO, ("decomposedRules.size() = ", decomposedRules.size()));
   for (size_t i = 0; i < decomposedRules.size(); ++i)
   {
     auto const & rule = decomposedRules[i];
@@ -226,6 +227,10 @@ bool OpeningHoursSerDes::SerializeImpl(BitWriter<Writer> & writer,
     {
       if (ExistsFeatureInOpeningHours(supportedFeature, rule))
       {
+        if (i == 0)
+        {
+          LOG(LINFO, ("decomposedRules[0]", rule.GetComment(), rule.GetModifierComment(), rule.GetAnySeparator(), rule.GetYears(), rule.GetMonths()));
+        }
         if (!Serialize(writer, supportedFeature, rule, i))
           return false;
       }
