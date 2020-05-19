@@ -320,13 +320,14 @@ uint8_t OpeningHoursSerDes::GetBitsNumber(Header::Bits type) const
 }
 
 bool OpeningHoursSerDes::CheckYearRange(osmoh::MonthDay::TYear start,
-                                        osmoh::MonthDay::TYear end) const
+                                        osmoh::MonthDay::TYear end, bool yearSize1,
+                                        bool monthSize1, size_t index) const
 {
   if (start < kYearBias || end < kYearBias)
     return false;
 
   // Should be filtered after |DecomposeOh| method.
-  CHECK(start <= end && end >= m_currentYear, (start, end, m_currentYear));
+  CHECK(start <= end && end >= m_currentYear, (start, end, m_currentYear, yearSize1, monthSize1, index));
   return true;
 }
 

@@ -133,7 +133,7 @@ private:
   bool HaveSameHeaders(std::vector<osmoh::RuleSequence> const & decomposedRules) const;
 
   template <typename Writer>
-  bool Serialize(BitWriter<Writer> & writer, Header::Bits type, osmoh::RuleSequence const & rule);
+  bool Serialize(BitWriter<Writer> & writer, Header::Bits type, osmoh::RuleSequence const & rule, size_t index);
 
   template <typename Reader>
   void Deserialize(BitReader<Reader> & reader, Header::Bits type, osmoh::RuleSequence & rule);
@@ -145,7 +145,8 @@ private:
   void SerializeRuleHeader(BitWriter<Writer> & writer, osmoh::RuleSequence const & rule);
 
   uint8_t GetBitsNumber(Header::Bits type) const;
-  bool CheckYearRange(osmoh::MonthDay::TYear start, osmoh::MonthDay::TYear end) const;
+  bool CheckYearRange(osmoh::MonthDay::TYear start, osmoh::MonthDay::TYear end, bool yearSize1,
+                      bool monthSize1, size_t index) const;
 
   uint16_t m_currentYear;
   bool m_serializeEverything = false;
@@ -214,8 +215,10 @@ bool OpeningHoursSerDes::SerializeImpl(BitWriter<Writer> & writer,
     SerializeRuleHeader(writer, decomposedRules.back());
   }
 
-  for (auto const & rule : decomposedRules)
+//  for (auto const & rule : decomposedRules)
+  for (size_t i = 0; i < decomposedRules.size(); ++i)
   {
+    auto const & rule = decomposedRules[i];
     if (m_serializeEverything)
       SerializeRuleHeader(writer, rule);
 
@@ -223,7 +226,7 @@ bool OpeningHoursSerDes::SerializeImpl(BitWriter<Writer> & writer,
     {
       if (ExistsFeatureInOpeningHours(supportedFeature, rule))
       {
-        if (!Serialize(writer, supportedFeature, rule))
+        if (!Serialize(writer, supportedFeature, rule, i))
           return false;
       }
     }
@@ -267,7 +270,7 @@ osmoh::OpeningHours OpeningHoursSerDes::Deserialize(BitReader<Reader> & reader)
 
 template <typename Writer>
 bool OpeningHoursSerDes::Serialize(BitWriter<Writer> & writer, Header::Bits type,
-                                   osmoh::RuleSequence const & rule)
+                                   osmoh::RuleSequence const & rule, size_t index)
 {
   uint8_t start = 0;
   uint8_t end = 0;
@@ -293,7 +296,7 @@ bool OpeningHoursSerDes::Serialize(BitWriter<Writer> & writer, Header::Bits type
       UNREACHABLE();
     }
 
-    if (!CheckYearRange(startYear, endYear))
+    if (!CheckYearRange(startYear, endYear, rule.GetYears().size() == 1, rule.GetMonths().size() == 1, index))
       return false;
 
     start = base::checked_cast<uint8_t>(startYear - kYearBias);
