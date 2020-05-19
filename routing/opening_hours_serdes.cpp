@@ -46,15 +46,18 @@ bool ShouldSkipYear(osmoh::YearRange const & range, uint16_t currentYear)
 
 bool ShouldSkipYear(osmoh::MonthdayRange const & range, uint16_t currentYear)
 {
+  LOG(LINFO, ("ShouldSkipYear(...) currentYear:", currentYear));
   auto const hasYear = range.GetStart().HasYear() && range.GetEnd().HasYear();
   if (!hasYear)
     return false;
   
   auto const startYear = range.GetStart().GetYear();
   auto const endYear = range.GetEnd().GetYear();
+  LOG(LINFO, ("ShouldSkipYear(...) currentYear:", currentYear, "hasYear:", hasYear, "startYear:", startYear, "endYear:", endYear));
   if (startYear > endYear)
     return false;
 
+  LOG(LINFO, ("ShouldSkipYear(...) befor exit. returns:", hasYear && startYear < currentYear && endYear < currentYear));
   return hasYear && startYear < currentYear && endYear < currentYear;
 }
 
@@ -233,6 +236,7 @@ std::vector<osmoh::RuleSequence> OpeningHoursSerDes::DecomposeOh(osmoh::OpeningH
       continue;
 
     bool badRule = false;
+    LOG(LINFO, ("Before apply years:", badRule));
     apply(rules, rule.GetYears(),
           [&](osmoh::YearRange const & range, osmoh::RuleSequence & item) {
             if (ShouldSkipYear(range, m_currentYear))
@@ -241,6 +245,7 @@ std::vector<osmoh::RuleSequence> OpeningHoursSerDes::DecomposeOh(osmoh::OpeningH
             item.SetYears({range});
           });
 
+    LOG(LINFO, ("Before apply month:", badRule));
     apply(rules, rule.GetMonths(),
           [&](osmoh::MonthdayRange const & range, osmoh::RuleSequence & item) {
             if (ShouldSkipYear(range, m_currentYear))
@@ -248,7 +253,7 @@ std::vector<osmoh::RuleSequence> OpeningHoursSerDes::DecomposeOh(osmoh::OpeningH
 
             item.SetMonths({range});
           });
-    LOG(LINFO, ("badRule:", badRule, rule.GetMonths()));
+    LOG(LINFO, ("After apply month. badRule:", badRule, rule.GetMonths()));
 
     if (badRule)
       continue;
