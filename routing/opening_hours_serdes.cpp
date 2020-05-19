@@ -35,12 +35,17 @@ osmoh::RuleSequence GetTwentyFourHourRule()
   return result;
 }
 
+bool AreStartAndEndTooOld(uint16_t startYear, uint16_t endYear, uint16_t currentYear)
+{
+  return startYear < currentYear && endYear < currentYear;
+}
+
 bool ShouldSkipYear(osmoh::YearRange const & range, uint16_t currentYear)
 {
   if (range.GetStart() > range.GetEnd())
     return true;
-  
-  return range.GetStart() < currentYear && range.GetEnd() < currentYear;
+
+  return AreStartAndEndTooOld(range.GetStart(), range.GetEnd(), currentYear);
 }
 
 bool ShouldSkipYear(osmoh::MonthdayRange const & range, uint16_t currentYear)
@@ -54,7 +59,7 @@ bool ShouldSkipYear(osmoh::MonthdayRange const & range, uint16_t currentYear)
   if (startYear > endYear)
     return true;
 
-  return hasYear && startYear < currentYear && endYear < currentYear;
+  return AreStartAndEndTooOld(startYear, endYear, currentYear);
 }
 
 bool UselessModifier(osmoh::RuleSequence const & rule)
