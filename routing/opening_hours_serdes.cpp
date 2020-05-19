@@ -3,6 +3,7 @@
 #include "coding/writer.hpp"
 
 #include "base/assert.hpp"
+#include "base/logging.hpp"
 #include "base/scope_guard.hpp"
 #include "base/stl_helpers.hpp"
 
@@ -192,6 +193,8 @@ bool OpeningHoursSerDes::CheckSupportedFeatures() const
 
 std::vector<osmoh::RuleSequence> OpeningHoursSerDes::DecomposeOh(osmoh::OpeningHours const & oh)
 {
+  LOG(LINFO, ("OpeningHoursSerDes::DecomposeOh(...) rule size:", oh.GetRule().size()));
+
   auto const apply = [&](auto & rules, auto const & ranges, auto const & rangeSetter) {
     if (ranges.empty())
       return;
@@ -245,6 +248,7 @@ std::vector<osmoh::RuleSequence> OpeningHoursSerDes::DecomposeOh(osmoh::OpeningH
 
             item.SetMonths({range});
           });
+    LOG(LINFO, ("badRule:", badRule, rule.GetMonths()));
 
     if (badRule)
       continue;
