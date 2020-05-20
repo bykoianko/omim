@@ -1,6 +1,8 @@
 #include "parse_opening_hours.hpp"
 #include "opening_hours_parsers.hpp"
 
+#include "base/logging.hpp"
+
 #include <boost/spirit/include/phoenix_bind.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/spirit/include/phoenix_stl.hpp>
@@ -117,6 +119,8 @@ namespace parsing
 
 bool Parse(std::string const & str, TRuleSequences & context)
 {
-  return osmoh::ParseImpl<parsing::time_domain>(str, context);
+  bool const result = osmoh::ParseImpl<parsing::time_domain>(str, context);
+  LOG(LINFO, ("Valid:", result, "Rule:", str));
+  return result;
 }
 } // namespace osmoh

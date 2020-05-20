@@ -265,6 +265,7 @@ void ParseRoadAccessConditional(
     string const & roadAccessPath, map<base::GeoObjectId, uint32_t> const & osmIdToFeatureId,
     RoadAccessCollector::RoadAccessByVehicleType & roadAccessByVehicleType)
 {
+  LOG(LINFO, ("ParseRoadAccessConditional(", roadAccessPath, "...)"));
   ifstream stream(roadAccessPath);
   if (!stream)
   {
@@ -325,6 +326,7 @@ void ParseRoadAccessConditional(
     roadAccessByVehicleType[i].SetAccessConditional(move(wayToAccessConditional[i]),
                                                     move(pointToAccessConditional[i]));
   }
+  LOG(LINFO, ("ParseRoadAccessConditional(...) end"));
 }
 
 // If |elem| has access tag from |mapping|, returns corresponding RoadAccess::Type.
