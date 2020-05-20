@@ -873,7 +873,7 @@ std::ostream & operator<<(std::ostream & ost, TRuleSequences const & s)
 
 // OpeningHours ------------------------------------------------------------------------------------
 OpeningHours::OpeningHours(std::string const & rule):
-    m_valid(Parse(rule, m_rule))
+    m_ruleStr(rule), m_valid(Parse(rule, m_rule))
 {
 }
 

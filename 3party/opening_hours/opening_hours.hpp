@@ -711,6 +711,7 @@ public:
   bool HasWeekSelector() const;
   bool HasYearSelector() const;
 
+  std::string const & GetRuleStr() const { return m_ruleStr; }
   TRuleSequences const & GetRule() const { return m_rule; }
 
   friend void swap(OpeningHours & lhs, OpeningHours & rhs);
@@ -718,6 +719,7 @@ public:
   bool operator==(OpeningHours const & rhs) const;
 
 private:
+  std::string m_ruleStr;
   TRuleSequences m_rule;
   bool m_valid;
 };

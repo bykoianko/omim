@@ -40,30 +40,46 @@ bool AreStartAndEndTooOld(uint16_t startYear, uint16_t endYear, uint16_t current
   return startYear < currentYear && endYear < currentYear;
 }
 
-bool ShouldSkipYear(osmoh::YearRange const & range, uint16_t currentYear)
+bool ShouldSkipYear(osmoh::YearRange const & range, uint16_t currentYear, osmoh::OpeningHours const & oh)
 {
+  LOG(LINFO, ("Year. String rule:", oh.GetRuleStr()));
   if (range.GetStart() > range.GetEnd())
+  {
+    LOG(LINFO, ("Year. Early return. Start is more than end.(", range.GetStart(), ">", range.GetEnd()));
     return true;
+  }
 
-  return AreStartAndEndTooOld(range.GetStart(), range.GetEnd(), currentYear);
+  bool const areStartAndEndTooOld = AreStartAndEndTooOld(range.GetStart(), range.GetEnd(), currentYear);
+  LOG(LINFO, ("Year. Normal return", areStartAndEndTooOld, "Start, end, current:", range.GetStart(), range.GetEnd(), currentYear));
+  return areStartAndEndTooOld;
 }
 
-bool ShouldSkipYear(osmoh::MonthdayRange const & range, uint16_t currentYear)
+bool ShouldSkipYear(osmoh::MonthdayRange const & range, uint16_t currentYear, osmoh::OpeningHours const & oh)
 {
+  LOG(LINFO, ("Month. String rule:", oh.GetRuleStr()));
   auto const hasYear = range.GetStart().HasYear() && range.GetEnd().HasYear();
   if (!hasYear)
+  {
+    LOG(LINFO, ("Month. Early return. No start or end:", range.GetStart().HasYear(), range.GetEnd().HasYear()));
     return false;
-  
+  }
+
   auto const startYear = range.GetStart().GetYear();
   auto const endYear = range.GetEnd().GetYear();
   if (startYear > endYear)
+  {
+    LOG(LINFO, ("Month. Early return. Start is more than end.(", startYear, ">", endYear));
     return true;
+  }
 
-  return AreStartAndEndTooOld(startYear, endYear, currentYear);
+  bool const areStartAndEndTooOld = AreStartAndEndTooOld(startYear, endYear, currentYear);
+  LOG(LINFO, ("Month. Normal return", areStartAndEndTooOld, "Start, end, current:", startYear, endYear, currentYear));
+  return areStartAndEndTooOld;
 }
 
 bool UselessModifier(osmoh::RuleSequence const & rule)
 {
+  // TODO
   if (rule.GetModifier() == osmoh::RuleSequence::Modifier::Closed ||
       rule.GetModifier() == osmoh::RuleSequence::Modifier::Open)
   {
@@ -237,7 +253,7 @@ std::vector<osmoh::RuleSequence> OpeningHoursSerDes::DecomposeOh(osmoh::OpeningH
     bool badRule = false;
     apply(rules, rule.GetYears(),
           [&](osmoh::YearRange const & range, osmoh::RuleSequence & item) {
-            if (ShouldSkipYear(range, m_currentYear))
+            if (ShouldSkipYear(range, m_currentYear, oh))
               badRule = true;
 
             item.SetYears({range});
@@ -245,7 +261,7 @@ std::vector<osmoh::RuleSequence> OpeningHoursSerDes::DecomposeOh(osmoh::OpeningH
 
     apply(rules, rule.GetMonths(),
           [&](osmoh::MonthdayRange const & range, osmoh::RuleSequence & item) {
-            if (ShouldSkipYear(range, m_currentYear))
+            if (ShouldSkipYear(range, m_currentYear, oh))
               badRule = true;
 
             item.SetMonths({range});
